@@ -1,0 +1,9 @@
+.vscode
+
+*.pyc
+*.pyo
+.pytest_cache
+.coverage
+__pycache__
+.blaze_env
+.DS_Store
