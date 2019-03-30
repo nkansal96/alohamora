@@ -1,46 +1,58 @@
-import collections
-import contextlib
-import itertools
 import json
 import os
 import subprocess
 import tempfile
 
-from jinja2 import Template
+from blaze.config import Config
+from blaze.chrome.config import get_chrome_flags
+from blaze.mahimahi import MahiMahiConfig
 
-from .chrome import get_chrome_flags
-from .mahimahi import MahiMahiConfig
-from .result import Results
+from .result import Result
 
-PW_CMD_PATH = os.path.join(os.path.dirname(__file__), '../node_modules/.bin/pwmetrics')
-TEMPLATE_FILE = os.path.join(os.path.dirname(__file__), 'templates/pwconfig.js.j2')
-CONFIG_TEMPLATE = Template(open(TEMPLATE_FILE, 'r').read())
+CONFIG_TEMPLATE = '''module.exports = {{
+  url: '{url}',
+  flags: {{
+    runs: {runs},
+    json: true,
+    outputPath: '{output_path}',
+    chromePath: '{chrome_path}',
+    chromeFlags: '{chrome_flags}',
+    showOutput: false,
+    disableCpuThrottling: false,
+    throttling: {{
+      cpuSlowdownMultiplier: {cpu_slowdown},
+    }},
+  }},
+}}
+'''
 
-def parse_pw_output(output: dict):
-  res = output.get("median", output["runs"][0])
-  return Results({k["id"]: k["timing"] for k in res["timings"]})
+def parse_pw_output(output: dict) -> Result:
+  res = output.get('median', output['runs'][0])
+  return Result(**{k['id']: k['timing'] for k in res['timings']})
 
-def get_metrics(url, mahimahi_config: MahiMahiConfig):
+def get_metrics(config: Config, mahimahi_config: MahiMahiConfig) -> Result:
   with tempfile.TemporaryDirectory(prefix='blaze_test', dir='/tmp') as tmp_dir:
     config_file = os.path.join(tmp_dir, 'pw_config.js')
     output_file = os.path.join(tmp_dir, 'pw_output.json')
     push_policy_file = os.path.join(tmp_dir, 'mm_push_policy')
 
     with open(config_file, 'w') as f:
-      f.write(CONFIG_TEMPLATE.render(
-        url=url,
-        n_runs=1,
+      f.write(CONFIG_TEMPLATE.format(
+        url=config.train_config.request_url,
+        runs=1,
         output_path=output_file,
-        chrome_flags=get_chrome_flags(tmp_dir),
-        cpu_slowdown=mahimahi_config.environment.device_speed.value,
+        chrome_path=config.chrome_bin,
+        chrome_flags=' '.join(get_chrome_flags(tmp_dir)),
+        cpu_slowdown=mahimahi_config.client_environment.device_speed.value,
       ))
 
-    mahimahi_cmd = mahimahi_config.cmd(push_policy_file)
-    cmd = [*mahimahi_cmd, PW_CMD_PATH, '--config', config_file]
+    mahimahi_config.set_push_config_file_name(push_policy_file)
+    cmd = mahimahi_config.proxy_replay_shell_with_cmd([config.pwmetrics_bin, '--config', config_file])
     # cwd='/' to write the output to the correct temporary folder. the folder
     # path is an absolute directory but there's a bug in pw-metrics that uses it
     # as a relative path despite the leading '/', so cwd to '/' to make it work
-    proc = subprocess.run(' '.join(cmd),
+    proc = subprocess.run(
+      ' '.join(cmd),
       shell=True,
       cwd='/',
       stdout=subprocess.DEVNULL,
