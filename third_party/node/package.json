@@ -1,0 +1,15 @@
+{
+  "name": "blaze",
+  "version": "1.0.0",
+  "description": "Node dependencies for blaze",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Nikhil Kansal",
+  "license": "MIT",
+  "dependencies": {
+    "chrome-har-capturer": "^0.13.4",
+    "pwmetrics": "^4.2.1"
+  }
+}
