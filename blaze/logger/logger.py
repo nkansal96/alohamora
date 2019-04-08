@@ -20,19 +20,16 @@ class Logger():
       return
 
     level_str = '[{}]'.format(str(level))
-    namespace_str = (Style.BRIGHT + '{}:'.format(namespace or self.namespace) + Style.RESET_ALL) \
+    namespace_str = (Style.BRIGHT + ' {}:'.format(namespace or self.namespace) + Style.RESET_ALL) \
                     if namespace or self.namespace else ''
 
-    key_color = level.color if level else Fore.LIGHTWHITE_EX
     ctx = {**self.context, **context}
-    ctx_str = ''
-    if ctx:
-      ctx_fmt = key_color + '{}' + Fore.RESET + '={}'
-      ctx_str = ' ' + ' '.join(ctx_fmt.format(*c) for c in ctx.items())
-    if namespace:
-      namespace_str = ' ' + namespace_str
+    ctx_fmt = level.color + '{}' + Fore.RESET + '={}'
+    ctx_str = ' '.join(ctx_fmt.format(*c) for c in ctx.items())
     if message:
       message = ' ' + message
+    if ctx:
+      ctx_str = ' ' + ctx_str
     self.print_fn('{}{}{}{}'.format(level_str, namespace_str, message, ctx_str))
 
   def with_namespace(self, namespace):
