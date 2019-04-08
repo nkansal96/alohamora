@@ -3,6 +3,7 @@ import gym
 
 from blaze.config import client, Config
 from blaze.evaluator import Analyzer
+from blaze.logger import logger as log
 
 from blaze.action import ActionSpace, Policy
 from .observation import get_observation, get_observation_space
@@ -16,6 +17,13 @@ class Environment(gym.Env):
   generation, and evaluation of the policy/action in the simulated environment.
   """
   def __init__(self, config: Config, client_environment=client.get_random_client_environment()):
+    log.info(
+      'initializing environment',
+      network_type=client_environment.network_type,
+      network_speed=client_environment.network_speed,
+      device_speed=client_environment.device_speed,
+    )
+
     self.config = config
     self.train_config = config.train_config
     self.client_environment = client_environment
@@ -33,6 +41,13 @@ class Environment(gym.Env):
     self.client_environment = client.get_random_client_environment()
     self.analyzer.reset(self.client_environment)
 
+    log.info(
+      'initializing environment',
+      network_type=self.client_environment.network_type,
+      network_speed=self.client_environment.network_speed,
+      device_speed=self.client_environment.device_speed,
+    )
+
     return get_observation(self.client_environment, self.train_config.push_groups, self.policy)
 
   def step(self, action):
@@ -44,12 +59,14 @@ class Environment(gym.Env):
     if action_applied:
       reward = self.analyzer.get_reward(self.policy) or NOOP_ACTION_REWARD
 
-    print('action={action}, total_actions={total}, reward={reward}'.format(
+    log.info(
+      'took action',
       action=repr(decoded_action),
-      total=self.policy.actions_taken,
+      total_actions=self.policy.actions_taken,
       reward=reward,
-    ))
-    return observation, reward, self.policy.completed, {'action': decoded_action} 
+    )
+
+    return observation, reward, self.policy.completed, {'action': decoded_action}
 
   def render(self, mode='human'):
     return super(Environment, self).render(mode=mode)
