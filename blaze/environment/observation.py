@@ -6,11 +6,10 @@ and generating observations based on some training state
 from typing import List
 
 import gym
-import numpy as np
 
 from blaze.action import Policy
-from blaze.config.client import NetworkType, NetworkBandwidth, NetworkLatency, DeviceSpeed, ClientEnvironment
-from blaze.config.train import PushGroup, ResourceType
+from blaze.config.client import NetworkType, DeviceSpeed, ClientEnvironment
+from blaze.config.environment import PushGroup, ResourceType
 
 MAX_PUSH_GROUPS = 100
 MAX_RESOURCES = 400
@@ -37,8 +36,6 @@ def get_observation_space():
   return gym.spaces.Dict({
     'client': gym.spaces.Dict({
       'network_type': gym.spaces.Discrete(len(NetworkType)),
-      'network_bandwidth': gym.spaces.Discrete(len(NetworkBandwidth)),
-      'network_latency': gym.spaces.Discrete(len(NetworkLatency)),
       'device_speed': gym.spaces.Discrete(len(DeviceSpeed)),
     }),
     'push_groups': gym.spaces.Dict({
@@ -69,8 +66,6 @@ def get_observation(client_environment: ClientEnvironment, push_groups: List[Pus
   return {
     'client': {
       'network_type': client_environment.network_type.value,
-      'network_bandwidth': client_environment.network_bandwidth.value,
-      'network_latency': client_environment.network_latency.value,
       'device_speed': client_environment.device_speed.value,
     },
     'push_groups': encoded_push_groups,
