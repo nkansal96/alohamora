@@ -1,3 +1,4 @@
+""" This module defines methods to configure an instance of Chrome """
 from typing import List, Optional
 from blaze.config import Config
 
