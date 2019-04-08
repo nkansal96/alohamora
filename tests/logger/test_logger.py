@@ -23,9 +23,9 @@ def create_logger(*args, **kwargs):
 
 class TestLogger():
   def test_init(self):
-    log = Logger(name='test', min_level=Level.INFO, time_start=0, print_fn=sys.stderr.write, context={'test': 100})
+    log = Logger(namespace='test', min_level=Level.INFO, time_start=0, print_fn=sys.stderr.write, context={'test': 100})
     assert isinstance(log, Logger)
-    assert log.name == 'test'
+    assert log.namespace == 'test'
     assert log.min_level == Level.INFO
     assert log.time_start == 0
     assert log.print_fn == sys.stderr.write
@@ -49,9 +49,9 @@ class TestLogger():
 
   def test_log_with_name(self):
     print_fn, log = create_logger(min_level=Level.INFO)
-    name = 'blaze'
-    log.log(level=Level.INFO, name=name)
-    assert print_fn.called_with == '[{}] {}:'.format(str(Level.INFO), name)
+    namespace = 'blaze'
+    log.log(level=Level.INFO, namespace=namespace)
+    assert print_fn.called_with == '[{}] {}:'.format(str(Level.INFO), namespace)
 
   def test_log_with_message(self):
     print_fn, log = create_logger(min_level=Level.INFO)
@@ -61,10 +61,10 @@ class TestLogger():
 
   def test_log_with_name_and_message(self):
     print_fn, log = create_logger(min_level=Level.INFO)
-    name = 'blaze'
+    namespace = 'blaze'
     message = 'this is a message'
-    log.log(level=Level.INFO, name=name, message=message)
-    assert print_fn.called_with == '[{}] {}: {}'.format(str(Level.INFO), name, message)
+    log.log(level=Level.INFO, namespace=namespace, message=message)
+    assert print_fn.called_with == '[{}] {}: {}'.format(str(Level.INFO), namespace, message)
 
   def test_log_with_context(self):
     print_fn, log = create_logger(min_level=Level.INFO)
@@ -74,18 +74,18 @@ class TestLogger():
 
   def test_log_with_name_and_context(self):
     print_fn, log = create_logger(min_level=Level.INFO)
-    name = 'blaze'
+    namespace = 'blaze'
     context = {'test': 123, 'another': 'test'}
-    log.log(level=Level.INFO, name=name, **context)
-    assert print_fn.called_with == '[{}] {}: {}'.format(str(Level.INFO), name, ' '.join('{}={}'.format(*c) for c in context.items()))
+    log.log(level=Level.INFO, namespace=namespace, **context)
+    assert print_fn.called_with == '[{}] {}: {}'.format(str(Level.INFO), namespace, ' '.join('{}={}'.format(*c) for c in context.items()))
 
   def test_log_with_name_message_and_context(self):
     print_fn, log = create_logger(min_level=Level.INFO)
-    name = 'blaze'
+    namespace = 'blaze'
     message = 'this is a message'
     context = {'test': 123, 'another': 'test'}
-    log.log(level=Level.INFO, name=name, message=message, **context)
-    assert print_fn.called_with == '[{}] {}: {} {}'.format(str(Level.INFO), name, message, ' '.join('{}={}'.format(*c) for c in context.items()))
+    log.log(level=Level.INFO, namespace=namespace, message=message, **context)
+    assert print_fn.called_with == '[{}] {}: {} {}'.format(str(Level.INFO), namespace, message, ' '.join('{}={}'.format(*c) for c in context.items()))
 
   def test_debug(self):
     print_fn, log = create_logger(min_level=Level.DEBUG)
