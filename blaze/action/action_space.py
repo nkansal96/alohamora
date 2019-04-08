@@ -2,12 +2,12 @@
 This module contains the main class representing an action that an agent can
 take when exploring push policies
 """
-from typing import List
+from typing import Dict, List, Tuple
 
 import gym
 import numpy as np
 
-from blaze.config.train import PushGroup, Resource
+from blaze.config.environment import PushGroup, Resource
 from .action import Action
 
 class ActionSpace(gym.Space):
@@ -25,15 +25,15 @@ class ActionSpace(gym.Space):
     super(ActionSpace, self).__init__((), np.int64)
     self.rand = np.random.RandomState()
     self.push_groups = push_groups
-    self.push_resources = []
-    self.action_map = {}
-    self.actions = [Action()]
+    self.push_resources: List[Resource] = []
+    self.action_id_map: Dict[Tuple[int, int, int], int] = {}
+    self.actions: List[Action] = [Action()]
     for g, group in enumerate(push_groups):
       for s, source in enumerate(group.resources):
         if s != 0:
           self.push_resources.append(source)
         for p in range(s + 1, len(group.resources)):
-          self.action_map[(g, s, p)] = len(self.actions)
+          self.action_id_map[(g, s, p)] = len(self.actions)
           self.actions.append(Action(len(self.actions), g, s, p, push_groups))
     self.push_resources.sort(key=lambda r: r.order)
 
@@ -57,7 +57,7 @@ class ActionSpace(gym.Space):
     j = len(source_resources) - 1 - (self.rand.geometric(0.2) - 1) % len(source_resources)
     s = source_resources[j].source_id
 
-    return self.action_map[(g, s, p)]
+    return self.action_id_map[(g, s, p)]
 
   def contains(self, x):
     return 0 <= x < len(self.actions)

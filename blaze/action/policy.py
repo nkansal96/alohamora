@@ -7,7 +7,7 @@ representation and the actual URL representation
 import collections
 from typing import Optional
 
-from blaze.config.train import Resource
+from blaze.config.environment import Resource
 from .action_space import ActionSpace
 
 class Policy():
