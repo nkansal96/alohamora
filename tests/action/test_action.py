@@ -98,12 +98,26 @@ class TestActionSpace():
     while limit > 0:
       action_id = action_space.sample()
       a = action_space.decode_action_id(action_id)
+      action_space.use_action(a)
       if a.is_noop:
         continue
-      action_space.use_action(a)
       assert a.push not in action_space.push_resources
       if not action_space:
         break
       limit -= 1
     else:
       assert False, 'Did not cycle through all push resources'
+
+  def test_use_action_noop(self):
+    action_space = copy.deepcopy(self.action_space)
+    original_len = len(action_space.push_resources)
+    action_space.use_action(Action())
+    assert len(action_space.push_resources) == original_len
+
+  def test_contains(self):
+    for i in range(10):
+      action_id = self.action_space.sample()
+      assert self.action_space.contains(action_id)
+    assert not self.action_space.contains(-1)
+    assert not self.action_space.contains(len(self.action_space.actions))
+

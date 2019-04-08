@@ -27,8 +27,6 @@ class TestGetObservation():
 
     # assert that the client environment is correctly captured
     assert obs['client']['network_type'] == self.client_environment.network_type.value
-    assert obs['client']['network_bandwidth'] == self.client_environment.network_bandwidth.value
-    assert obs['client']['network_latency'] == self.client_environment.network_latency.value
     assert obs['client']['device_speed'] == self.client_environment.device_speed.value
 
     # assert that all resources are not pushed initially

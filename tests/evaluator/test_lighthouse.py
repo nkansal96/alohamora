@@ -83,7 +83,6 @@ class TestGetMetrics():
     mock_TemporaryDirectory.return_value.__enter__.return_value = tmp_dir
 
     metrics = get_metrics(self.config, self.mahimahi_config)
-    print(mock_open.call_args_list[0][0][0])
     assert mock_open.call_args_list[0][0][0].startswith(tmp_dir)
     assert mock_open.call_args_list[1][0][0].startswith(tmp_dir)
     assert mock_open.call_args_list[2][0][0].startswith(tmp_dir)
@@ -106,7 +105,7 @@ class TestGetMetrics():
     )
     mock_TemporaryDirectory.return_value.__enter__.return_value = '/tmp/blaze_test_123'
     metrics = get_metrics(self.config, self.mahimahi_config)
-    mahimahi_cmd = self.mahimahi_config.proxy_replay_shell_with_cmd([])
+    mahimahi_cmd = self.mahimahi_config.proxy_replay_shell_with_cmd('file', [])
     assert mock_run.called_once()
     assert mock_run.call_args_list[0].cmd.startswith(' '.join(mahimahi_cmd))
     assert metrics.speed_index == 1000

@@ -1,3 +1,4 @@
+import pytest
 from unittest import mock
 
 from blaze.action import Action, ActionSpace, Policy
@@ -76,3 +77,7 @@ class TestEnvironment():
       assert obs['push_groups'][str(action.g)][str(action.p)]['push_from'] == action.s
     finally:
       self.environment.reset()
+
+  def test_render(self):
+    with pytest.raises(NotImplementedError):
+      self.environment.render()

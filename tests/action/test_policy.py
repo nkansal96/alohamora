@@ -1,6 +1,6 @@
 import itertools
 
-from blaze.action import ActionSpace, Policy
+from blaze.action import Action, ActionSpace, Policy
 
 from tests.mocks.config import get_push_groups
 
@@ -109,3 +109,14 @@ class TestPolicy():
       assert any(action.source == source and action.push == push
                  for source, push_res in policy
                  for push in push_res)
+
+  def test_resource_push_from(self):
+    action_space = ActionSpace(self.push_groups)
+    policy = Policy(action_space)
+    action_id = Action().action_id
+    while Action(action_id).is_noop:
+      action_id = action_space.sample()
+    action = action_space.decode_action_id(action_id)
+    assert policy.resource_pushed_from(action.push) is None
+    assert policy.apply_action(action_id)
+    assert policy.resource_pushed_from(action.push) is action.source
