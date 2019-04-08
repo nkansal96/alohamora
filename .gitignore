@@ -4,6 +4,7 @@
 *.pyo
 .pytest_cache
 .coverage
+htmlcov
 __pycache__
 .blaze_env
 .DS_Store
