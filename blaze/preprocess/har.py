@@ -35,7 +35,7 @@ def har_entries_to_resources(har_entries) -> List[Resource]:
   for (order, entry) in enumerate(har_entries):
     resource_list.append(Resource(
       url=entry.request.url,
-      size=entry.response.bodySize + entry.response.headersSize,
+      size=max(entry.response.bodySize, 0) + max(entry.response.headersSize, 0),
       order=order,
       group_id=0,
       source_id=order,

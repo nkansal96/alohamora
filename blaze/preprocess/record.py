@@ -51,6 +51,9 @@ def find_url_stable_set(url: str, config: Config) -> List[Resource]:
     log.debug('capturing HAR...', run=n+1, url=url)
     har = capture_har(url, config)
     resource_list = har_entries_to_resources(har.log.entries)
+    if not resource_list:
+      log.warn('no response received', run=n+1)
+      continue
     log.debug('received resources', total=len(resource_list))
 
     for i in range(len(resource_list)): # pylint: disable=consider-using-enumerate
@@ -58,8 +61,9 @@ def find_url_stable_set(url: str, config: Config) -> List[Resource]:
         pos_dict[resource_list[i].url][resource_list[j].url] += 1
     resource_lists.append(set(resource_list))
 
-  common_res = list(set.intersection(*resource_lists))
-  common_res.sort(key=functools.cmp_to_key(lambda a, b: -pos_dict[a.url][b.url] + (STABLE_SET_NUM_RUNS//2)))
+  log.debug('resource list lengths', resource_lens=list(map(len, resource_lists)))
+  common_res = list(set.intersection(*resource_lists)) if resource_lists else []
+  common_res.sort(key=functools.cmp_to_key(lambda a, b: -pos_dict[a.url][b.url] + (len(resource_lists)//2)))
   return common_res
 
 def get_page_links(url: str, max_depth: int = 1) -> List[str]:
