@@ -1,7 +1,7 @@
 """ This module contains utility functions to operate on sequences """
-from typing import Any, Callable, Hashable, Iterable, List, TypeVar
+from typing import Callable, Hashable, Iterable, List, TypeVar
 
-T = TypeVar('T')
+T = TypeVar('T') # pylint: disable=invalid-name
 def ordered_uniq(seq: Iterable[T], key: Callable[[T], Hashable] = lambda x: x) -> List[T]:
   """
   Returns the list of unique elements from the given sequence using the
