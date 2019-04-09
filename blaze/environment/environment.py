@@ -17,6 +17,10 @@ class Environment(gym.Env):
   generation, and evaluation of the policy/action in the simulated environment.
   """
   def __init__(self, config: Config, client_environment=client.get_random_client_environment()):
+    # make sure config is an instance of Config or a dict
+    assert isinstance(config, (Config, dict))
+    config = config if isinstance(config, Config) else Config(**config)
+
     log.info(
       'initializing environment',
       network_type=client_environment.network_type,
