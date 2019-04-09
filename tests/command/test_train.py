@@ -3,6 +3,7 @@ import tempfile
 from unittest import mock
 
 from blaze.command.train import train
+from blaze.config.config import get_config
 from blaze.config.train import TrainConfig
 from tests.mocks.config import get_env_config
 
@@ -13,7 +14,7 @@ class TestTrain():
 
   def test_train_invalid_website_file(self):
     with pytest.raises(IOError):
-      train(['experiment_name', '--dir', '/tmp/tmp_dir', '--website', '/non/existent/file'])
+      train(['experiment_name', '--dir', '/tmp/tmp_dir', '--manifest_file', '/non/existent/file'])
 
   @mock.patch('blaze.model.apex.train')
   def test_train(self, mock_train):
@@ -24,6 +25,7 @@ class TestTrain():
       num_cpus=4,
       max_timesteps=100,
     )
+    config = get_config(env_config)
     with tempfile.NamedTemporaryFile() as env_file:
       env_config.save_file(env_file.name)
       train([
@@ -32,8 +34,8 @@ class TestTrain():
         '--cpus', str(train_config.num_cpus),
         '--timesteps', str(train_config.max_timesteps),
         '--model', 'APEX',
-        '--website', env_file.name,
+        '--manifest_file', env_file.name,
       ])
 
     mock_train.assert_called_once()
-    mock_train.assert_called_with(train_config, env_config)
+    mock_train.assert_called_with(train_config, config)

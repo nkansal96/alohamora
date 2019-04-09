@@ -3,6 +3,7 @@ from unittest import mock
 
 from blaze.action import Action, ActionSpace, Policy
 from blaze.config.client import ClientEnvironment
+from blaze.config.config import get_config
 from blaze.environment import Environment
 from blaze.environment.environment import NOOP_ACTION_REWARD
 from blaze.evaluator import Analyzer
@@ -29,6 +30,15 @@ class TestEnvironment():
     assert isinstance(env.policy, Policy)
     assert env.config.train_config.push_groups == env.action_space.push_groups
     assert env.policy.action_space == env.action_space
+
+  def test_init_with_dict_env(self):
+    env = Environment(get_config()._asdict())
+    assert isinstance(env, Environment)
+    assert env.config == get_config()
+
+  def test_init_with_invalid_config_type(self):
+    with pytest.raises(AssertionError):
+      Environment((1, 2, 3))
 
   @mock.patch('blaze.evaluator.Analyzer.get_reward')
   def test_reset(self, mock_get_reward):

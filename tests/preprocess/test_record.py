@@ -1,11 +1,13 @@
-import pytest
+import random
 import requests
+
+import pytest
 from unittest import mock
 
 
 from blaze.preprocess.record import record_webpage, find_url_stable_set, get_page_links, STABLE_SET_NUM_RUNS
 from tests.mocks.config import get_config
-from tests.mocks.har import generate_har, HarReturner
+from tests.mocks.har import empty_har, generate_har, HarReturner
 
 def exists_before(seq, a, b):
   a_i = seq.index(a)
@@ -41,6 +43,18 @@ class TestRecordWebpage():
 class TestFindUrlStableSet():
   def setup(self):
     self.config = get_config()
+
+  def test_handles_all_missing_har_files(self):
+    hars = [empty_har() for _ in range(STABLE_SET_NUM_RUNS)]
+    with mock.patch('blaze.preprocess.record.capture_har', new=HarReturner(hars)) as mock_capture_har:
+      stable_set = find_url_stable_set('http://cs.ucla.edu', self.config)
+    assert not stable_set
+
+  def test_handles_some_missing_har_files(self):
+    hars = [random.choice([generate_har(), empty_har()]) for _ in range(STABLE_SET_NUM_RUNS)]
+    with mock.patch('blaze.preprocess.record.capture_har', new=HarReturner(hars)) as mock_capture_har:
+      stable_set = find_url_stable_set('http://cs.ucla.edu', self.config)
+    assert stable_set
 
   def test_find_url_stable_set(self):
     hars = [generate_har() for _ in range(STABLE_SET_NUM_RUNS)]

@@ -2,6 +2,7 @@ import os
 from unittest import mock
 
 from blaze.config import config
+from tests.mocks.config import get_env_config
 
 class TestConfig():
   def test_create(self):
@@ -15,6 +16,12 @@ class TestConfig():
     assert isinstance(conf, config.Config)
     assert conf.train_config is None
 
+  def test_items(self):
+    conf = config.get_config()
+    items = conf.items()
+    assert all(len(v) == 2 for v in items)
+    assert len(items) == 6
+
 class TestGetConfig():
   def test_get_default_config(self):
     conf = config.get_config()
@@ -25,6 +32,10 @@ class TestGetConfig():
     assert conf.nghttpx_bin == config.DEFAULT_NGHTTPX_BIN
     assert conf.chrome_bin == config.DEFAULT_CHROME_BIN
     assert conf.train_config is None
+
+  def test_get_config_with_env_config(self):
+    conf = config.get_config(get_env_config())
+    assert conf.train_config == get_env_config()
 
   @mock.patch.dict(os.environ, {'CHROME_BIN': 'test_chrome', 'MAHIMAHI_CERT_DIR': 'test_mm_dir'})
   def test_get_config_with_override(self):

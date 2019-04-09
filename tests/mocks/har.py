@@ -34,6 +34,9 @@ def generate_har():
 
   return SimpleNamespace(log=SimpleNamespace(entries=har_entries))
 
+def empty_har():
+  return SimpleNamespace(log=SimpleNamespace(entries=[]))
+
 class HarReturner():
   def __init__(self, hars):
     self.hars = hars

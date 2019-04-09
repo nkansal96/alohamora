@@ -13,9 +13,10 @@ class TestCaptureHar():
     self.har_json = get_har_json()
     self.har = har_from_json(self.har_json)
 
+  @mock.patch('time.sleep')
   @mock.patch('subprocess.Popen')
   @mock.patch('subprocess.run')
-  def test_correct_proc_flags(self, mock_run, mock_popen):
+  def test_correct_proc_flags(self, mock_run, mock_popen, _):
     mock_run.return_value.stdout = self.har_json
     url = 'https://www.google.com'
     har = capture_har(url, self.config)
@@ -33,18 +34,20 @@ class TestCaptureHar():
     assert har_capturer_args[-1] == url
     assert any(str(REMOTE_DEBUGGING_PORT) == flag for flag in har_capturer_args)
 
+  @mock.patch('time.sleep')
   @mock.patch('subprocess.Popen')
   @mock.patch('subprocess.run')
-  def test_terminates_chrome_if_har_capturer_raises(self, mock_run, mock_popen):
+  def test_terminates_chrome_if_har_capturer_raises(self, mock_run, mock_popen, _):
     mock_run.return_value.check_returncode.side_effect = subprocess.CalledProcessError(returncode=1, cmd=[])
     with pytest.raises(subprocess.CalledProcessError):
       url = 'https://www.google.com'
       capture_har(url, self.config)
     mock_popen.return_value.terminate.assert_called_once()
 
+  @mock.patch('time.sleep')
   @mock.patch('subprocess.Popen')
   @mock.patch('subprocess.run')
-  def test_capture_har(self, mock_run, mock_popen):
+  def test_capture_har(self, mock_run, mock_popen, _):
     mock_run.return_value.stdout = self.har_json
     url = 'https://www.google.com'
     har = capture_har(url, self.config)
