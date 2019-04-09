@@ -19,12 +19,12 @@ class Logger():
     if level is None or level < self.min_level:
       return
 
-    level_str = '[{}]'.format(str(level))
+    level_str = '[' + level.color + str(level) + Style.RESET_ALL + ']'
     namespace_str = (Style.BRIGHT + ' {}:'.format(namespace or self.namespace) + Style.RESET_ALL) \
                     if namespace or self.namespace else ''
 
     ctx = {**self.context, **context}
-    ctx_fmt = level.color + '{}' + Fore.RESET + '={}'
+    ctx_fmt = level.context_key_color + '{}' + Style.RESET_ALL + '={}'
     ctx_str = ' '.join(ctx_fmt.format(*c) for c in ctx.items())
     if message:
       message = ' ' + message

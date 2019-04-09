@@ -1,7 +1,7 @@
 """ This module defines the log levels and corresponding utilities """
 import enum
 
-from colorama import Fore
+from colorama import Fore, Style
 
 @enum.unique
 class Level(enum.IntEnum):
@@ -19,3 +19,8 @@ class Level(enum.IntEnum):
   def color(self):
     """ Returns the corresponding text color for each log level """
     return [Fore.LIGHTWHITE_EX, Fore.LIGHTBLUE_EX, Fore.YELLOW, Fore.LIGHTRED_EX, Fore.RED][int(self.value)]
+
+  @property
+  def context_key_color(self):
+    """ Returns the corresponding context key text color for each log level """
+    return [Style.DIM + Fore.LIGHTWHITE_EX, Fore.LIGHTBLUE_EX, Fore.YELLOW, Fore.LIGHTRED_EX, Fore.RED][int(self.value)]
