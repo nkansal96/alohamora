@@ -1,7 +1,7 @@
 """ This module defines the main logger """
 import time
 
-from colorama import Fore, Style
+from colorama import Style
 
 from .level import Level
 
