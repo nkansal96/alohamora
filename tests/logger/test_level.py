@@ -18,3 +18,7 @@ class TestLevel():
   def test_has_distinct_color(self):
     colors = [l.color for l in list(Level)]
     assert len(colors) == len(set(colors))
+
+  def test_has_distinct_context_key_color(self):
+    colors = [l.context_key_color for l in list(Level)]
+    assert len(colors) == len(set(colors))

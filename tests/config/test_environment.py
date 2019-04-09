@@ -1,4 +1,6 @@
+import tempfile
 from blaze.config.environment import PushGroup, Resource, ResourceType, EnvironmentConfig
+from tests.mocks.config import get_env_config
 
 def create_resource(url):
   return Resource(
@@ -9,6 +11,7 @@ def create_resource(url):
     source_id=0,
     type=ResourceType.HTML,
   )
+
 class TestResourceType():
   def test_has_int_type(self):
     for val in list(ResourceType):
@@ -31,17 +34,31 @@ class TestResource():
 
 class TestPushGroup():
   def test_compiles(self):
-    r = PushGroup(
+    p = PushGroup(
       group_name='example.com',
       resources=[],
     )
-    assert isinstance(r, PushGroup)
+    assert isinstance(p, PushGroup)
 
 class TestEnvironmentConfig():
   def test_compiles(self):
-    r = EnvironmentConfig(
+    c = EnvironmentConfig(
       replay_dir='/replay/dir',
       request_url='http://example.com',
       push_groups=[],
     )
-    assert isinstance(r, EnvironmentConfig)
+    assert isinstance(c, EnvironmentConfig)
+
+  def test_pickle(self):
+    c = get_env_config()
+    with tempfile.NamedTemporaryFile() as tmp_file:
+      c.save_file(tmp_file.name)
+      loaded_c = EnvironmentConfig.load_file(tmp_file.name)
+      assert c.request_url == loaded_c.request_url
+      assert c.replay_dir == loaded_c.replay_dir
+      assert len(c.push_groups) == len(loaded_c.push_groups)
+      for i, group in enumerate(c.push_groups):
+        assert loaded_c.push_groups[i].group_name == group.group_name
+        assert len(loaded_c.push_groups[i].resources) == len(group.resources)
+        for j, res in enumerate(group.resources):
+          assert loaded_c.push_groups[i].resources[j] == res

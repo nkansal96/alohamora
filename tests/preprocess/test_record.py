@@ -5,19 +5,7 @@ from unittest import mock
 
 from blaze.preprocess.record import record_webpage, find_url_stable_set, get_page_links, STABLE_SET_NUM_RUNS
 from tests.mocks.config import get_config
-from tests.mocks.har import generate_har
-
-class HarReturner():
-  def __init__(self, hars):
-    self.hars = hars
-    self.i = 0
-
-  def __call__(self, url, config):
-    if self.i >= len(self.hars):
-      raise IndexError('capture_har called too many times!')
-    har = self.hars[self.i]
-    self.i += 1
-    return har
+from tests.mocks.har import generate_har, HarReturner
 
 def exists_before(seq, a, b):
   a_i = seq.index(a)

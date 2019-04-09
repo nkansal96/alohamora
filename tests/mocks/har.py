@@ -33,3 +33,15 @@ def generate_har():
     entry.startedDateTime = last_date
 
   return SimpleNamespace(log=SimpleNamespace(entries=har_entries))
+
+class HarReturner():
+  def __init__(self, hars):
+    self.hars = hars
+    self.i = 0
+
+  def __call__(self, url, config):
+    if self.i >= len(self.hars):
+      raise IndexError('capture_har called too many times!')
+    har = self.hars[self.i]
+    self.i += 1
+    return har

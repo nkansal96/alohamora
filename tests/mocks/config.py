@@ -1,22 +1,11 @@
-import os
-import platform
-import subprocess
 from typing import List
 
 from blaze.action import ActionSpace, Policy
-from blaze.config import Config
 from blaze.config.client import get_random_client_environment
+from blaze.config.config import Config, get_config as _get_config
 from blaze.config.environment import PushGroup, Resource, ResourceType, EnvironmentConfig
 from blaze.config.train import TrainConfig
 from blaze.mahimahi.mahimahi import MahiMahiConfig
-
-def run_cmd(cmd: List[str]) -> str:
-  try:
-    proc = subprocess.run(cmd, stdout=subprocess.PIPE)
-    proc.check_returncode()
-    return str(proc.stdout).strip()
-  except subprocess.CalledProcessError:
-    return ""
 
 def get_push_groups() -> List[PushGroup]:
   return [
@@ -53,15 +42,7 @@ def get_train_config() -> TrainConfig:
   )
 
 def get_config() -> Config:
-  system = platform.system()
-  return Config(
-    mahimahi_cert_dir=os.path.join(os.path.dirname(__file__), '../../mahimahi/src/frontend/certs'),
-    chrome_har_capturer_bin=os.path.join(os.path.dirname(__file__), '../../third_party/node/node_modules/.bin/chrome-har-capturer'),
-    pwmetrics_bin=os.path.join(os.path.dirname(__file__), '../../third_party/node/node_modules/.bin/pwmetrics'),
-    nghttpx_bin=run_cmd(['which', 'nghttpx']),
-    chrome_bin='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' if system == 'Darwin' else run_cmd(['which', 'google-chrome']),
-    train_config=get_env_config()
-  )
+  return Config(**{**_get_config()._asdict(), 'train_config': get_env_config()})
 
 def get_mahimahi_config() -> MahiMahiConfig:
   return MahiMahiConfig(
