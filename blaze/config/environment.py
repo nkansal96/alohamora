@@ -1,7 +1,8 @@
 """ Describes types used to configure the training environment """
 
-from typing import List, NamedTuple
 import enum
+import pickle
+from typing import List, NamedTuple
 
 class ResourceType(enum.IntEnum):
   """ ResourceType defines the type of a particular resource """
@@ -41,3 +42,12 @@ class EnvironmentConfig(NamedTuple):
   replay_dir: str
   request_url: str
   push_groups: List[PushGroup]
+
+  def save_file(self, file_name):
+    """ Serialize the EnvironmentConfig to the given file path """
+    pickle.dump(self, open(file_name, 'wb'))
+
+  @staticmethod
+  def load_file(file_name) -> 'EnvironmentConfig':
+    """ Load an EnvironmentConfig from the given file path """
+    return pickle.load(open(file_name, 'rb'))
