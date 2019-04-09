@@ -10,6 +10,6 @@ def run(cmd: List[str]) -> str:
   try:
     proc = subprocess.run(cmd, stdout=subprocess.PIPE)
     proc.check_returncode()
-    return str(proc.stdout).strip()
+    return proc.stdout.decode('utf-8').strip()
   except subprocess.CalledProcessError:
     return ""
