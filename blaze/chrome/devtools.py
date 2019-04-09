@@ -1,6 +1,7 @@
 """ This module implements methods interacting with Chrome DevTools """
 import subprocess
 import tempfile
+import time
 
 from blaze.config import Config
 from blaze.logger import logger
@@ -34,6 +35,9 @@ def capture_har(url: str, config: Config) -> Har:
       '-i',
       url
     ]
+
+    # wait 1 second for the Chrome process to start up
+    time.sleep(1)
 
     # spawn the HAR capturer process
     try:

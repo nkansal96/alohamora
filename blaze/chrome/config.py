@@ -14,7 +14,7 @@ def get_chrome_flags(user_data_dir: str, extra_flags: Optional[List[str]] = None
     '--disable-background-networking',
     '--disable-default-apps',
     # '--disable-gpu',
-    # '--disable-logging',
+    '--disable-logging',
     # '--disable-renderer-backgrounding',
     # '--disable-threaded-animation',
     # '--disable-threaded-compositing',
