@@ -1,6 +1,4 @@
 """ This module defines the model for training and instantiating APEX agents """
-import ray
-import ray.tune as tune
 
 from blaze.config.environment import EnvironmentConfig
 from blaze.config.train import TrainConfig
@@ -8,6 +6,9 @@ from blaze.environment import Environment
 
 def train(train_config: TrainConfig, env_config: EnvironmentConfig):
   """ Trains an APEX agent with the given training and environment configuration """
+  # lazy load modules so that they aren't imported if they're not necessary
+  import ray
+  import ray.tune as tune
   ray.init(num_cpus=train_config.num_cpus)
   name = train_config.experiment_name
   total_urls = sum(len(group.resources) for group in env_config.push_groups)
