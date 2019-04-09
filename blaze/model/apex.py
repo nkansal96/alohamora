@@ -1,17 +1,17 @@
 """ This module defines the model for training and instantiating APEX agents """
 
-from blaze.config.environment import EnvironmentConfig
+from blaze.config.config import Config
 from blaze.config.train import TrainConfig
 from blaze.environment import Environment
 
-def train(train_config: TrainConfig, env_config: EnvironmentConfig):
+def train(train_config: TrainConfig, config: Config):
   """ Trains an APEX agent with the given training and environment configuration """
   # lazy load modules so that they aren't imported if they're not necessary
   import ray
   import ray.tune as tune
   ray.init(num_cpus=train_config.num_cpus)
   name = train_config.experiment_name
-  total_urls = sum(len(group.resources) for group in env_config.push_groups)
+  total_urls = sum(len(group.resources) for group in config.train_config.push_groups)
   tune.run_experiments({
     name : {
       "run": "APEX",
@@ -31,7 +31,7 @@ def train(train_config: TrainConfig, env_config: EnvironmentConfig):
         "collect_metrics_timeout": 1200,
         "num_workers": train_config.num_cpus//2,
         "num_gpus": 0,
-        "env_config": env_config,
+        "env_config": config,
       },
     },
   }, resume='prompt')
