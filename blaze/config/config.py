@@ -25,7 +25,10 @@ class Config(NamedTuple):
   chrome_bin: str
   train_config: Optional[EnvironmentConfig] = None
 
-def get_config() -> Config:
+  def items(self):
+    return self._asdict().items()
+
+def get_config(train_config: Optional[EnvironmentConfig] = None) -> Config:
   """
   get_config returns the runtime configuration, taking values from environment variables
   when available to override the defaults
@@ -36,4 +39,5 @@ def get_config() -> Config:
     pwmetrics_bin=os.environ.get('PWMETRICS_BIN', DEFAULT_PWMETRICS_BIN),
     nghttpx_bin=os.environ.get('NGHTTPX_BIN', DEFAULT_NGHTTPX_BIN),
     chrome_bin=os.environ.get('CHROME_BIN', DEFAULT_CHROME_BIN),
+    train_config=train_config,
   )
