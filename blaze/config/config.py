@@ -26,7 +26,8 @@ class Config(NamedTuple):
   train_config: Optional[EnvironmentConfig] = None
 
   def items(self):
-    return self._asdict().items()
+    """ Return the dictionary items() method for this object """
+    return self._asdict().items() # pylint: disable=no-member
 
 def get_config(train_config: Optional[EnvironmentConfig] = None) -> Config:
   """
