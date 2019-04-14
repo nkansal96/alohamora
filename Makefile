@@ -1,5 +1,5 @@
 setup:
-	./setup.sh
+	./scripts/setup.sh
 
 clean:
 	find blaze tests -name "*.pyo" -exec rm -rf "{}" \+
