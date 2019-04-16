@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+enum NetworkType {
+  WIRED = 0;
+  WIFI = 1;
+  LTE = 2;
+  UMTS = 3;
+}
+
+enum DeviceSpeed {
+  DESKTOP	= 0;
+  FAST_MOBILE = 1;
+  SLOW_MOBILE = 2;
+}
+
+enum ResouceType {
+  NONE = 0;
+  HTML = 1;
+  SCRIPT = 2;
+  CSS = 3;
+  IMAGE = 4;
+  FONT = 5;
+  OTHER = 6;
+}
+
+message Resource {
+  string url = 1;
+  int32 size = 2;
+  ResouceType type = 3;
+  int32 timestamp = 4;
+}
+
+message Page {
+  string url = 1;
+  NetworkType network_type = 2;
+  DeviceSpeed device_speed = 3;
+  repeated Resource resources = 4;
+}
+
+message PolicyEntry {
+  string source_url = 1;
+  repeated string push_urls = 2;
+}
+
+message Policy {
+  repeated PolicyEntry policy = 1;
+}
+
+service PolicyService {
+  rpc GetPolicy(Page) returns (Policy);
+}

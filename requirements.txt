@@ -15,6 +15,7 @@ funcsigs==1.0.2
 future==0.17.1
 gast==0.2.2
 grpcio==1.19.0
+grpcio-tools==1.19.0
 gym==0.12.1
 h5py==2.9.0
 idna==2.8
