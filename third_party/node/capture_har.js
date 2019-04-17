@@ -16,7 +16,9 @@ const captureRequests = async options => {
 
     // setup domain handlers
     client.Network.requestWillBeSent(params => {
-      console.error(`[${(new Date()).toISOString()}][sent] ${params.request.method} ${params.request.url}`)
+      if (options.verbose) {
+        console.error(`[${(new Date()).toISOString()}] [sent] ${params.request.method} ${params.request.url}`)
+      }
       resources[params.requestId] = {
         startedDateTime: (new Date()).toISOString(),
         request: {
@@ -27,12 +29,18 @@ const captureRequests = async options => {
     });
 
     client.Network.responseReceived(params => {
-      console.error(`[${(new Date()).toISOString()}][recv] ${params.response.url}: headersSize=${JSON.stringify(params.response.headers).length}, bodySize=${params.response.encodedDataLength}`)
+      const headersSize = JSON.stringify(params.response.headers).length - 2;
+      const bodySize = params.response.encodedDataLength;
+      if (options.verbose) {
+        const now = now;
+        const url = params.response.url;
+        console.error(`[${now}][recv] ${url}: headersSize=${headersSize}, bodySize=${bodySize}`)
+      }
       resources[params.requestId].response = {
         status: params.response.status,
         statusText: params.response.statusText,
-        headersSize: (params.response.headersText || "").length,
-        bodySize: params.response.encodedDataLength,
+        headersSize: headersSize,
+        bodySize: bodySize,
         content: {
           mimeType: params.response.mimeType,
         },
@@ -53,8 +61,6 @@ const captureRequests = async options => {
           .sort((a, b) => a.startedDateTime < b.startedDateTime ? -1 : 1),
       },
     };
-  } catch (err) {
-    console.error(err);
   } finally {
     if (client) {
       await client.close();
@@ -63,12 +69,22 @@ const captureRequests = async options => {
 };
 
 const argumentsDefinition = [
+  { name: 'verbose', alias: 'v', defaultValue: false, type: Boolean },
   { name: 'host', alias: 'h', defaultValue: 'localhost' },
   { name: 'port', alias: 'p', defaultValue: 9222, type: Number },
   { name: 'url', defaultOption: true },
 ]
 
-const main = async (options = commandLineArgs(argumentsDefinition)) =>
-  console.log(JSON.stringify(await captureRequests(options)));
+const main = async (options = commandLineArgs(argumentsDefinition)) => {
+  process.stderr.write(`Loading: ${options.url}... `);
+  try {
+    const result = JSON.stringify(await captureRequests(options));
+    console.error('✔');
+    console.log(result);
+  } catch (e) {
+    console.error('✗');
+    console.error(e);
+  }
+}
 
 main();
