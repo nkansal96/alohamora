@@ -9,7 +9,8 @@
   "author": "Nikhil Kansal",
   "license": "MIT",
   "dependencies": {
-    "chrome-har-capturer": "^0.13.4",
+    "chrome-remote-interface": "^0.27.1",
+    "command-line-args": "^5.1.1",
     "pwmetrics": "^4.2.1"
   }
 }
