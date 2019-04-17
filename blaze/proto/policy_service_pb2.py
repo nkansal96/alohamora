@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x14policy_service.proto\"A\n\x08Resource\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x0c\n\x04size\x18\x02 \x01(\x05\x12\x1a\n\x04type\x18\x03 \x01(\x0e\x32\x0c.ResouceType\"y\n\x04Page\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\"\n\x0cnetwork_type\x18\x02 \x01(\x0e\x32\x0c.NetworkType\x12\"\n\x0c\x64\x65vice_speed\x18\x03 \x01(\x0e\x32\x0c.DeviceSpeed\x12\x1c\n\tresources\x18\x04 \x03(\x0b\x32\t.Resource\"4\n\x0bPolicyEntry\x12\x12\n\nsource_url\x18\x01 \x01(\t\x12\x11\n\tpush_urls\x18\x02 \x03(\t\"&\n\x06Policy\x12\x1c\n\x06policy\x18\x01 \x03(\x0b\x32\x0c.PolicyEntry*5\n\x0bNetworkType\x12\t\n\x05WIRED\x10\x00\x12\x08\n\x04WIFI\x10\x01\x12\x07\n\x03LTE\x10\x02\x12\x08\n\x04UMTS\x10\x03*<\n\x0b\x44\x65viceSpeed\x12\x0b\n\x07\x44\x45SKTOP\x10\x00\x12\x0f\n\x0b\x46\x41ST_MOBILE\x10\x01\x12\x0f\n\x0bSLOW_MOBILE\x10\x02*V\n\x0bResouceType\x12\x08\n\x04NONE\x10\x00\x12\x08\n\x04HTML\x10\x01\x12\n\n\x06SCRIPT\x10\x02\x12\x07\n\x03\x43SS\x10\x03\x12\t\n\x05IMAGE\x10\x04\x12\x08\n\x04\x46ONT\x10\x05\x12\t\n\x05OTHER\x10\x06\x32,\n\rPolicyService\x12\x1b\n\tGetPolicy\x12\x05.Page\x1a\x07.Policyb\x06proto3')
+  serialized_pb=_b('\n\x14policy_service.proto\"U\n\x08Resource\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x0c\n\x04size\x18\x02 \x01(\x05\x12\x1b\n\x04type\x18\x03 \x01(\x0e\x32\r.ResourceType\x12\x11\n\ttimestamp\x18\x04 \x01(\x05\"y\n\x04Page\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\"\n\x0cnetwork_type\x18\x02 \x01(\x0e\x32\x0c.NetworkType\x12\"\n\x0c\x64\x65vice_speed\x18\x03 \x01(\x0e\x32\x0c.DeviceSpeed\x12\x1c\n\tresources\x18\x04 \x03(\x0b\x32\t.Resource\"4\n\x0bPolicyEntry\x12\x12\n\nsource_url\x18\x01 \x01(\t\x12\x11\n\tpush_urls\x18\x02 \x03(\t\"&\n\x06Policy\x12\x1c\n\x06policy\x18\x01 \x03(\x0b\x32\x0c.PolicyEntry*5\n\x0bNetworkType\x12\t\n\x05WIRED\x10\x00\x12\x08\n\x04WIFI\x10\x01\x12\x07\n\x03LTE\x10\x02\x12\x08\n\x04UMTS\x10\x03*<\n\x0b\x44\x65viceSpeed\x12\x0b\n\x07\x44\x45SKTOP\x10\x00\x12\x0f\n\x0b\x46\x41ST_MOBILE\x10\x01\x12\x0f\n\x0bSLOW_MOBILE\x10\x02*W\n\x0cResourceType\x12\x08\n\x04NONE\x10\x00\x12\x08\n\x04HTML\x10\x01\x12\n\n\x06SCRIPT\x10\x02\x12\x07\n\x03\x43SS\x10\x03\x12\t\n\x05IMAGE\x10\x04\x12\x08\n\x04\x46ONT\x10\x05\x12\t\n\x05OTHER\x10\x06\x32,\n\rPolicyService\x12\x1b\n\tGetPolicy\x12\x05.Page\x1a\x07.Policyb\x06proto3')
 )
 
 _NETWORKTYPE = _descriptor.EnumDescriptor(
@@ -48,8 +48,8 @@ _NETWORKTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=308,
-  serialized_end=361,
+  serialized_start=328,
+  serialized_end=381,
 )
 _sym_db.RegisterEnumDescriptor(_NETWORKTYPE)
 
@@ -75,15 +75,15 @@ _DEVICESPEED = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=363,
-  serialized_end=423,
+  serialized_start=383,
+  serialized_end=443,
 )
 _sym_db.RegisterEnumDescriptor(_DEVICESPEED)
 
 DeviceSpeed = enum_type_wrapper.EnumTypeWrapper(_DEVICESPEED)
-_RESOUCETYPE = _descriptor.EnumDescriptor(
-  name='ResouceType',
-  full_name='ResouceType',
+_RESOURCETYPE = _descriptor.EnumDescriptor(
+  name='ResourceType',
+  full_name='ResourceType',
   filename=None,
   file=DESCRIPTOR,
   values=[
@@ -118,12 +118,12 @@ _RESOUCETYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=425,
-  serialized_end=511,
+  serialized_start=445,
+  serialized_end=532,
 )
-_sym_db.RegisterEnumDescriptor(_RESOUCETYPE)
+_sym_db.RegisterEnumDescriptor(_RESOURCETYPE)
 
-ResouceType = enum_type_wrapper.EnumTypeWrapper(_RESOUCETYPE)
+ResourceType = enum_type_wrapper.EnumTypeWrapper(_RESOURCETYPE)
 WIRED = 0
 WIFI = 1
 LTE = 2
@@ -169,6 +169,13 @@ _RESOURCE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='timestamp', full_name='Resource.timestamp', index=3,
+      number=4, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -182,7 +189,7 @@ _RESOURCE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=24,
-  serialized_end=89,
+  serialized_end=109,
 )
 
 
@@ -233,8 +240,8 @@ _PAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=91,
-  serialized_end=212,
+  serialized_start=111,
+  serialized_end=232,
 )
 
 
@@ -271,8 +278,8 @@ _POLICYENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=214,
-  serialized_end=266,
+  serialized_start=234,
+  serialized_end=286,
 )
 
 
@@ -302,11 +309,11 @@ _POLICY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=268,
-  serialized_end=306,
+  serialized_start=288,
+  serialized_end=326,
 )
 
-_RESOURCE.fields_by_name['type'].enum_type = _RESOUCETYPE
+_RESOURCE.fields_by_name['type'].enum_type = _RESOURCETYPE
 _PAGE.fields_by_name['network_type'].enum_type = _NETWORKTYPE
 _PAGE.fields_by_name['device_speed'].enum_type = _DEVICESPEED
 _PAGE.fields_by_name['resources'].message_type = _RESOURCE
@@ -317,7 +324,7 @@ DESCRIPTOR.message_types_by_name['PolicyEntry'] = _POLICYENTRY
 DESCRIPTOR.message_types_by_name['Policy'] = _POLICY
 DESCRIPTOR.enum_types_by_name['NetworkType'] = _NETWORKTYPE
 DESCRIPTOR.enum_types_by_name['DeviceSpeed'] = _DEVICESPEED
-DESCRIPTOR.enum_types_by_name['ResouceType'] = _RESOUCETYPE
+DESCRIPTOR.enum_types_by_name['ResourceType'] = _RESOURCETYPE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Resource = _reflection.GeneratedProtocolMessageType('Resource', (_message.Message,), dict(
@@ -356,8 +363,8 @@ _POLICYSERVICE = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=513,
-  serialized_end=557,
+  serialized_start=534,
+  serialized_end=578,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetPolicy',

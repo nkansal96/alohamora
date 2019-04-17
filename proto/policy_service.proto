@@ -13,7 +13,7 @@ enum DeviceSpeed {
   SLOW_MOBILE = 2;
 }
 
-enum ResouceType {
+enum ResourceType {
   NONE = 0;
   HTML = 1;
   SCRIPT = 2;
@@ -26,7 +26,7 @@ enum ResouceType {
 message Resource {
   string url = 1;
   int32 size = 2;
-  ResouceType type = 3;
+  ResourceType type = 3;
   int32 timestamp = 4;
 }
 
