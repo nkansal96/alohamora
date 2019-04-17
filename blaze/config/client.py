@@ -25,11 +25,11 @@ class DeviceSpeed(enum.IntEnum):
 class ClientEnvironment(NamedTuple):
   """ ClientEnvironment consists of a network type, bandwidth, and latency, and device speed """
   network_type: NetworkType
-  network_speed: NetworkSpeed
   device_speed: DeviceSpeed
-  bandwidth: int
-  latency: int
-  cpu_slowdown: int
+  network_speed: NetworkSpeed
+  bandwidth: int = 0
+  latency: int = 0
+  cpu_slowdown: int = 0
 
 def network_to_bandwidth_range(network_type: NetworkType, network_speed: NetworkSpeed) -> Tuple[int, int]:
   """ Returns the (low, high) bandwidth range in kbps for the given network type """
