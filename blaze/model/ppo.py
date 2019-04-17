@@ -36,5 +36,6 @@ def train(train_config: TrainConfig, config: Config):
   }, resume='prompt')
 
 def get_model(location: str):
+  """ Returns a SavedModel for instantiation given a model checkpoint directory """
   from ray.rllib.agents.ppo import PPOAgent
   return SavedModel(PPOAgent, Environment, location)
