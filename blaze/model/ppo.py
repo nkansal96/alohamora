@@ -4,14 +4,16 @@ from blaze.config.config import Config
 from blaze.config.train import TrainConfig
 from blaze.environment import Environment
 
+from .model import SavedModel
+
 def train(train_config: TrainConfig, config: Config):
   """ Trains an PPO agent with the given training and environment configuration """
   # lazy load modules so that they aren't imported if they're not necessary
   import ray
-  import ray.tune as tune
   ray.init(num_cpus=train_config.num_cpus)
+
   name = train_config.experiment_name
-  tune.run_experiments({
+  ray.tune.run_experiments({
     name : {
       "run": "PPO",
       "env": Environment,
@@ -32,3 +34,7 @@ def train(train_config: TrainConfig, config: Config):
       },
     },
   }, resume='prompt')
+
+def get_model(location: str):
+  from ray.rllib.agents.ppo import PPOAgent
+  return SavedModel(PPOAgent, Environment, location)

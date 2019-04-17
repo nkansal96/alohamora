@@ -4,15 +4,17 @@ from blaze.config.config import Config
 from blaze.config.train import TrainConfig
 from blaze.environment import Environment
 
+from .model import SavedModel
+
 def train(train_config: TrainConfig, config: Config):
   """ Trains an APEX agent with the given training and environment configuration """
   # lazy load modules so that they aren't imported if they're not necessary
   import ray
-  import ray.tune as tune
   ray.init(num_cpus=train_config.num_cpus)
+
   name = train_config.experiment_name
   total_urls = sum(len(group.resources) for group in config.train_config.push_groups)
-  tune.run_experiments({
+  ray.tune.run_experiments({
     name : {
       "run": "APEX",
       "env": Environment,
@@ -35,3 +37,7 @@ def train(train_config: TrainConfig, config: Config):
       },
     },
   }, resume='prompt')
+
+def get_model(location: str):
+  from ray.rllib.agents.dqn import ApexAgent
+  return SavedModel(ApexAgent, Environment, location)

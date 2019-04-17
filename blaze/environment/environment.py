@@ -52,12 +52,11 @@ class Environment(gym.Env):
       device_speed=self.client_environment.device_speed,
     )
 
-    return get_observation(self.client_environment, self.train_config.push_groups, self.policy)
+    return self.observation
 
   def step(self, action):
     decoded_action = self.action_space.decode_action_id(action)
     action_applied = self.policy.apply_action(action)
-    observation = get_observation(self.client_environment, self.train_config.push_groups, self.policy)
 
     reward = NOOP_ACTION_REWARD
     if action_applied:
@@ -70,7 +69,12 @@ class Environment(gym.Env):
       reward=reward,
     )
 
-    return observation, reward, self.policy.completed, {'action': decoded_action}
+    return self.observation, reward, self.policy.completed, {'action': decoded_action}
 
   def render(self, mode='human'):
     return super(Environment, self).render(mode=mode)
+
+  @property
+  def observation(self):
+    """ Returns an observation for the current state of the environment """
+    return get_observation(self.client_environment, self.train_config.push_groups, self.policy)
