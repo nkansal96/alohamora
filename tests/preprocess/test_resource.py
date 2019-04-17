@@ -1,4 +1,5 @@
-from blaze.preprocess.resource import resource_list_to_push_groups
+from blaze.preprocess.resource import convert_policy_resource_to_environment_resource, resource_list_to_push_groups
+from blaze.proto import policy_service_pb2
 from tests.mocks.config import get_push_groups
 
 class TestResourceListToPushGroups():
@@ -17,3 +18,17 @@ class TestResourceListToPushGroups():
         assert res.type == actual.type
         assert res.source_id == actual.source_id
         assert res.group_id == g
+
+class TestConvertPolicyResourceToEnvironmentResource():
+  def test_convert_policy_resource_to_environment_resource(self):
+    policy_resource = policy_service_pb2.Resource(
+      url="http://example.com",
+      size=1024,
+      type=policy_service_pb2.IMAGE,
+      timestamp=1501981821,
+    )
+    env_resource = convert_policy_resource_to_environment_resource(policy_resource)
+    assert env_resource.url == policy_resource.url
+    assert env_resource.size == policy_resource.size
+    assert env_resource.type == policy_resource.type
+    assert env_resource.order == 0

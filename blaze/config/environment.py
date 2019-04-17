@@ -18,10 +18,10 @@ class Resource(NamedTuple):
   """ Resource defines a particular resource in a page """
   url: str
   size: int
-  order: int
-  group_id: int
-  source_id: int
   type: ResourceType
+  order: int = 0
+  group_id: int = 0
+  source_id: int = 0
 
   def __eq__(self, other):
     return self.url == other.url
