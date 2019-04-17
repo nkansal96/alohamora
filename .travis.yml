@@ -1,17 +1,11 @@
 dist: xenial
-language: generic
+language: python
 python:
   - 3.6
   - 3.7
-node_js:
-  - 8
-  - 10
-cache:
-  - pip
-  - npm
+cache: pip
 install:
   - pip install -r requirements.txt
-  - cd third_party/node && npm install
 script:
   - make lint
-  - make test
+  - make test-ci

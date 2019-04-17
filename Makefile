@@ -24,4 +24,7 @@ test:
 	pytest --cov=blaze -p no:warnings tests
 	coverage html
 
-.PHONY: setup proto clean lint test
+test-ci:
+	CI=true pytest --cov=blaze -p no:warnings tests
+
+.PHONY: setup proto clean lint test test-ci
