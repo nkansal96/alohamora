@@ -4,7 +4,7 @@ import itertools
 
 from blaze.action import Action, ActionSpace
 
-from tests.mocks.config import get_push_groups
+from tests.mocks.config import get_push_groups, convert_push_groups_to_push_pairs
 
 class TestAction():
   def setup(self):
@@ -45,16 +45,19 @@ class TestActionSpace():
 
   def test_init_push_resources(self):
     # pushable resources are all resources except the first in each group
-    assert len(self.action_space.push_resources) == 3
-    assert self.action_space.push_resources[0].order == 2
-    assert self.action_space.push_resources[1].order == 3
-    assert self.action_space.push_resources[2].order == 4
+    push_pairs = convert_push_groups_to_push_pairs(self.push_groups)
+    pushable_resources = set(v.url for (k, v) in push_pairs)
+    assert len(self.action_space.push_resources) == len(pushable_resources)
+    for (i, res) in enumerate(self.action_space.push_resources):
+      # skipping the zeroth one (noop) and first one (can't push the first resource)
+      assert res.order == i + 2
 
   def test_init_actions(self):
-    # 3 for the first group, 1 for the second, and 1 no-op
-    assert len(self.action_space.actions) == 5
+    push_pairs = convert_push_groups_to_push_pairs(self.push_groups)
+    # total pairs of resources and 1 no-op
+    assert len(self.action_space.actions) == len(push_pairs) + 1
     # ensure all actions are unique
-    assert len(set((action.g, action.s, action.p) for action in self.action_space.actions)) == 5
+    assert len(set((action.g, action.s, action.p) for action in self.action_space.actions)) == len(push_pairs) + 1
     # ensure all push urls are after the source urls
     assert all(action.p > action.s for action in self.action_space.actions if not action.is_noop)
 
@@ -120,4 +123,3 @@ class TestActionSpace():
       assert self.action_space.contains(action_id)
     assert not self.action_space.contains(-1)
     assert not self.action_space.contains(len(self.action_space.actions))
-
