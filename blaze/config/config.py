@@ -11,7 +11,7 @@ ABSPATH = lambda path: os.path.abspath(os.path.join(os.path.dirname(__file__), p
 
 # pylint: disable=line-too-long
 DEFAULT_MAHIMAHI_CERT_DIR = ABSPATH('../../mahimahi/src/frontend/certs')
-DEFAULT_CHROME_HAR_CAPTURER_BIN = ABSPATH('../../third_party/node/node_modules/.bin/chrome-har-capturer')
+DEFAULT_CHROME_HAR_CAPTURER_BIN = ABSPATH('../../third_party/node/capture_har.js')
 DEFAULT_PWMETRICS_BIN = ABSPATH('../../third_party/node/node_modules/.bin/pwmetrics')
 DEFAULT_NGHTTPX_BIN = run(['which', 'nghttpx'])
 DEFAULT_CHROME_BIN = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' if platform.system() == 'Darwin' else run(['which', 'google-chrome'])

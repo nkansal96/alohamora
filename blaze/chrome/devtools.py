@@ -32,8 +32,7 @@ def capture_har(url: str, config: Config) -> Har:
       config.chrome_har_capturer_bin,
       '-h', 'localhost',
       '-p', str(REMOTE_DEBUGGING_PORT),
-      '-i',
-      url
+      '--url', url
     ]
 
     # wait 1 second for the Chrome process to start up
