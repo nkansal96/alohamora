@@ -65,7 +65,8 @@ class TestEnvironment():
       assert reward == NOOP_ACTION_REWARD
       assert info['action'] == noop_action
       assert self.environment.policy.actions_taken == 1
-      assert all(res['push_from'] == 0 for group in obs['push_groups'].values() for res in group.values())
+      # res[3] refers to the third item in the resource_space for res
+      assert all(res[3] == 0 for res in obs['resources'].values())
     finally:
       self.environment.reset()
 
@@ -84,7 +85,7 @@ class TestEnvironment():
       assert info['action'] == action
       assert self.environment.policy.actions_taken == 1
       assert self.environment.policy.resource_pushed_from(action.push) == action.source
-      assert obs['push_groups'][str(action.g)][str(action.p)]['push_from'] == action.s
+      assert obs['resources'][str(action.push.order)][3] == action.source.order
     finally:
       self.environment.reset()
 
