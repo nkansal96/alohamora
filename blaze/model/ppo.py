@@ -33,7 +33,7 @@ def train(train_config: TrainConfig, config: Config):
         "env_config": config,
       },
     },
-  }, resume='prompt')
+  }, resume='prompt', reuse_actors=True)
 
 def get_model(location: str):
   """ Returns a SavedModel for instantiation given a model checkpoint directory """
