@@ -54,9 +54,11 @@ class TestEnvironment():
     assert self.environment.policy.actions_taken == 1
 
     # check that resetting the environment works
-    self.environment.reset()
+    obs = self.environment.reset()
     assert len(self.environment.action_space) == num_push_resources
     assert self.environment.policy.actions_taken == 0
+    assert obs and isinstance(obs, dict)
+    assert self.environment.observation_space.contains(obs)
 
   def test_step_noop_action(self):
     try:
@@ -88,6 +90,17 @@ class TestEnvironment():
       assert obs['resources'][str(action.push.order)][3] == action.source.order
     finally:
       self.environment.reset()
+
+  def test_observation(self):
+    obs = self.environment.observation
+    assert obs and isinstance(obs, dict)
+    assert self.environment.observation_space.contains(obs)
+
+  def test_obseration_when_environment_is_created_with_dict(self):
+    env = Environment(get_config()._asdict())
+    obs = env.observation
+    assert obs and isinstance(obs, dict)
+    assert self.environment.observation_space.contains(obs)
 
   def test_render(self):
     with pytest.raises(NotImplementedError):
