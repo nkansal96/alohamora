@@ -53,7 +53,10 @@ def get_observation(client_environment: ClientEnvironment, push_groups: List[Pus
 
   for group in push_groups:
     for res in group.resources:
-      encoded_resources[str(res.order)] = np.array([1, res.type.value, res.size//1000, 0])
+      # for some reason, sometimes res.type is in int instead of a ResourceType
+      res_type = res.type.value if isinstance(res.type, ResourceType) else res.type
+      res_size_kb = res.size//1000
+      encoded_resources[str(res.order)] = np.array([1, res_type, res_size_kb, 0])
 
   for (source, push) in policy:
     for push_res in push:
