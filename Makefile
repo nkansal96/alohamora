@@ -21,10 +21,10 @@ lint:
 	pylint blaze
 
 test:
-	pytest --cov=blaze -p no:warnings tests
+	pytest --cov=blaze -p no:warnings
 	coverage html
 
 test-ci:
-	CI=true pytest --cov=blaze -p no:warnings tests
+	CI=true pytest --cov=blaze -p no:warnings
 
 .PHONY: setup proto clean lint test test-ci
