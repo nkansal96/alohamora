@@ -10,7 +10,7 @@ import numpy as np
 from blaze.config.environment import PushGroup, Resource
 from .action import Action
 
-class ActionSpace(gym.Space):
+class ActionSpace(gym.spaces.Discrete):
   """
   ActionSpace defines the valid set of possible actions and faciliates the
   selection and management of actions as the agent explores. As actions are
@@ -22,7 +22,6 @@ class ActionSpace(gym.Space):
   resources
   """
   def __init__(self, push_groups: List[PushGroup]):
-    super(ActionSpace, self).__init__((), np.int64)
     self.rand = np.random.RandomState()
     self.push_groups = push_groups
     self.push_resources: List[Resource] = []
@@ -36,6 +35,7 @@ class ActionSpace(gym.Space):
           self.action_id_map[(g, s, p)] = len(self.actions)
           self.actions.append(Action(len(self.actions), g, s, p, push_groups))
     self.push_resources.sort(key=lambda r: r.order)
+    super(ActionSpace, self).__init__(len(self.actions))
 
   def seed(self, seed):
     self.rand.seed(seed)
