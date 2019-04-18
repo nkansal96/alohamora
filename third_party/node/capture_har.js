@@ -37,7 +37,7 @@ const captureRequests = async options => {
       const headersSize = JSON.stringify(params.response.headers).length - 2;
       const bodySize = params.response.encodedDataLength;
       if (options.verbose) {
-        const now = now;
+        const now = (new Date()).toISOString();
         const url = params.response.url;
         console.error(`[${now}][recv] ${url}: headersSize=${headersSize}, bodySize=${bodySize}`);
       }
@@ -55,7 +55,7 @@ const captureRequests = async options => {
     client.Network.dataReceived(params => {
       resources[params.requestId].response.bodySize += params.dataLength;
       if (options.verbose) {
-        const now = now;
+        const now = (new Date()).toISOString();
         const url = params.response.url;
         const total = resources[params.requestId].response.bodySize;
         console.error(`[${now}][data] ${url}: chunk=${params.dataLength}, total=${total}`);
