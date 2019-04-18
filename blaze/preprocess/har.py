@@ -27,8 +27,13 @@ def get_har_entry_type(entry) -> ResourceType:
 
 def har_entries_to_resources(har_entries) -> List[Resource]:
   """ Converts a list of HAR entries to a list of Resources """
+  # filter only entries that are requests for http(s) resources
+  har_entries = [entry for entry in har_entries if entry.request.url.startswith("http")]
+  # filter only entries for requests that completed
+  har_entries = [entry for entry in har_entries if entry.response.status != 0]
   # sort the requests by initiated time
   har_entries = sorted(har_entries, key=lambda e: e.startedDateTime)
+  # select unique entries in case the same URL shows up twice
   har_entries = ordered_uniq(har_entries, key=lambda e: e.request.url)
 
   resource_list = []

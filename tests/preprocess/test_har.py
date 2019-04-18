@@ -1,3 +1,5 @@
+import copy
+import random
 from types import SimpleNamespace
 from unittest import mock
 
@@ -40,3 +42,29 @@ class TestHarEntriesToResources():
     sorted_har_entries = ordered_uniq(sorted_har_entries, key=lambda e: e.request.url)
     for har_entry, resource in zip(sorted_har_entries, resources):
       assert har_entry.request.url == resource.url
+
+  def test_har_entries_to_resources_ignores_non_http_and_non_complete(self):
+    entries = []
+    entry_urls = set()
+    invalid_entries = set()
+    for entry in self.har.log.entries:
+      if random.random() < 0.1:
+        entry_copy = copy.deepcopy(entry)
+        if random.random() < 0.5:
+          entry_copy.request.url = "data:image/png;base64,asdflhqp49tqo3hifehqp" + str(random.random())[2:] + "=="
+        else:
+          entry_copy.response.status = 0
+        entries.append(entry_copy)
+        invalid_entries.add(entry_copy.request.url)
+        print("invalid: {}".format(entry_copy.request.url))
+      else:
+        entries.append(entry)
+        entry_urls.add(entry.request.url)
+
+    invalid_entries = invalid_entries - set(entry_urls)
+    resources = har_entries_to_resources(entries)
+
+    assert len(resources) < len(entries) - len(invalid_entries)
+    assert not any(res.url in invalid_entries for res in resources)
+    assert all(res.url in entry_urls for res in resources)
+
