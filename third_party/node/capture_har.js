@@ -17,13 +17,18 @@ const captureRequests = async options => {
     // setup domain handlers
     client.Network.requestWillBeSent(params => {
       if (options.verbose) {
-        console.error(`[${(new Date()).toISOString()}] [sent] ${params.request.method} ${params.request.url}`)
+        console.error(`[${(new Date()).toISOString()}] [sent] ${params.request.method} ${params.request.url}`);
       }
       resources[params.requestId] = {
         startedDateTime: (new Date()).toISOString(),
         request: {
           url: params.request.url,
           method: params.request.method,
+        },
+        response: {
+          status: 0,
+          headersSize: 0,
+          bodySize: 0,
         },
       };
     });
@@ -34,7 +39,7 @@ const captureRequests = async options => {
       if (options.verbose) {
         const now = now;
         const url = params.response.url;
-        console.error(`[${now}][recv] ${url}: headersSize=${headersSize}, bodySize=${bodySize}`)
+        console.error(`[${now}][recv] ${url}: headersSize=${headersSize}, bodySize=${bodySize}`);
       }
       resources[params.requestId].response = {
         status: params.response.status,
@@ -45,6 +50,16 @@ const captureRequests = async options => {
           mimeType: params.response.mimeType,
         },
       };
+    });
+
+    client.Network.dataReceived(params => {
+      resources[params.requestId].response.bodySize += params.dataLength;
+      if (options.verbose) {
+        const now = now;
+        const url = params.response.url;
+        const total = resources[params.requestId].response.bodySize;
+        console.error(`[${now}][data] ${url}: chunk=${params.dataLength}, total=${total}`);
+      }
     });
 
     // enable events then start
