@@ -6,14 +6,14 @@ and generating observations based on some training state
 from typing import List
 
 import gym
+import numpy as np
 
 from blaze.action import Policy
 from blaze.config.client import NetworkType, DeviceSpeed, ClientEnvironment
 from blaze.config.environment import PushGroup, ResourceType
 
-MAX_PUSH_GROUPS = 100
-MAX_RESOURCES = 400
-MAX_BYTES = 10000000
+MAX_RESOURCES = 200
+MAX_KBYTES = 10000
 
 def get_observation_space():
   """
@@ -21,25 +21,23 @@ def get_observation_space():
   can be made from the environment. It encompasses client information, resources available
   to push, and the resources that are being pushed according to the current push policy
   """
-  enabled_space = gym.spaces.Discrete(2)
-  type_space = gym.spaces.Discrete(len(ResourceType))
-  size_space = gym.spaces.Discrete(MAX_BYTES)
-  push_from_space = gym.spaces.Discrete(MAX_RESOURCES + 1)
-  push_group = gym.spaces.Dict({
-    str(j): gym.spaces.Dict({
-      'enabled': enabled_space,
-      'type': type_space,
-      'size': size_space,
-      'push_from': push_from_space,
-    }) for j in range(MAX_RESOURCES)
-  })
+  resource_space = gym.spaces.MultiDiscrete([
+    # 0 for disabled, 1 for enabled
+    2,
+    # the resource type
+    len(ResourceType),
+    # the size in kilobytes
+    MAX_KBYTES,
+    # the resource that pushed this one
+    MAX_RESOURCES
+  ])
   return gym.spaces.Dict({
     'client': gym.spaces.Dict({
       'network_type': gym.spaces.Discrete(len(NetworkType)),
       'device_speed': gym.spaces.Discrete(len(DeviceSpeed)),
     }),
-    'push_groups': gym.spaces.Dict({
-      str(i): push_group for i in range(MAX_PUSH_GROUPS)
+    'resources': gym.spaces.Dict({
+      str(i): resource_space for i in range(MAX_RESOURCES)
     }),
   })
 
@@ -49,24 +47,25 @@ def get_observation(client_environment: ClientEnvironment, push_groups: List[Pus
   return an observation
   """
   # Encode the push groups
-  encoded_push_groups = {
-    str(i): {
-      str(j): {'enabled': 0, 'type': 0, 'size': 0, 'push_from': 0} for j in range(MAX_RESOURCES)
-    } for i in range(MAX_PUSH_GROUPS)
+  encoded_resources = {
+    str(i): np.array([0, 0, 0, 0]) for i in range(MAX_RESOURCES)
   }
 
-  for g, group in enumerate(push_groups):
-    for s, res in enumerate(group.resources):
-      encoded_push_groups[str(g)][str(s)] = {'enabled': 1, 'type': res.type.value, 'size': res.size, 'push_from': 0}
+  for group in push_groups:
+    for res in group.resources:
+      # for some reason, sometimes res.type is in int instead of a ResourceType
+      res_type = res.type.value if isinstance(res.type, ResourceType) else res.type
+      res_size_kb = res.size//1000
+      encoded_resources[str(res.order)] = np.array([1, res_type, res_size_kb, 0])
 
   for (source, push) in policy:
     for push_res in push:
-      encoded_push_groups[str(source.group_id)][str(push_res.source_id)]['push_from'] = source.source_id
+      encoded_resources[str(push_res.order)][3] = source.order
 
   return {
     'client': {
       'network_type': client_environment.network_type.value,
       'device_speed': client_environment.device_speed.value,
     },
-    'push_groups': encoded_push_groups,
+    'resources': encoded_resources,
   }

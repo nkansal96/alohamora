@@ -3,6 +3,7 @@ Command implements a lightweight decorator-based interface to defining many
 command-line sub-commands
 """
 import argparse
+import re
 import sys
 from types import SimpleNamespace
 from typing import Any, Callable, List
@@ -14,10 +15,10 @@ class Command():
   Command represents a single command, wrapping the command name, function, description,
   arguments, and argument parsing into one
   """
-  def __init__(self, name: str, func: Callable[[SimpleNamespace], Any]):
+  def __init__(self, name: str, desc: str, func: Callable[[SimpleNamespace], Any]):
     self.name = name
     self.func = func
-    self.desc = None
+    self.desc = (desc or "").strip()
     self.args = []
 
   def __call__(self, argv: List[str]):
@@ -35,7 +36,7 @@ class Command():
 
   def description(self, desc: str):
     """ Sets the description for this command """
-    self.desc = desc
+    self.desc = desc.strip()
 
   def argument(self, *args, **kwargs):
     """
@@ -50,7 +51,7 @@ def command(func: Callable[[SimpleNamespace], Any]):
   commands. The wrapped function must take a single argument (the parsed arguments
   from argparse). This method returns an instance of a Command class.
   """
-  cmd = Command(func.__name__, func)
+  cmd = Command(func.__name__, func.__doc__, func)
   COMMANDS[func.__name__] = cmd
   return cmd
 
@@ -92,12 +93,12 @@ To see the usage for a particular command, run blaze [command] -h"""
     name_str = "  {name: >{max_len}}: ".format(name=name, max_len=max_command_len)
     desc_width = max_line_length - len(name_str)
     lines = [[]]
-    for word in desc.split(' '):
+    for word in re.split(r'\s+', desc):
       if sum(map(len, lines[-1])) + len(lines[-1]) + len(word) < desc_width:
         lines[-1].append(word)
       else:
         lines.append([word])
-    desc_str = ('\n'+(' ' * (len(name_str) + 2))).join(' '.join(line) for line in lines)
+    desc_str = ('\n'+(' ' * (len(name_str)))).join(' '.join(line) for line in lines)
     return name_str + desc_str
   command_info = format_command('help', 'Display this help text') + '\n'
   command_info += '\n'.join(format_command(c.name, c.desc) for c in COMMANDS.values())

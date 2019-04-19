@@ -54,9 +54,11 @@ class TestEnvironment():
     assert self.environment.policy.actions_taken == 1
 
     # check that resetting the environment works
-    self.environment.reset()
+    obs = self.environment.reset()
     assert len(self.environment.action_space) == num_push_resources
     assert self.environment.policy.actions_taken == 0
+    assert obs and isinstance(obs, dict)
+    assert self.environment.observation_space.contains(obs)
 
   def test_step_noop_action(self):
     try:
@@ -65,7 +67,8 @@ class TestEnvironment():
       assert reward == NOOP_ACTION_REWARD
       assert info['action'] == noop_action
       assert self.environment.policy.actions_taken == 1
-      assert all(res['push_from'] == 0 for group in obs['push_groups'].values() for res in group.values())
+      # res[3] refers to the third item in the resource_space for res
+      assert all(res[3] == 0 for res in obs['resources'].values())
     finally:
       self.environment.reset()
 
@@ -84,9 +87,20 @@ class TestEnvironment():
       assert info['action'] == action
       assert self.environment.policy.actions_taken == 1
       assert self.environment.policy.resource_pushed_from(action.push) == action.source
-      assert obs['push_groups'][str(action.g)][str(action.p)]['push_from'] == action.s
+      assert obs['resources'][str(action.push.order)][3] == action.source.order
     finally:
       self.environment.reset()
+
+  def test_observation(self):
+    obs = self.environment.observation
+    assert obs and isinstance(obs, dict)
+    assert self.environment.observation_space.contains(obs)
+
+  def test_obseration_when_environment_is_created_with_dict(self):
+    env = Environment(get_config()._asdict())
+    obs = env.observation
+    assert obs and isinstance(obs, dict)
+    assert self.environment.observation_space.contains(obs)
 
   def test_render(self):
     with pytest.raises(NotImplementedError):

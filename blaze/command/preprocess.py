@@ -9,16 +9,17 @@ from blaze.preprocess.url import Url
 
 from . import command
 
-@command.description('Preprocesses a website for training. Automatically discovers linked pages up to a certain depth\
- and finds the stable set of page dependencies. The page load is recorded and stored and a training manifest is\
- outputted.')
 @command.argument('website', help='The URL of the website to prepare for training')
 @command.argument('--depth', help='The recursive depth of URLs to process for the given page', default=0, type=int)
 @command.argument('--output', help='The location to save the prepared manifest', required=True)
 @command.argument('--record_dir', help='The directory to save the recorded webpage', required=True)
 @command.command
 def preprocess(args):
-  """ Implement webpage preprocessing for training """
+  """
+  Preprocesses a website for training. Automatically discovers linked pages up to a certain depth
+  and finds the stable set of page dependencies. The page load is recorded and stored and a
+  training manifest is outputted.
+  """
   log.info('preprocessing website', website=args.website, depth=args.depth)
 
   config = get_config()
@@ -42,12 +43,12 @@ def preprocess(args):
   env_config.save_file(args.output)
   log.info('successfully prepared website for training', output=args.output)
 
-@command.description('View the prepared manifest from `blaze preprocess`')
+
 @command.argument('manifest_file', help='The file path to the saved manifest file from `blaze preprocess`')
 @command.argument('--verbose', '-v', help='Show more information', action='store_true', default=False)
 @command.command
 def view_manifest(args):
-  """ Implement viewing the preprocess manifest for training """
+  """ View the prepared manifest from `blaze preprocess` """
   log.info('loading manifest', manifest_file=args.manifest_file)
   env_config = EnvironmentConfig.load_file(args.manifest_file)
 
