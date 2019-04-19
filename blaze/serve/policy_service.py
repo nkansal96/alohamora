@@ -10,7 +10,7 @@ from blaze.proto import policy_service_pb2
 from blaze.proto import policy_service_pb2_grpc
 
 class PolicyService(policy_service_pb2_grpc.PolicyServiceServicer):
-  def __init__(self, saved_model: SavedModel = None):
+  def __init__(self, saved_model: SavedModel):
     self.saved_model = saved_model
     self.policies: Dict[str, policy_service_pb2.Policy] = {}
 
