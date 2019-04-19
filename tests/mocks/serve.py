@@ -38,3 +38,27 @@ class MockGRPCServicerContext(grpc.ServicerContext):
   def set_details(self, details): pass
   def set_trailing_metadata(self, trailing_metadata): pass
   def time_remaining(self): pass
+
+class MockServer():
+  def __init__(self):
+    self.args = None
+    self.kwargs = None
+    self.set_policy_service_args = None
+    self.set_policy_service_kwargs = None
+    self.start_called = False
+    self.stop_called = False
+
+  def __call__(self, *args, **kwargs):
+    self.args = args
+    self.kwargs = kwargs
+    return self
+
+  def set_policy_service(self, *args, **kwargs):
+    self.set_policy_service_args = args
+    self.set_policy_service_kwargs = kwargs
+
+  def start(self):
+    self.start_called = True
+
+  def stop(self):
+    self.stop_called = True

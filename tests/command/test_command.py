@@ -5,18 +5,20 @@ from blaze.command import command
 
 class TestCommand():
   def test_init(self):
-    cmd = command.Command('name', lambda x: x)
+    cmd = command.Command('name', ' desc   ', lambda x: x)
     assert isinstance(cmd, command.Command)
     assert cmd.name == 'name'
+    assert cmd.desc == 'desc' # also tests that the desc is stripped of whitespace
     assert cmd.func(1) == 1
 
   def test_description(self):
-    cmd = command.Command('name', lambda x: x)
+    cmd = command.Command('name', 'orig_desc', lambda x: x)
+    assert cmd.desc == 'orig_desc'
     cmd.description('desc')
     assert cmd.desc == 'desc'
 
   def test_argument(self):
-    cmd = command.Command('name', lambda x: x)
+    cmd = command.Command('name', 'desc', lambda x: x)
     cmd.argument(1, 'a', ['test'], keyword='test')
     assert len(cmd.args) == 1
     assert cmd.args[0] == ((1, 'a', ['test']), {'keyword': 'test'})
@@ -33,7 +35,7 @@ class TestCommand():
       assert args.f == 100
 
     fn.called = False
-    cmd = command.Command('fn', fn)
+    cmd = command.Command('fn', 'desc', fn)
     cmd.argument('test', type=int)
     cmd.argument('-f', required=True, type=int)
     cmd(['123', '-f', '100'])
@@ -46,7 +48,7 @@ class TestCommand():
       assert args.f == 100
 
     fn.called = False
-    cmd = command.Command('fn', fn)
+    cmd = command.Command('fn', 'desc', fn)
     cmd.argument('test', type=int)
     cmd.argument('-f', required=True, type=int)
     with pytest.raises(SystemExit):
@@ -60,10 +62,12 @@ class TestCommandDecorator():
 
       @command.command
       def test_fn(args):
+        """ test_fn_desc """
         return 1
 
       assert isinstance(test_fn, command.Command)
       assert test_fn.name == 'test_fn'
+      assert test_fn.desc == 'test_fn_desc'
       assert test_fn.func(None) == 1
       assert 'test_fn' in command.COMMANDS
     finally:
@@ -81,6 +85,7 @@ class TestDescriptionDecorator():
       @command.description('test')
       @command.command
       def test_fn(args):
+        """ orig_desc """
         pass
       assert test_fn.desc == 'test'
     finally:
@@ -93,7 +98,7 @@ class TestArgumentDecorator():
       def test_fn(args):
         pass
 
-  def test_argument_adds_description_to_command(self):
+  def test_argument_adds_argument_to_command(self):
     try:
       @command.description('test')
       @command.argument('--test_a', required=True)
