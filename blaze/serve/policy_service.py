@@ -1,3 +1,4 @@
+""" Defines classes and methods to instantiate, evaluate, and serve push policies """
 from typing import Dict
 
 import grpc
@@ -10,16 +11,21 @@ from blaze.proto import policy_service_pb2
 from blaze.proto import policy_service_pb2_grpc
 
 class PolicyService(policy_service_pb2_grpc.PolicyServiceServicer):
+  """
+  Implements the PolicyServerServicer interface to satsify the proto-defined RPC interface for
+  serving push policies
+  """
   def __init__(self, saved_model: SavedModel):
     self.saved_model = saved_model
     self.policies: Dict[str, policy_service_pb2.Policy] = {}
 
-  def GetPolicy(self, request: policy_service_pb2.Page, context: grpc.ServicerContext):
+  def GetPolicy(self, request: policy_service_pb2.Page, context: grpc.ServicerContext) -> policy_service_pb2.Policy:
     if request.url not in self.policies:
       self.policies[request.url] = self.create_push_policy(request)
     return self.policies[request.url]
 
-  def create_push_policy(self, page: policy_service_pb2.Page):
+  def create_push_policy(self, page: policy_service_pb2.Page) -> policy_service_pb2.Policy:
+    """ Creates and formats a push policy for the given page """
     model = self.create_model_instance(page)
     response = policy_service_pb2.Policy()
     for (source, push_list) in model.push_policy:
@@ -29,6 +35,7 @@ class PolicyService(policy_service_pb2_grpc.PolicyServiceServicer):
     return response
 
   def create_model_instance(self, page: policy_service_pb2.Page) -> ModelInstance:
+    """ Instantiates a model for the given page """
     # convert page resources to ordered push groups
     page_resources = sorted(page.resources, key=lambda r: r.timestamp)
     page_resources = list(map(convert_policy_resource_to_environment_resource, page_resources))
