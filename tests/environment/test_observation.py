@@ -56,7 +56,8 @@ class TestGetObservation():
       # make sure the push sources are recorded correctly
       for (source, push) in policy:
         for push_res in push:
-          assert obs['resources'][str(push_res.order)][3] == source.order
+          # +1 since we have defined it that way
+          assert obs['resources'][str(push_res.order)][3] == source.order + 1
 
       # check that all other resources are not pushed
       pushed_res = set(push_res.order for (source, push) in policy for push_res in push)

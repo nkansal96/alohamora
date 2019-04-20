@@ -13,7 +13,7 @@ def train(train_config: TrainConfig, config: Config):
   ray.init(num_cpus=train_config.num_cpus)
 
   name = train_config.experiment_name
-  total_urls = sum(len(group.resources) for group in config.train_config.push_groups)
+  total_urls = sum(len(group.resources) for group in config.env_config.push_groups)
   ray.tune.run_experiments({
     name : {
       "run": "APEX",

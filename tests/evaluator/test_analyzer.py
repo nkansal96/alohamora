@@ -10,7 +10,7 @@ from tests.mocks.config import get_config
 class TestAnalyzer():
   def setup(self):
     self.config = get_config()
-    self.policy = Policy(ActionSpace(self.config.train_config.push_groups))
+    self.policy = Policy(ActionSpace(self.config.env_config.push_groups))
     self.client_environment = get_random_client_environment()
 
   def get_analyzer(self):

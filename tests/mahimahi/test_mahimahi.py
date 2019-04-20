@@ -102,7 +102,7 @@ class TestMahiMahiConfig():
     mm_config = MahiMahiConfig(self.config, self.policy)
     proxy_replay_cmd = mm_config.proxy_replay_cmd
     assert proxy_replay_cmd[0] == 'mm-proxyreplay'
-    assert proxy_replay_cmd[1] == self.config.train_config.replay_dir
+    assert proxy_replay_cmd[1] == self.config.env_config.replay_dir
     assert proxy_replay_cmd[2] == self.config.nghttpx_bin
     assert proxy_replay_cmd[3].startswith(self.config.mahimahi_cert_dir)
     assert proxy_replay_cmd[3].endswith('reverse_proxy_key.pem')

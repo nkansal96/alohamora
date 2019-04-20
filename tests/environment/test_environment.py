@@ -28,7 +28,7 @@ class TestEnvironment():
     assert isinstance(env.action_space, ActionSpace)
     assert isinstance(env.analyzer, Analyzer)
     assert isinstance(env.policy, Policy)
-    assert env.config.train_config.push_groups == env.action_space.push_groups
+    assert env.config.env_config.push_groups == env.action_space.push_groups
     assert env.policy.action_space == env.action_space
 
   def test_init_with_dict_env(self):
@@ -87,7 +87,7 @@ class TestEnvironment():
       assert info['action'] == action
       assert self.environment.policy.actions_taken == 1
       assert self.environment.policy.resource_pushed_from(action.push) == action.source
-      assert obs['resources'][str(action.push.order)][3] == action.source.order
+      assert obs['resources'][str(action.push.order)][3] == action.source.order + 1
     finally:
       self.environment.reset()
 

@@ -30,7 +30,7 @@ class TestModelInstance():
     assert policy
     assert policy.completed
     assert len(mock_agent.observations) == len(policy)
-    assert all((source, push) in push_pairs for (push, source) in policy.push_to_source.items())
+    assert all((source, p) in push_pairs for (source, push) in policy for p in push)
     assert all(observation_space.contains(obs) for obs in mock_agent.observations)
 
   def test_push_policy_returns_cached_policy(self):

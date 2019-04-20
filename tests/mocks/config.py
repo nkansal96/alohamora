@@ -58,7 +58,7 @@ def get_serve_config() -> ServeConfig:
   )
 
 def get_config() -> Config:
-  return Config(**{**_get_config()._asdict(), 'train_config': get_env_config()})
+  return Config(**{**_get_config()._asdict(), 'env_config': get_env_config()})
 
 def get_mahimahi_config() -> MahiMahiConfig:
   return MahiMahiConfig(
