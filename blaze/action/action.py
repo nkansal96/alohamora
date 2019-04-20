@@ -5,7 +5,7 @@ take when exploring push policies
 
 from typing import Optional
 
-from blaze.config.environment import PushGroup, Resource
+from blaze.config.environment import Resource
 
 class Action():
   """
