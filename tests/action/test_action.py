@@ -11,31 +11,34 @@ class TestAction():
     self.push_groups = get_push_groups()
 
   def test_init(self):
-    a = Action(0, 0, 0, 0, self.push_groups)
+    a = Action(0)
+    assert isinstance(a, Action)
+    a = Action(0, self.push_groups[0].resources[0], self.push_groups[0].resources[1])
     assert isinstance(a, Action)
 
-  def test_source(self):
-    a = Action(2, 0, 0, 2, self.push_groups)
-    assert a.source == self.push_groups[0].resources[0]
+  def test_source_and_push(self):
+    source = self.push_groups[0].resources[0]
+    push = self.push_groups[0].resources[2]
+    a = Action(2, source, push)
+    assert a.source == source
+    assert a.push == push
 
-    a = Action(3, 1, 0, 1, self.push_groups)
-    assert a.source == self.push_groups[1].resources[0]
+    source = self.push_groups[1].resources[0]
+    push = self.push_groups[1].resources[1]
+    a = Action(3, source, push)
+    assert a.source == source
+    assert a.push == push
 
-  def test_push(self):
-    a = Action(2, 0, 0, 2, self.push_groups)
-    assert a.push == self.push_groups[0].resources[2]
-
-    a = Action(3, 1, 0, 1, self.push_groups)
-    assert a.push == self.push_groups[1].resources[1]
 
   def test_noop(self):
-    a = Action(0, 0, 0, 0, self.push_groups)
+    a = Action(0)
     assert a.is_noop
 
   def test_eq(self):
     a1 = Action(action_id=5)
     a2 = Action(action_id=5)
-    assert a1 == a2
+    a3 = Action(action_id=5, source=self.push_groups[1].resources[0])
+    assert a1 == a2 == a3
 
 class TestActionSpace():
   def setup(self):
@@ -58,9 +61,11 @@ class TestActionSpace():
     # total pairs of resources and 1 no-op
     assert len(self.action_space.actions) == len(push_pairs) + 1
     # ensure all actions are unique
-    assert len(set((action.g, action.s, action.p) for action in self.action_space.actions)) == len(push_pairs) + 1
+    assert len(set((action.source.group_id, action.source.source_id, action.push.source_id)
+                   for action in self.action_space.actions if not action.is_noop)) == len(push_pairs)
     # ensure all push urls are after the source urls
-    assert all(action.p > action.s for action in self.action_space.actions if not action.is_noop)
+    assert all(action.push.source_id > action.source.source_id
+               for action in self.action_space.actions if not action.is_noop)
 
   def test_seed(self):
     a = ActionSpace(self.push_groups)

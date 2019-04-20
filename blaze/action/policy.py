@@ -21,10 +21,13 @@ class Policy():
     self.actions_taken = 0
     self.push_to_source = {}
     self.source_to_push = collections.defaultdict(list)
-    self.source_to_push_urls = collections.defaultdict(list)
+    self.default_source_to_push = collections.defaultdict(list)
 
   def __iter__(self):
-    return iter(self.source_to_push.items())
+    # This function assumes that the keys in self.source_to_push and self.default_source_to_push
+    # are disjoint sets
+    source_to_push = {**dict(self.default_source_to_push), **dict(self.source_to_push)}
+    return iter(source_to_push.items())
 
   def __len__(self):
     return self.actions_taken
@@ -34,22 +37,35 @@ class Policy():
     """ Returns true if all actions have been taken """
     return self.actions_taken >= self.total_actions
 
+  @property
+  def observable(self):
+    """
+    Returns the observable push policy, which is only the set of items that are a subset
+    of the trainable push groups
+    """
+    return iter(self.source_to_push.items())
+
   def apply_action(self, action_id: int):
     """ Given an encoded action, applies the action towards the push policy """
     action = self.action_space.decode_action_id(action_id)
     if not action.is_noop:
       self.push_to_source[action.push] = action.source
       self.source_to_push[action.source].append(action.push)
-      self.source_to_push_urls[action.source.url].append(action.push.url)
       self.action_space.use_action(action)
     self.actions_taken += 1
     return not action.is_noop
 
-  def resource_pushed_from(self, res: Resource) -> Optional[Resource]:
+  def add_default_action(self, source: Resource, push: Resource):
     """
-    Returns the order (number) of the resource that the given resource was
-    pushed from. Returns 0 if the resource was not pushed
+    Adds a default entry to the push policy, which is always pushed but not
+    observable to the environment
     """
-    if res not in self.push_to_source:
+    self.default_source_to_push[source].append(push)
+
+  def resource_pushed_from(self, push: Resource) -> Optional[Resource]:
+    """
+    Returns the resource that the given resource is pushed from, or None if none
+    """
+    if push not in self.push_to_source:
       return None
-    return self.push_to_source[res]
+    return self.push_to_source[push]

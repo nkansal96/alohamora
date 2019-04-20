@@ -27,13 +27,13 @@ class ActionSpace(gym.spaces.Discrete):
     self.push_resources: List[Resource] = []
     self.action_id_map: Dict[Tuple[int, int, int], int] = {}
     self.actions: List[Action] = [Action()]
-    for g, group in enumerate(push_groups):
-      for s, source in enumerate(group.resources):
-        if s != 0:
+    for group in push_groups:
+      for source in group.resources:
+        if source.source_id != 0:
           self.push_resources.append(source)
-        for p in range(s + 1, len(group.resources)):
-          self.action_id_map[(g, s, p)] = len(self.actions)
-          self.actions.append(Action(len(self.actions), g, s, p, push_groups))
+        for push in group.resources[source.source_id+1:]:
+          self.action_id_map[(source.group_id, source.source_id, push.source_id)] = len(self.actions)
+          self.actions.append(Action(len(self.actions), source, push))
     self.push_resources.sort(key=lambda r: r.order)
     super(ActionSpace, self).__init__(len(self.actions))
 
