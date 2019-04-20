@@ -5,7 +5,7 @@ from blaze.proto import policy_service_pb2
 
 from tests.mocks.config import get_push_groups
 
-def get_page(url: str, client_environment = get_random_client_environment()) -> policy_service_pb2.Page:
+def get_page(url: str, client_environment=get_random_client_environment()) -> policy_service_pb2.Page:
   push_groups = get_push_groups()
   resources = [res for group in push_groups for res in group.resources]
   page_resources = [policy_service_pb2.Resource(

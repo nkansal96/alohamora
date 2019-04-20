@@ -36,6 +36,7 @@ class PushGroup(NamedTuple):
   """ PushGroup collects a group of resources for the same domain """
   group_name: str
   resources: List[Resource]
+  trainable: bool = True
 
 class EnvironmentConfig(NamedTuple):
   """ EnvironmentConfig is the main configuration used in setting up the training environment """

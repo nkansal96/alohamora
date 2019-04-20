@@ -14,7 +14,8 @@ class TestPolicyService():
     self.client_environment = get_random_client_environment()
     self.page = get_page("http://example.com", self.client_environment)
     self.push_groups = get_push_groups()
-    self.action_space = ActionSpace(self.push_groups)
+    self.trainable_push_groups = [group for group in self.push_groups if group.trainable]
+    self.action_space = ActionSpace(self.trainable_push_groups)
     self.saved_model = SavedModel(mock_agent_with_action_space(self.action_space), Environment, "")
 
   def test_init(self):

@@ -23,13 +23,13 @@ class Config(NamedTuple):
   pwmetrics_bin: str
   nghttpx_bin: str
   chrome_bin: str
-  train_config: Optional[EnvironmentConfig] = None
+  env_config: Optional[EnvironmentConfig] = None
 
   def items(self):
     """ Return the dictionary items() method for this object """
     return self._asdict().items() # pylint: disable=no-member
 
-def get_config(train_config: Optional[EnvironmentConfig] = None) -> Config:
+def get_config(env_config: Optional[EnvironmentConfig] = None) -> Config:
   """
   get_config returns the runtime configuration, taking values from environment variables
   when available to override the defaults
@@ -40,5 +40,5 @@ def get_config(train_config: Optional[EnvironmentConfig] = None) -> Config:
     pwmetrics_bin=os.environ.get('PWMETRICS_BIN', DEFAULT_PWMETRICS_BIN),
     nghttpx_bin=os.environ.get('NGHTTPX_BIN', DEFAULT_NGHTTPX_BIN),
     chrome_bin=os.environ.get('CHROME_BIN', DEFAULT_CHROME_BIN),
-    train_config=train_config,
+    env_config=env_config,
   )

@@ -3,9 +3,9 @@ This module contains the main class representing an action that an agent can
 take when exploring push policies
 """
 
-from typing import List
+from typing import Optional
 
-from blaze.config.environment import PushGroup, Resource
+from blaze.config.environment import Resource
 
 class Action():
   """
@@ -13,22 +13,10 @@ class Action():
   a pair of resources (source, push) which describe the resource that should be pushed
   upon a request for a given resource
   """
-  def __init__(self, action_id: int = 0, g: int = 0, s: int = 0, p: int = 0, push_groups: List[PushGroup] = None):
+  def __init__(self, action_id: int = 0, source: Optional[Resource] = None, push: Optional[Resource] = None):
     self.action_id = action_id
-    self.g = g
-    self.s = s
-    self.p = p
-    self.push_groups = push_groups or []
-
-  @property
-  def source(self) -> Resource:
-    """ Return the source resource for this action """
-    return self.push_groups[self.g].resources[self.s]
-
-  @property
-  def push(self) -> Resource:
-    """ Return the push resource for this action """
-    return self.push_groups[self.g].resources[self.p]
+    self.source = source
+    self.push = push
 
   @property
   def is_noop(self):

@@ -1,4 +1,6 @@
 """ Defines the environment that the training of the agent occurs in """
+import random
+
 import gym
 
 from blaze.config import client, Config
@@ -21,38 +23,48 @@ class Environment(gym.Env):
     assert isinstance(config, (Config, dict))
     config = config if isinstance(config, Config) else Config(**config)
 
+    self.config = config
+    self.env_config = config.env_config
+    self.trainable_push_groups = [group for group in self.env_config.push_groups if group.trainable]
     log.info(
-      'initializing environment',
+      'initialized trainable push groups',
+      groups=[group.group_name for group in self.trainable_push_groups],
+    )
+
+    self.observation_space = get_observation_space()
+    self.analyzer = Analyzer(self.config)
+    self.initialize_environment(client_environment)
+
+  def reset(self):
+    self.initialize_environment()
+    return self.observation
+
+  def initialize_environment(self, client_environment=client.get_random_client_environment()):
+    """ Initialize the environment """
+    log.info(
+      'initialized environment',
       network_type=client_environment.network_type,
       network_speed=client_environment.network_speed,
       device_speed=client_environment.device_speed,
     )
-
-    self.config = config
-    self.train_config = config.train_config
     self.client_environment = client_environment
-
-    self.action_space = ActionSpace(self.train_config.push_groups)
-    self.observation_space = get_observation_space()
-
-    self.policy = Policy(self.action_space)
-    self.analyzer = Analyzer(self.config, self.client_environment)
-
-  def reset(self):
-    self.action_space = ActionSpace(self.train_config.push_groups)
-    self.policy = Policy(self.action_space)
-
-    self.client_environment = client.get_random_client_environment()
     self.analyzer.reset(self.client_environment)
 
-    log.info(
-      'initializing environment',
-      network_type=self.client_environment.network_type,
-      network_speed=self.client_environment.network_speed,
-      device_speed=self.client_environment.device_speed,
-    )
+    self.action_space = ActionSpace(self.trainable_push_groups)
+    self.policy = Policy(self.action_space)
 
-    return self.observation
+    # choose a random non-trainable push group to simulate as if it's already pushed
+    candidate_push_groups = [group for group in self.env_config.push_groups
+                             if len(group.resources) > 2 and not group.trainable]
+    if candidate_push_groups:
+      default_group = random.choice(candidate_push_groups)
+      for push in default_group.resources[1:]:
+        self.policy.add_default_action(default_group.resources[0], push)
+      log.info(
+        'chose group to auto push',
+        group=default_group.group_name,
+        rules_added=len(default_group.resources) - 1
+      )
 
   def step(self, action):
     decoded_action = self.action_space.decode_action_id(action)
@@ -77,4 +89,4 @@ class Environment(gym.Env):
   @property
   def observation(self):
     """ Returns an observation for the current state of the environment """
-    return get_observation(self.client_environment, self.train_config.push_groups, self.policy)
+    return get_observation(self.client_environment, self.env_config.push_groups, self.policy)

@@ -73,7 +73,7 @@ class MahiMahiConfig():
     """
     return [
       'mm-proxyreplay',
-      self.config.train_config.replay_dir,
+      self.config.env_config.replay_dir,
       self.config.nghttpx_bin,
       os.path.join(self.config.mahimahi_cert_dir, 'reverse_proxy_key.pem'),
       os.path.join(self.config.mahimahi_cert_dir, 'reverse_proxy_cert.pem'),

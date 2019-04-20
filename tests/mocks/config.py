@@ -12,6 +12,7 @@ def get_push_groups() -> List[PushGroup]:
   return [
     PushGroup(
       group_name='example.com',
+      trainable=True,
       resources=[
         Resource(url='http://example.com/A', size=1024, order=0, group_id=0, source_id=0, type=ResourceType.IMAGE),
         Resource(url='http://example.com/B', size=1024, order=3, group_id=0, source_id=1, type=ResourceType.IMAGE),
@@ -21,10 +22,20 @@ def get_push_groups() -> List[PushGroup]:
     ),
     PushGroup(
       group_name='sub.example.com',
+      trainable=True,
       resources=[
         Resource(url='http://sub.example.com/D', size=1024, order=1, group_id=1, source_id=0, type=ResourceType.IMAGE),
         Resource(url='http://sub.example.com/E', size=1024, order=2, group_id=1, source_id=1, type=ResourceType.IMAGE),
         Resource(url='http://sub.example.com/G', size=1024, order=5, group_id=1, source_id=2, type=ResourceType.IMAGE),
+      ],
+    ),
+    PushGroup(
+      group_name='zz.ads.googleads.com',
+      trainable=False,
+      resources=[
+        Resource(url='http://zz.ads.googleads.com/script.1.js', size=1024, order=7, group_id=2, source_id=0, type=ResourceType.SCRIPT),
+        Resource(url='http://zz.ads.googleads.com/script.2.js', size=1024, order=8, group_id=2, source_id=1, type=ResourceType.SCRIPT),
+        Resource(url='http://zz.ads.googleads.com/script.3.js', size=1024, order=9, group_id=2, source_id=2, type=ResourceType.SCRIPT),
       ],
     ),
   ]
@@ -58,7 +69,7 @@ def get_serve_config() -> ServeConfig:
   )
 
 def get_config() -> Config:
-  return Config(**{**_get_config()._asdict(), 'train_config': get_env_config()})
+  return Config(**{**_get_config()._asdict(), 'env_config': get_env_config()})
 
 def get_mahimahi_config() -> MahiMahiConfig:
   return MahiMahiConfig(

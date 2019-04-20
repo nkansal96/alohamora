@@ -28,8 +28,8 @@ def get_observation_space():
     len(ResourceType),
     # the size in kilobytes
     MAX_KBYTES,
-    # the resource that pushed this one
-    MAX_RESOURCES
+    # the resource that pushed this one, offset by 1 so that 0 indicates not pushed
+    MAX_RESOURCES + 1
   ])
   return gym.spaces.Dict({
     'client': gym.spaces.Dict({
@@ -58,9 +58,10 @@ def get_observation(client_environment: ClientEnvironment, push_groups: List[Pus
       res_size_kb = res.size//1000
       encoded_resources[str(res.order)] = np.array([1, res_type, res_size_kb, 0])
 
-  for (source, push) in policy:
+  for (source, push) in policy.observable:
     for push_res in push:
-      encoded_resources[str(push_res.order)][3] = source.order
+      # note that the pushed-from field is offset by 1, so that 0 indictates not pushed
+      encoded_resources[str(push_res.order)][3] = source.order + 1
 
   return {
     'client': {

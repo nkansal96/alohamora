@@ -49,7 +49,7 @@ def get_metrics(config: Config, mahimahi_config: MahiMahiConfig) -> Result:
 
     with open(config_file, 'w') as f:
       f.write(CONFIG_TEMPLATE.format(
-        url=config.train_config.request_url,
+        url=config.env_config.request_url,
         runs=1,
         output_path=output_file,
         chrome_path=config.chrome_bin,
