@@ -30,7 +30,7 @@ class Environment(gym.Env):
       'initialized trainable push groups',
       groups=[group.group_name for group in self.trainable_push_groups],
     )
-    
+
     self.observation_space = get_observation_space()
     self.analyzer = Analyzer(self.config)
     self.initialize_environment(client_environment)
