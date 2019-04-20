@@ -20,6 +20,7 @@ def get_action(action_space):
 class TestEnvironment():
   def setup(self):
     self.environment = Environment(get_config())
+    self.trainable_push_groups = [group for group in self.environment.env_config.push_groups if group.trainable]
 
   def test_init(self):
     env = self.environment
@@ -28,7 +29,8 @@ class TestEnvironment():
     assert isinstance(env.action_space, ActionSpace)
     assert isinstance(env.analyzer, Analyzer)
     assert isinstance(env.policy, Policy)
-    assert env.config.env_config.push_groups == env.action_space.push_groups
+    assert env.config.env_config.push_groups == get_config().env_config.push_groups
+    assert env.action_space.push_groups == self.trainable_push_groups
     assert env.policy.action_space == env.action_space
 
   def test_init_with_dict_env(self):
@@ -59,6 +61,18 @@ class TestEnvironment():
     assert self.environment.policy.actions_taken == 0
     assert obs and isinstance(obs, dict)
     assert self.environment.observation_space.contains(obs)
+
+  def test_initialize_environment_chooses_random_default_push_group(self):
+    assert not self.environment.policy.push_to_source
+    non_trainable_group = self.environment.env_config.push_groups[-1]
+    source = non_trainable_group.resources[0]
+    assert len(self.environment.policy.default_source_to_push) == 1
+    assert source in self.environment.policy.default_source_to_push
+    assert (len(self.environment.policy.default_source_to_push[source])
+            == len(non_trainable_group.resources) - 1)
+
+  def test_initialize_only_trains_on_trainable_push_groups(self):
+    assert self.environment.action_space.push_groups == self.trainable_push_groups
 
   def test_step_noop_action(self):
     try:

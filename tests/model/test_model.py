@@ -11,6 +11,7 @@ class TestModelInstance():
   def setup(self):
     self.client_environment = get_random_client_environment()
     self.env_config = get_env_config()
+    self.trainable_push_groups = [group for group in self.env_config.push_groups if group.trainable]
 
   def test_init(self):
     action_space = ActionSpace(self.env_config.push_groups)
@@ -21,9 +22,9 @@ class TestModelInstance():
     assert not m.policy
 
   def test_push_policy(self):
-    push_pairs = convert_push_groups_to_push_pairs(self.env_config.push_groups)
+    push_pairs = convert_push_groups_to_push_pairs(self.trainable_push_groups)
     observation_space = get_observation_space()
-    action_space = ActionSpace(self.env_config.push_groups)
+    action_space = ActionSpace(self.trainable_push_groups)
     mock_agent = MockAgent(action_space)
     m = ModelInstance(mock_agent, self.env_config, self.client_environment)
     policy = m.push_policy
@@ -34,7 +35,7 @@ class TestModelInstance():
     assert all(observation_space.contains(obs) for obs in mock_agent.observations)
 
   def test_push_policy_returns_cached_policy(self):
-    action_space = ActionSpace(self.env_config.push_groups)
+    action_space = ActionSpace(self.trainable_push_groups)
     mock_agent = MockAgent(action_space)
     m = ModelInstance(mock_agent, self.env_config, self.client_environment)
     first_policy = m.push_policy

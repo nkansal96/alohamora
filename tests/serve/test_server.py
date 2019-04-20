@@ -16,8 +16,9 @@ from tests.mocks.serve import get_page
 class TestServer():
   def setup(self):
     self.push_groups = get_push_groups()
+    self.trainable_push_groups = [group for group in self.push_groups if group.trainable]
     self.serve_config = get_serve_config()
-    self.action_space = ActionSpace(self.push_groups)
+    self.action_space = ActionSpace(self.trainable_push_groups)
     self.mock_agent = mock_agent_with_action_space(self.action_space)
     self.saved_model = SavedModel(self.mock_agent, Environment, "/tmp/model_location")
 

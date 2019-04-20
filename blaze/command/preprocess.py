@@ -12,6 +12,8 @@ from . import command
 @command.argument('website', help='The URL of the website to prepare for training')
 @command.argument('--depth', help='The recursive depth of URLs to process for the given page', default=0, type=int)
 @command.argument('--output', help='The location to save the prepared manifest', required=True)
+@command.argument('--train_domain_suffix', help='The suffix of domain names to enable training for. By default this '
+                                                'will be the domain of the given URL')
 @command.argument('--record_dir', help='The directory to save the recorded webpage', required=True)
 @command.command
 def preprocess(args):
@@ -20,7 +22,8 @@ def preprocess(args):
   and finds the stable set of page dependencies. The page load is recorded and stored and a
   training manifest is outputted.
   """
-  log.info('preprocessing website', website=args.website, depth=args.depth)
+  domain = args.train_domain_suffix or Url.parse(args.website).domain
+  log.info('preprocessing website', website=args.website, depth=args.depth, train_domain="*.{}".format(domain))
 
   config = get_config()
   log.debug('using configuration', **config._asdict())
@@ -32,7 +35,7 @@ def preprocess(args):
   res_list = find_url_stable_set(args.website, config)
 
   log.info('found total dependencies', total=len(res_list))
-  push_groups = resource_list_to_push_groups(res_list)
+  push_groups = resource_list_to_push_groups(res_list, train_domain_suffix=domain)
 
   log.info('generating configuration...')
   env_config = EnvironmentConfig(

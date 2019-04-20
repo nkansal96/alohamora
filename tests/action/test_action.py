@@ -52,9 +52,6 @@ class TestActionSpace():
     push_pairs = convert_push_groups_to_push_pairs(self.push_groups)
     pushable_resources = set(v.url for (k, v) in push_pairs)
     assert len(self.action_space.push_resources) == len(pushable_resources)
-    for (i, res) in enumerate(self.action_space.push_resources):
-      # skipping the zeroth one (noop) and first one (can't push the first resource)
-      assert res.order == i + 2
 
   def test_init_actions(self):
     push_pairs = convert_push_groups_to_push_pairs(self.push_groups)

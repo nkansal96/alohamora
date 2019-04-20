@@ -25,7 +25,7 @@ class Analyzer():
   a better speed index than the previous policy, or a worse speed index than the
   previous policy
   """
-  def __init__(self, config: Config, client_environment: client.ClientEnvironment):
+  def __init__(self, config: Config, client_environment: Optional[client.ClientEnvironment] = None):
     self.config = config
     self.client_environment = client_environment
     self.min_speed_index = MIN_SPEED_INDEX

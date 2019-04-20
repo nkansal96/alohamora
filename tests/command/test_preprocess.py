@@ -34,6 +34,31 @@ class TestPreprocess():
         assert config.replay_dir == output_dir
         assert config.request_url == 'http://cs.ucla.edu'
         assert config.push_groups
+        # since we passed cs.ucla.edu as URL, nothing should be trainable
+        assert all(not group.trainable for group in config.push_groups)
+
+    mock_record_webpage.assert_called_once()
+    mock_record_webpage.assert_called_with('http://cs.ucla.edu', output_dir, get_config())
+
+  @mock.patch('blaze.command.preprocess.record_webpage')
+  def test_runs_successfully_with_train_domain_suffix(self, mock_record_webpage):
+    hars = [generate_har() for _ in range(STABLE_SET_NUM_RUNS)]
+    with tempfile.NamedTemporaryFile() as output_file:
+      with tempfile.TemporaryDirectory() as output_dir:
+        with mock.patch('blaze.preprocess.record.capture_har', new=HarReturner(hars)):
+          preprocess([
+            'http://cs.ucla.edu',
+            '--output', output_file.name,
+            '--record_dir', output_dir,
+            '--train_domain_suffix', 'reddit.com',
+          ])
+
+        config = EnvironmentConfig.load_file(output_file.name)
+        assert config.replay_dir == output_dir
+        assert config.request_url == 'http://cs.ucla.edu'
+        assert config.push_groups
+        # since we passed reddit.com as train_domain_suffix, something should be trainable
+        assert any(group.trainable for group in config.push_groups)
 
     mock_record_webpage.assert_called_once()
     mock_record_webpage.assert_called_with('http://cs.ucla.edu', output_dir, get_config())
