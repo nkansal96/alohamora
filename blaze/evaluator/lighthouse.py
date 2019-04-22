@@ -46,6 +46,7 @@ def get_metrics(config: Config, mahimahi_config: MahiMahiConfig) -> Result:
     config_file = os.path.join(tmp_dir, 'pw_config.js')
     output_file = os.path.join(tmp_dir, 'pw_output.json')
     push_policy_file = os.path.join(tmp_dir, 'mm_push_policy')
+    trace_file = os.path.join(tmp_dir, 'trace')
 
     with open(config_file, 'w') as f:
       f.write(CONFIG_TEMPLATE.format(
@@ -60,9 +61,14 @@ def get_metrics(config: Config, mahimahi_config: MahiMahiConfig) -> Result:
 
     with open(push_policy_file, 'w') as f:
       f.write(mahimahi_config.formatted_push_policy)
-      log.debug('write mahimahi push config', file=push_policy_file)
+      log.debug('wrote mahimahi push config', file=push_policy_file)
 
-    cmd = mahimahi_config.proxy_replay_shell_with_cmd(push_policy_file, [config.pwmetrics_bin, '--config', config_file])
+    with open(trace_file, 'w') as f:
+      f.write(mahimahi_config.formatted_trace_file)
+      log.debug('wrote formatted trace file', file=trace_file)
+
+    pwmetrics_cmd = [config.pwmetrics_bin, '--config', config_file]
+    cmd = mahimahi_config.proxy_replay_shell_with_cmd(push_policy_file, trace_file, pwmetrics_cmd)
     # cwd='/' to write the output to the correct temporary folder. the folder
     # path is an absolute directory but there's a bug in pwmetrics that uses it
     # as a relative path despite the leading '/', so cwd to '/' to make it work

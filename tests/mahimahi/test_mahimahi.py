@@ -6,6 +6,7 @@ from blaze.config.client import get_random_client_environment, network_to_bandwi
                                 network_to_latency_range, device_speed_to_cpu_slowdown, \
                                 ClientEnvironment, NetworkType, NetworkSpeed, DeviceSpeed
 from blaze.mahimahi.mahimahi import MahiMahiConfig
+from blaze.mahimahi.trace import format_trace_lines, trace_for_kbps
 
 from tests.mocks.config import get_config, get_push_groups
 
@@ -38,27 +39,39 @@ class TestMahiMahiConfig():
 
   def test_proxy_replay_shell_with_cmd(self):
     push_config_file_name = '/tmp/push_config'
+    trace_file_name = '/tmp/trace'
     mm_config = MahiMahiConfig(self.config, self.policy, self.client_environment)
     shell_cmd = ['some', 'command']
-    cmd = mm_config.proxy_replay_shell_with_cmd(push_config_file_name, shell_cmd)
+    cmd = mm_config.proxy_replay_shell_with_cmd(push_config_file_name, trace_file_name, shell_cmd)
 
     assert cmd == (
-      mm_config.proxy_replay_cmd +
-      [push_config_file_name] +
+      mm_config.proxy_replay_cmd(push_config_file_name) +
       mm_config.delay_cmd +
-      mm_config.link_cmd +
+      mm_config.link_cmd(trace_file_name) +
       shell_cmd
     )
 
   def test_record_shell_with_cmd(self):
     save_dir = '/tmp/save_dir'
-    mm_config = MahiMahiConfig(self.config, self.policy, self.client_environment)
+    mm_config = MahiMahiConfig(self.config, self.policy)
     cmd = mm_config.record_shell_with_cmd(save_dir, ['a', 'command'])
-    assert cmd == (mm_config.link_cmd + mm_config.record_cmd(save_dir) + ['a', 'command'])
+    assert cmd == (mm_config.record_cmd(save_dir) + ['a', 'command'])
+
+
+  def test_record_shell_with_cmd_and_environment_raises(self):
+    save_dir = '/tmp/save_dir'
+    mm_config = MahiMahiConfig(self.config, self.policy, self.client_environment)
+    with pytest.raises(TypeError):
+      mm_config.record_shell_with_cmd(save_dir, ['a', 'command'])
 
   def test_link_cmd_without_environment(self):
     mm_config = MahiMahiConfig(self.config, self.policy)
-    assert not mm_config.link_cmd
+    assert not mm_config.link_cmd()
+
+  def test_link_cmd_without_trace_file_name(self):
+    mm_config = MahiMahiConfig(self.config, self.policy, self.client_environment)
+    with pytest.raises(TypeError):
+      mm_config.link_cmd()
 
   def test_link_cmd_with_environment(self):
     def test_link_cmd(network_type: NetworkType, network_speed: NetworkSpeed, device_speed: DeviceSpeed):
@@ -66,11 +79,12 @@ class TestMahiMahiConfig():
       latency = random.randint(*network_to_latency_range(network_type))
       cpu_slowdown = device_speed_to_cpu_slowdown(device_speed)
       env = ClientEnvironment(network_type, network_speed, device_speed, bandwidth, latency, cpu_slowdown)
-      link_cmd = MahiMahiConfig(self.config, self.policy, env).link_cmd
+      trace_file = '/tmp/trace_file'
+      link_cmd = MahiMahiConfig(self.config, self.policy, env).link_cmd(trace_file)
       return (
         link_cmd[0] == 'mm-link' and
-        link_cmd[1].startswith('<(echo \'') and
-        link_cmd[2] == link_cmd[1] and
+        link_cmd[1] == trace_file and
+        link_cmd[2] == trace_file and
         link_cmd[3] == '--'
       )
 
@@ -99,8 +113,9 @@ class TestMahiMahiConfig():
     assert delay_cmd[1] == str(self.client_environment.latency // 2)
 
   def test_proxy_replay_cmd(self):
+    push_config_file_name = '/tmp/push_config'
     mm_config = MahiMahiConfig(self.config, self.policy)
-    proxy_replay_cmd = mm_config.proxy_replay_cmd
+    proxy_replay_cmd = mm_config.proxy_replay_cmd(push_config_file_name)
     assert proxy_replay_cmd[0] == 'mm-proxyreplay'
     assert proxy_replay_cmd[1] == self.config.env_config.replay_dir
     assert proxy_replay_cmd[2] == self.config.nghttpx_bin
@@ -108,6 +123,7 @@ class TestMahiMahiConfig():
     assert proxy_replay_cmd[3].endswith('reverse_proxy_key.pem')
     assert proxy_replay_cmd[4].startswith(self.config.mahimahi_cert_dir)
     assert proxy_replay_cmd[4].endswith('reverse_proxy_cert.pem')
+    assert proxy_replay_cmd[5] == push_config_file_name
 
   def test_record_cmd(self):
     save_dir = '/tmp/save_dir'
@@ -128,3 +144,9 @@ class TestMahiMahiConfig():
     for (parent, deps) in self.policy:
       assert parent.url in formatted_push_policy
       assert all(dep.url in formatted_push_policy for dep in deps)
+
+  def test_formatted_trace_file(self):
+    mm_config = MahiMahiConfig(self.config, self.policy, self.client_environment)
+    trace_lines = trace_for_kbps(self.client_environment.bandwidth)
+    formatted = format_trace_lines(trace_lines)
+    assert mm_config.formatted_trace_file == formatted
