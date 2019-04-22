@@ -34,7 +34,8 @@ class Resource(NamedTuple):
 
 class PushGroup(NamedTuple):
   """ PushGroup collects a group of resources for the same domain """
-  group_name: str
+  id: int
+  name: str
   resources: List[Resource]
   trainable: bool = True
 

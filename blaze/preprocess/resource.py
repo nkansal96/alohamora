@@ -12,8 +12,8 @@ def resource_list_to_push_groups(res_list: List[Resource], train_domain_suffix="
   # map domain to push group
   domain_to_push_group = {domain: i for (i, domain) in enumerate(domains)}
   # create the push groups
-  push_groups = [PushGroup(group_name=domain, resources=[], trainable=domain.endswith(train_domain_suffix))
-                 for domain in domains]
+  push_groups = [PushGroup(id=i, name=domain, resources=[], trainable=domain.endswith(train_domain_suffix))
+                 for (i, domain) in enumerate(domains)]
 
   for (order, res) in enumerate(res_list):
     url = Url.parse(res.url)

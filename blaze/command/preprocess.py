@@ -57,12 +57,14 @@ def view_manifest(args):
 
   print('[[ Request URL ]]\n{}\n'.format(env_config.request_url))
   print('[[ Replay Dir ]]\n{}\n'.format(env_config.replay_dir))
+  print('[[ Trainable Groups ]]\n{}\n'.format('\n'.join(group.name for group in env_config.push_groups
+                                                        if group.trainable)))
   print('[[ Push Groups]]')
 
-  for i, group in enumerate(env_config.push_groups):
+  for group in env_config.push_groups:
     print('  [{id}: {name} ({num} resources)]'.format(
-      id=i,
-      name=group.group_name,
+      id=group.id,
+      name=group.name,
       num=len(group.resources),
     ))
     for res in group.resources:

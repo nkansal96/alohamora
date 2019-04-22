@@ -32,7 +32,7 @@ class ActionSpace(gym.spaces.Discrete):
         if source.source_id != 0:
           self.push_resources.append(source)
         for push in group.resources[source.source_id+1:]:
-          self.action_id_map[(source.group_id, source.source_id, push.source_id)] = len(self.actions)
+          self.action_id_map[(group.id, source.source_id, push.source_id)] = len(self.actions)
           self.actions.append(Action(len(self.actions), source, push))
     self.push_resources.sort(key=lambda r: r.order)
     super(ActionSpace, self).__init__(len(self.actions))
@@ -52,7 +52,8 @@ class ActionSpace(gym.spaces.Discrete):
     g = push_res.group_id
 
     # Choose a source URL
-    source_resources = [res for res in self.push_groups[g].resources if res.order < push_res.order]
+    group = next(group for group in self.push_groups if group.id == g)
+    source_resources = [res for res in group.resources if res.order < push_res.order]
     source_resources.sort(key=lambda r: r.order)
     j = len(source_resources) - 1 - (self.rand.geometric(0.2) - 1) % len(source_resources)
     s = source_resources[j].source_id
