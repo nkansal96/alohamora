@@ -43,10 +43,10 @@ class TestMahiMahiConfig():
     cmd = mm_config.proxy_replay_shell_with_cmd(push_config_file_name, shell_cmd)
 
     assert cmd == (
-      mm_config.delay_cmd +
-      mm_config.link_cmd +
       mm_config.proxy_replay_cmd +
       [push_config_file_name] +
+      mm_config.delay_cmd +
+      mm_config.link_cmd +
       shell_cmd
     )
 
