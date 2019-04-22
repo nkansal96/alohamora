@@ -35,7 +35,8 @@ class TestResource():
 class TestPushGroup():
   def test_compiles(self):
     p = PushGroup(
-      group_name='example.com',
+      id=0,
+      name='example.com',
       resources=[],
     )
     assert isinstance(p, PushGroup)
@@ -58,7 +59,7 @@ class TestEnvironmentConfig():
       assert c.replay_dir == loaded_c.replay_dir
       assert len(c.push_groups) == len(loaded_c.push_groups)
       for i, group in enumerate(c.push_groups):
-        assert loaded_c.push_groups[i].group_name == group.group_name
+        assert loaded_c.push_groups[i].name == group.name
         assert len(loaded_c.push_groups[i].resources) == len(group.resources)
         for j, res in enumerate(group.resources):
           assert loaded_c.push_groups[i].resources[j] == res

@@ -64,8 +64,11 @@ class TestEnvironment():
 
   def test_initialize_environment_chooses_random_default_push_group(self):
     assert not self.environment.policy.push_to_source
-    non_trainable_group = self.environment.env_config.push_groups[-1]
+    # there is exactly one non-trainable group, so that would be the one that is
+    # "randomly" selected
+    non_trainable_group = next(group for group in self.environment.env_config.push_groups if not group.trainable)
     source = non_trainable_group.resources[0]
+
     assert len(self.environment.policy.default_source_to_push) == 1
     assert source in self.environment.policy.default_source_to_push
     assert (len(self.environment.policy.default_source_to_push[source])

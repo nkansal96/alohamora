@@ -28,7 +28,7 @@ class Environment(gym.Env):
     self.trainable_push_groups = [group for group in self.env_config.push_groups if group.trainable]
     log.info(
       'initialized trainable push groups',
-      groups=[group.group_name for group in self.trainable_push_groups],
+      groups=[group.name for group in self.trainable_push_groups],
     )
 
     self.observation_space = get_observation_space()
@@ -62,7 +62,7 @@ class Environment(gym.Env):
         self.policy.add_default_action(default_group.resources[0], push)
       log.info(
         'chose group to auto push',
-        group=default_group.group_name,
+        group=default_group.name,
         rules_added=len(default_group.resources) - 1
       )
 
