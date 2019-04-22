@@ -67,7 +67,8 @@ def get_metrics(config: Config, mahimahi_config: MahiMahiConfig) -> Result:
       f.write(mahimahi_config.formatted_trace_file)
       log.debug('wrote formatted trace file', file=trace_file)
 
-    cmd = mahimahi_config.proxy_replay_shell_with_cmd(push_policy_file, trace_file, [config.pwmetrics_bin, '--config', config_file])
+    pwmetrics_cmd = [config.pwmetrics_bin, '--config', config_file]
+    cmd = mahimahi_config.proxy_replay_shell_with_cmd(push_policy_file, trace_file, pwmetrics_cmd)
     # cwd='/' to write the output to the correct temporary folder. the folder
     # path is an absolute directory but there's a bug in pwmetrics that uses it
     # as a relative path despite the leading '/', so cwd to '/' to make it work
