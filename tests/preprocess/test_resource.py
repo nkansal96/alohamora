@@ -11,26 +11,28 @@ class TestResourceListToPushGroups():
   def test_resource_list_to_push_groups(self):
     push_groups = resource_list_to_push_groups(self.resources)
     for g, group in enumerate(push_groups):
+      assert group.id == g
+      assert group.name == self.push_groups[g].name
       assert group.trainable
-      assert group.group_name == self.push_groups[g].group_name
       for res, actual in zip(group.resources, self.push_groups[g].resources):
         assert res.url == actual.url
         assert res.order == actual.order
         assert res.type == actual.type
         assert res.source_id == actual.source_id
-        assert res.group_id == g
+        assert res.group_id == group.id
 
   def test_resource_list_to_push_groups_with_domain_suffix(self):
     push_groups = resource_list_to_push_groups(self.resources, train_domain_suffix="example.com")
     for g, group in enumerate(push_groups):
+      assert group.id == g
+      assert group.name == self.push_groups[g].name
       assert group.trainable == self.push_groups[g].trainable
-      assert group.group_name == self.push_groups[g].group_name
       for res, actual in zip(group.resources, self.push_groups[g].resources):
         assert res.url == actual.url
         assert res.order == actual.order
         assert res.type == actual.type
         assert res.source_id == actual.source_id
-        assert res.group_id == g
+        assert res.group_id == group.id
 
 class TestConvertPolicyResourceToEnvironmentResource():
   def test_convert_policy_resource_to_environment_resource(self):

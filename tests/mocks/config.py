@@ -11,33 +11,46 @@ from blaze.mahimahi.mahimahi import MahiMahiConfig
 def get_push_groups() -> List[PushGroup]:
   return [
     PushGroup(
-      group_name='example.com',
+      id=0,
+      name='example.com',
       trainable=True,
       resources=[
         Resource(url='http://example.com/A', size=1024, order=0, group_id=0, source_id=0, type=ResourceType.IMAGE),
-        Resource(url='http://example.com/B', size=1024, order=3, group_id=0, source_id=1, type=ResourceType.IMAGE),
-        Resource(url='http://example.com/C', size=1024, order=4, group_id=0, source_id=2, type=ResourceType.IMAGE),
-        Resource(url='http://example.com/F', size=1024, order=6, group_id=0, source_id=3, type=ResourceType.IMAGE),
+        Resource(url='http://example.com/B', size=1024, order=4, group_id=0, source_id=1, type=ResourceType.IMAGE),
+        Resource(url='http://example.com/C', size=1024, order=7, group_id=0, source_id=2, type=ResourceType.IMAGE),
+        Resource(url='http://example.com/F', size=1024, order=11, group_id=0, source_id=3, type=ResourceType.IMAGE),
       ],
     ),
     PushGroup(
-      group_name='sub.example.com',
+      id=1,
+      name='img.example.com',
       trainable=True,
       resources=[
-        Resource(url='http://sub.example.com/D', size=1024, order=1, group_id=1, source_id=0, type=ResourceType.IMAGE),
-        Resource(url='http://sub.example.com/E', size=1024, order=2, group_id=1, source_id=1, type=ResourceType.IMAGE),
-        Resource(url='http://sub.example.com/G', size=1024, order=5, group_id=1, source_id=2, type=ResourceType.IMAGE),
+        Resource(url='http://img.example.com/D', size=1024, order=8, group_id=1, source_id=0, type=ResourceType.IMAGE),
+        Resource(url='http://img.example.com/E', size=1024, order=10, group_id=1, source_id=1, type=ResourceType.IMAGE),
+        Resource(url='http://img.example.com/G', size=1024, order=12, group_id=1, source_id=2, type=ResourceType.IMAGE),
       ],
     ),
     PushGroup(
-      group_name='zz.ads.googleads.com',
+      id=2,
+      name='serve.ads.googleads.com',
       trainable=False,
       resources=[
-        Resource(url='http://zz.ads.googleads.com/script.1.js', size=1024, order=7, group_id=2, source_id=0, type=ResourceType.SCRIPT),
-        Resource(url='http://zz.ads.googleads.com/script.2.js', size=1024, order=8, group_id=2, source_id=1, type=ResourceType.SCRIPT),
-        Resource(url='http://zz.ads.googleads.com/script.3.js', size=1024, order=9, group_id=2, source_id=2, type=ResourceType.SCRIPT),
+        Resource(url='http://serve.ads.googleads.com/script.1.js', size=1024, order=3, group_id=2, source_id=0, type=ResourceType.SCRIPT),
+        Resource(url='http://serve.ads.googleads.com/script.2.js', size=1024, order=6, group_id=2, source_id=1, type=ResourceType.SCRIPT),
+        Resource(url='http://serve.ads.googleads.com/script.3.js', size=1024, order=9, group_id=2, source_id=2, type=ResourceType.SCRIPT),
       ],
     ),
+    PushGroup(
+      id=3,
+      name='static.example.com',
+      trainable=True,
+      resources=[
+        Resource(url='http://static.example.com/script.js', size=1024, order=1, group_id=3, source_id=0, type=ResourceType.SCRIPT),
+        Resource(url='http://static.example.com/font.woff', size=1024, order=2, group_id=3, source_id=1, type=ResourceType.FONT),
+        Resource(url='http://static.example.com/image.jpg', size=1024, order=5, group_id=3, source_id=2, type=ResourceType.IMAGE),
+      ],
+    )
   ]
 
 def convert_push_groups_to_push_pairs(push_groups: List[PushGroup]) -> List[Tuple[Resource, Resource]]:
@@ -49,7 +62,7 @@ def convert_push_groups_to_push_pairs(push_groups: List[PushGroup]) -> List[Tupl
 def get_env_config() -> EnvironmentConfig:
   return EnvironmentConfig(
     replay_dir='/tmp/replay_dir',
-    request_url='http://example.com/',
+    request_url='http://cs.ucla.edu/',
     push_groups=get_push_groups(),
   )
 

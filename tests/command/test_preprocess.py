@@ -86,7 +86,7 @@ class TestViewManifest():
     printed_text = '\n'.join(call[0][0] for call in mock_print.call_args_list if call[0])
     assert config.replay_dir in printed_text
     assert config.request_url in printed_text
-    assert all(group.group_name in printed_text for group in config.push_groups)
+    assert all(group.name in printed_text for group in config.push_groups)
     assert all(Url.parse(res.url).resource[:61] in printed_text
                for group in config.push_groups
                for res in group.resources)
