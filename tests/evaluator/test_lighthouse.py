@@ -1,5 +1,6 @@
 import io
 import json
+import os
 import re
 import subprocess
 
@@ -86,12 +87,15 @@ class TestGetMetrics():
     assert mock_open.call_args_list[0][0][0].startswith(tmp_dir)
     assert mock_open.call_args_list[1][0][0].startswith(tmp_dir)
     assert mock_open.call_args_list[2][0][0].startswith(tmp_dir)
+    assert mock_open.call_args_list[3][0][0].startswith(tmp_dir)
     assert is_valid_path(mock_open.call_args_list[0][0][0])
     assert is_valid_path(mock_open.call_args_list[1][0][0])
     assert is_valid_path(mock_open.call_args_list[2][0][0])
+    assert is_valid_path(mock_open.call_args_list[3][0][0])
     assert mock_open.call_args_list[0][0][1] == 'w'
     assert mock_open.call_args_list[1][0][1] == 'w'
-    assert mock_open.call_args_list[2][0][1] == 'r'
+    assert mock_open.call_args_list[2][0][1] == 'w'
+    assert mock_open.call_args_list[3][0][1] == 'r'
     assert metrics.speed_index == 1000
 
   @mock.patch('tempfile.TemporaryDirectory')
@@ -103,22 +107,20 @@ class TestGetMetrics():
       returncode=0,
       stdout=io.StringIO(basic_pw_output_json())
     )
-    mock_TemporaryDirectory.return_value.__enter__.return_value = '/tmp/blaze_test_123'
+    mock_TemporaryDirectory.return_value.__enter__.return_value = ''
     metrics = get_metrics(self.config, self.mahimahi_config)
-    mahimahi_cmd = self.mahimahi_config.proxy_replay_shell_with_cmd('file', [])
+    mahimahi_cmd = self.mahimahi_config.proxy_replay_shell_with_cmd('mm_push_policy', 'trace', [self.config.pwmetrics_bin, '--config', 'pw_config.js'])
     assert mock_run.called_once()
-    assert mock_run.call_args_list[0].cmd.startswith(' '.join(mahimahi_cmd))
+    assert mock_run.call_args_list[0][0][0].startswith(' '.join(mahimahi_cmd))
     assert metrics.speed_index == 1000
 
-  @mock.patch('tempfile.TemporaryDirectory')
   @mock.patch('builtins.open', new_callable=mock.mock_open, read_data=basic_pw_output_json())
   @mock.patch('subprocess.run')
-  def test_get_metrics_should_raise_if_subprocess_error(self, mock_run, mock_open, mock_TemporaryDirectory):
+  def test_get_metrics_should_raise_if_subprocess_error(self, mock_run, mock_open):
     mock_run.return_value = subprocess.CompletedProcess(
       args=[],
       returncode=1,
       stdout=io.StringIO(basic_pw_output_json())
     )
-    mock_TemporaryDirectory.return_value.__enter__.return_value = '/tmp/blaze_test_123'
     with pytest.raises(subprocess.CalledProcessError):
       assert get_metrics(self.config, self.mahimahi_config).speed_index == 1000
