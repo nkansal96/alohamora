@@ -24,10 +24,10 @@ class MahiMahiConfig():
     to start a link shell and proxy replay shell with the given command
     """
     return [
-      *self.delay_cmd,
-      *self.link_cmd,
       *self.proxy_replay_cmd,
       push_config_file_name,
+      *self.delay_cmd,
+      *self.link_cmd,
       *cmd
     ]
 
