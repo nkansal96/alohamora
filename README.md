@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/nkansal96/blaze.svg?branch=master)](https://travis-ci.com/nkansal96/blaze)
+
 # Requirements
 
 1. Install Node.js v10 or higher
