@@ -16,6 +16,16 @@ class TestTrain():
     with pytest.raises(IOError):
       train(['experiment_name', '--dir', '/tmp/tmp_dir', '--manifest_file', '/non/existent/file'])
 
+  def test_train_with_resume_and_no_resume(self):
+    with pytest.raises(SystemExit):
+      train([
+        'experiment_name',
+        '--dir', '/tmp/model_dir',
+        '--manifest_file', '/tmp/manifest_file',
+        '--resume',
+        '--no-resume',
+      ])
+
   @mock.patch('blaze.model.apex.train')
   def test_train_apex(self, mock_train):
     env_config = get_env_config()
@@ -59,6 +69,58 @@ class TestTrain():
         '--timesteps', str(train_config.max_timesteps),
         '--model', 'PPO',
         '--manifest_file', env_file.name,
+      ])
+
+    mock_train.assert_called_once()
+    mock_train.assert_called_with(train_config, config)
+
+  @mock.patch('blaze.model.apex.train')
+  def test_train_resume(self, mock_train):
+    env_config = get_env_config()
+    train_config = TrainConfig(
+      experiment_name='experiment_name',
+      model_dir='/tmp/tmp_dir',
+      num_cpus=4,
+      max_timesteps=100,
+      resume=True
+    )
+    config = get_config(env_config)
+    with tempfile.NamedTemporaryFile() as env_file:
+      env_config.save_file(env_file.name)
+      train([
+        train_config.experiment_name,
+        '--dir', train_config.model_dir,
+        '--cpus', str(train_config.num_cpus),
+        '--timesteps', str(train_config.max_timesteps),
+        '--model', 'APEX',
+        '--manifest_file', env_file.name,
+        '--resume',
+      ])
+
+    mock_train.assert_called_once()
+    mock_train.assert_called_with(train_config, config)
+
+  @mock.patch('blaze.model.apex.train')
+  def test_train_no_resume(self, mock_train):
+    env_config = get_env_config()
+    train_config = TrainConfig(
+      experiment_name='experiment_name',
+      model_dir='/tmp/tmp_dir',
+      num_cpus=4,
+      max_timesteps=100,
+      resume=False
+    )
+    config = get_config(env_config)
+    with tempfile.NamedTemporaryFile() as env_file:
+      env_config.save_file(env_file.name)
+      train([
+        train_config.experiment_name,
+        '--dir', train_config.model_dir,
+        '--cpus', str(train_config.num_cpus),
+        '--timesteps', str(train_config.max_timesteps),
+        '--model', 'APEX',
+        '--manifest_file', env_file.name,
+        '--no-resume',
       ])
 
     mock_train.assert_called_once()

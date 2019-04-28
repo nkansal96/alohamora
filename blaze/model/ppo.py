@@ -22,7 +22,7 @@ def train(train_config: TrainConfig, config: Config):
       },
       "checkpoint_at_end": True,
       "checkpoint_freq": 1,
-      "max_failures": 20,
+      "max_failures": 1000,
       "config": {
         "sample_batch_size": 32,
         "train_batch_size": 256,
