@@ -43,9 +43,12 @@ class Environment(gym.Env):
     """ Initialize the environment """
     log.info(
       'initialized environment',
-      network_type=client_environment.network_type,
-      network_speed=client_environment.network_speed,
-      device_speed=client_environment.device_speed,
+      network_type=client.NetworkType(client_environment.network_type),
+      network_speed=client.NetworkSpeed(client_environment.network_speed),
+      device_speed=client.DeviceSpeed(client_environment.device_speed),
+      bandwidth=client_environment.bandwidth,
+      latency=client_environment.latency,
+      cpu_slowdown=client_environment.cpu_slowdown,
     )
     self.client_environment = client_environment
     self.analyzer.reset(self.client_environment)
@@ -60,26 +63,17 @@ class Environment(gym.Env):
       default_group = random.choice(candidate_push_groups)
       for push in default_group.resources[1:]:
         self.policy.add_default_action(default_group.resources[0], push)
-      log.info(
-        'chose group to auto push',
-        group=default_group.name,
-        rules_added=len(default_group.resources) - 1
-      )
+      log.info('chose group to auto push', group=default_group.name, rules_added=len(default_group.resources) - 1)
 
   def step(self, action):
     decoded_action = self.action_space.decode_action_id(action)
     action_applied = self.policy.apply_action(action)
+    log.info('trying action', action=repr(decoded_action), total_actions=self.policy.actions_taken)
 
     reward = NOOP_ACTION_REWARD
     if action_applied:
       reward = self.analyzer.get_reward(self.policy) or NOOP_ACTION_REWARD
-
-    log.info(
-      'took action',
-      action=repr(decoded_action),
-      total_actions=self.policy.actions_taken,
-      reward=reward,
-    )
+    log.info('got reward', action=repr(decoded_action), reward=reward)
 
     return self.observation, reward, self.policy.completed, {'action': decoded_action}
 
