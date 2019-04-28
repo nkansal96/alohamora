@@ -70,7 +70,7 @@ class TestPolicy():
     assert len(output_policy) == 1
     assert len(output_policy[0][1]) == 1
     assert output_policy[0][0] == action.source
-    assert output_policy[0][1][0] == action.push
+    assert output_policy[0][1] == set([action.push])
 
   def test_apply_action_same_source_resource(self):
     action_space = ActionSpace(self.push_groups)
@@ -87,8 +87,7 @@ class TestPolicy():
     assert len(output_policy[0][1]) == 2
     assert output_policy[0][0] == action_1.source
     assert output_policy[0][0] == action_2.source
-    assert output_policy[0][1][0] == action_1.push
-    assert output_policy[0][1][1] == action_2.push
+    assert output_policy[0][1] == set([action_1.push, action_2.push])
 
   def test_apply_multiple_actions(self):
     action_space = ActionSpace(self.push_groups)

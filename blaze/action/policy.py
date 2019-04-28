@@ -20,8 +20,8 @@ class Policy():
     self.total_actions = len(action_space)
     self.actions_taken = 0
     self.push_to_source = {}
-    self.source_to_push = collections.defaultdict(list)
-    self.default_source_to_push = collections.defaultdict(list)
+    self.source_to_push = collections.defaultdict(set)
+    self.default_source_to_push = collections.defaultdict(set)
 
   def __iter__(self):
     # This function assumes that the keys in self.source_to_push and self.default_source_to_push
@@ -50,7 +50,7 @@ class Policy():
     action = self.action_space.decode_action_id(action_id)
     if not action.is_noop:
       self.push_to_source[action.push] = action.source
-      self.source_to_push[action.source].append(action.push)
+      self.source_to_push[action.source].add(action.push)
       self.action_space.use_action(action)
     self.actions_taken += 1
     return not action.is_noop
@@ -60,7 +60,7 @@ class Policy():
     Adds a default entry to the push policy, which is always pushed but not
     observable to the environment
     """
-    self.default_source_to_push[source].append(push)
+    self.default_source_to_push[source].add(push)
 
   def resource_pushed_from(self, push: Resource) -> Optional[Resource]:
     """
