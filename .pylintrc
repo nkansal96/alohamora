@@ -341,6 +341,7 @@ function-naming-style=snake_case
 good-names=a,
            b,
            c,
+           e,
            f,
            i,
            j,

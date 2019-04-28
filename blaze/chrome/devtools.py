@@ -46,4 +46,8 @@ def capture_har(url: str, config: Config) -> Har:
     finally:
       log.debug('terminating chrome process')
       chrome_proc.terminate()
+      # wait 1 second for Chrome process to terminate, otherwise there's a race
+      # condition between chrome deleting its files in user-data-fir and the
+      # TemporaryDirectory deleting the files in __exit__
+      time.sleep(1)
     return har_from_json(har_capture_proc.stdout)

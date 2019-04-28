@@ -8,6 +8,7 @@ import gym
 import numpy as np
 
 from blaze.config.environment import PushGroup, Resource
+from blaze.logger import logger
 from .action import Action
 
 class ActionSpace(gym.spaces.Discrete):
@@ -35,6 +36,7 @@ class ActionSpace(gym.spaces.Discrete):
           self.action_id_map[(group.id, source.source_id, push.source_id)] = len(self.actions)
           self.actions.append(Action(len(self.actions), source, push))
     self.push_resources.sort(key=lambda r: r.order)
+    logger.with_namespace('action_space').debug('initialized push resources', total=len(self.push_resources))
     super(ActionSpace, self).__init__(len(self.actions))
 
   def seed(self, seed):
@@ -73,11 +75,14 @@ class ActionSpace(gym.spaces.Discrete):
     of pushable resources, effectively removing a subset of the actions to prevent
     pushing the same resource twice. If the action was a noop, it doesn't do anything
     """
+    log = logger.with_namespace('action_space.use_action')
     if action.is_noop:
+      log.debug('noop: doing nothing', action=action)
       return
     for i, res in enumerate(self.push_resources):
       if res.order == action.push.order:
         del self.push_resources[i]
+        log.debug('removed push resource', push=action.push.url, remaining=len(self.push_resources))
         break
 
   def __len__(self):

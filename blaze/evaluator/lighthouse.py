@@ -54,7 +54,9 @@ def get_metrics(config: Config, mahimahi_config: MahiMahiConfig) -> Result:
         runs=1,
         output_path=output_file,
         chrome_path=config.chrome_bin,
-        chrome_flags=' '.join(get_chrome_flags(tmp_dir)),
+        # for some reason chrome fails to launch through chrome-launcher if '--no-sandbox'
+        # is not specified: https://github.com/GoogleChrome/chrome-launcher/issues/107
+        chrome_flags=' '.join(get_chrome_flags(tmp_dir, extra_flags=['--no-sandbox'])),
         cpu_slowdown=mahimahi_config.client_environment.cpu_slowdown,
       ))
       log.debug('wrote lighthouse config', file=config_file)
@@ -77,11 +79,14 @@ def get_metrics(config: Config, mahimahi_config: MahiMahiConfig) -> Result:
       ' '.join(cmd),
       shell=True,
       cwd='/',
-      stdout=subprocess.DEVNULL,
-      stderr=subprocess.DEVNULL
+      stdout=subprocess.PIPE,
+      stderr=subprocess.PIPE
     )
-    proc.check_returncode()
-
-    with open(output_file, 'r') as f:
-      log.debug('received results', file=output_file)
-      return parse_pw_output(json.load(f))
+    try:
+      proc.check_returncode()
+      with open(output_file, 'r') as f:
+        log.debug('received results', file=output_file)
+        return parse_pw_output(json.load(f))
+    except subprocess.CalledProcessError as e:
+      log.error('lighthouse error', code=e.returncode, stdout=e.stdout, stderr=e.stderr, cmd=e.cmd)
+      raise
