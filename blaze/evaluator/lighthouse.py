@@ -51,7 +51,9 @@ def get_metrics(config: Config, mahimahi_config: MahiMahiConfig) -> Result:
     with open(config_file, 'w') as f:
       f.write(CONFIG_TEMPLATE.format(
         url=config.env_config.request_url,
-        runs=1,
+        # use 5 runs and take the median of the results -- in high latency environments
+        # single-runs typically fail
+        runs=5,
         output_path=output_file,
         chrome_path=config.chrome_bin,
         # for some reason chrome fails to launch through chrome-launcher if '--no-sandbox'
