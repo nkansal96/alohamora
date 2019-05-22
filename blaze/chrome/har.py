@@ -7,8 +7,9 @@ import json
 from types import SimpleNamespace
 from typing import NewType, Union
 
-Har = NewType('Har', SimpleNamespace)
+Har = NewType("Har", SimpleNamespace)
+
 
 def har_from_json(har_json: Union[str, bytes]) -> Har:
-  """ Returns a Har instance from JSON data """
-  return json.loads(har_json, object_hook=lambda d: SimpleNamespace(**d))
+    """ Returns a Har instance from JSON data """
+    return json.loads(har_json, object_hook=lambda d: SimpleNamespace(**d))

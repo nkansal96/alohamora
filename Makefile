@@ -20,6 +20,12 @@ clean:
 lint:
 	pylint blaze
 
+format:
+	black --line-length 120 --target-version py36 --exclude '.*_pb2.*' blaze tests
+
+check-format:
+	black --line-length 120 --target-version py36 --exclude '.*_pb2.*' --check blaze tests
+
 test:
 	pytest --cov=blaze -p no:warnings
 	coverage html
