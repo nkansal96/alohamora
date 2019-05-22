@@ -8,4 +8,5 @@ install:
   - pip install -r requirements.txt
 script:
   - make lint
+  - make check-format
   - make test-ci
