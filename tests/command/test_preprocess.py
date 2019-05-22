@@ -50,7 +50,7 @@ class TestPreprocess():
             'http://cs.ucla.edu',
             '--output', output_file.name,
             '--record_dir', output_dir,
-            '--train_domain_suffix', 'reddit.com',
+            '--train_domain_globs', '*reddit.com',
           ])
 
         config = EnvironmentConfig.load_file(output_file.name)

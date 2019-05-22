@@ -41,7 +41,7 @@ class PolicyService(policy_service_pb2_grpc.PolicyServiceServicer):
     url = Url.parse(page.url)
     page_resources = sorted(page.resources, key=lambda r: r.timestamp)
     page_resources = list(map(convert_policy_resource_to_environment_resource, page_resources))
-    push_groups = resource_list_to_push_groups(page_resources, train_domain_suffix=url.domain)
+    push_groups = resource_list_to_push_groups(page_resources, train_domain_globs=["*{}".format(url.domain)])
     # convert page network_type and device_speed to client environment
     client_environment = client.ClientEnvironment(
       device_speed=client.DeviceSpeed(page.device_speed),
