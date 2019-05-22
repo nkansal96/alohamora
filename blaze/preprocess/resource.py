@@ -6,7 +6,7 @@ from blaze.config.environment import PushGroup, Resource, ResourceType
 from blaze.proto import policy_service_pb2
 from .url import Url
 
-def resource_list_to_push_groups(res_list: List[Resource], train_domain_globs=[]) -> List[PushGroup]:
+def resource_list_to_push_groups(res_list: List[Resource], train_domain_globs=None) -> List[PushGroup]:
   """ Convert an ordered list of resources to a list of PushGroups """
   # extract the list of domains and sort
   domains = sorted(list(set(Url.parse(res.url).domain for res in res_list)))
