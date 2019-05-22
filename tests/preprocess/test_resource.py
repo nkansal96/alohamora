@@ -22,7 +22,7 @@ class TestResourceListToPushGroups():
         assert res.group_id == group.id
 
   def test_resource_list_to_push_groups_with_domain_suffix(self):
-    push_groups = resource_list_to_push_groups(self.resources, train_domain_suffix="example.com")
+    push_groups = resource_list_to_push_groups(self.resources, train_domain_globs=["*example.com"])
     for g, group in enumerate(push_groups):
       assert group.id == g
       assert group.name == self.push_groups[g].name
