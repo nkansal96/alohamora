@@ -53,6 +53,10 @@ class EnvironmentConfig(NamedTuple):
     request_url: str
     push_groups: List[PushGroup]
 
+    @property
+    def trainable_push_groups(self):
+        return [group for group in self.push_groups if group.trainable]
+
     def save_file(self, file_name):
         """ Serialize the EnvironmentConfig to the given file path """
         pickle.dump(self, open(file_name, "wb"))
