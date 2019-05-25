@@ -32,8 +32,7 @@ class ModelInstance:
         if self.policy is not None:
             return self.policy
         # create ActionSpace and Policy objects to record the actions taken by the agent
-        trainable_push_groups = [group for group in self.env_config.push_groups if group.trainable]
-        action_space = ActionSpace(trainable_push_groups)
+        action_space = ActionSpace(self.env_config.trainable_push_groups)
         self.policy = Policy(action_space)
         # create the initial observation from the environment that gets passed to the agent
         observation = get_observation(self.client_environment, self.env_config.push_groups, self.policy)
