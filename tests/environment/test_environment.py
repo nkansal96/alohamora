@@ -22,7 +22,7 @@ def get_action(action_space):
 class TestEnvironment:
     def setup(self):
         self.environment = Environment(get_config())
-        self.trainable_push_groups = [group for group in self.environment.env_config.push_groups if group.trainable]
+        self.trainable_push_groups = self.environment.env_config.trainable_push_groups
 
     def test_init(self):
         env = self.environment

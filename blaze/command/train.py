@@ -1,5 +1,6 @@
 """ Implements the commands for training """
 import multiprocessing
+import os
 import sys
 
 from blaze.config.config import get_config
@@ -14,6 +15,7 @@ from . import command
 @command.argument("--dir", help="The location to save the model", required=True)
 @command.argument("--model", help="The RL technique to use while training", default="APEX", choices=["APEX", "PPO"])
 @command.argument("--cpus", help="Number of CPUs to use for training", default=multiprocessing.cpu_count(), type=int)
+@command.argument("--eval_results_dir", help="Directory to store intermediate policy evalution results (for debugging)", default=None, type=str)
 @command.argument("--timesteps", help="Maximum number of timesteps to train for", default=10000000, type=int)
 @command.argument(
     "--manifest_file",
@@ -42,7 +44,12 @@ def train(args):
         )
         sys.exit(1)
 
-    log.info("starting train", name=args.name, model=args.model)
+    # check and create eval results directory
+    if args.eval_results_dir:
+        os.makedirs(args.eval_results_dir, exist_ok=True)
+
+    log.info("starting train", name=args.name, model=args.model, eval_results_dir=args.eval_results_dir)
+
     # import specified model
     if args.model == "APEX":
         from blaze.model import apex as model
@@ -55,5 +62,5 @@ def train(args):
         experiment_name=args.name, model_dir=args.dir, num_cpus=args.cpus, max_timesteps=args.timesteps, resume=resume
     )
     env_config = EnvironmentConfig.load_file(args.manifest_file)
-    config = get_config(env_config)
+    config = get_config(env_config, args.eval_results_dir)
     model.train(train_config, config)
