@@ -85,3 +85,14 @@ def get_random_client_environment():
         latency=random.randrange(*latency_range, 2),
         cpu_slowdown=cpu_slowdown,
     )
+
+def get_fast_mobile_client_environment():
+    """ Returns a ClientEnvironment with 40ms latency, 48 Mbps throughput, and no device slowdown """
+    return ClientEnvironment(
+        network_type=NetworkType.LTE,
+        network_speed=NetworkSpeed.FAST,
+        device_speed=DeviceSpeed.DESKTOP,
+        bandwidth=48000,
+        latency=40,
+        cpu_slowdown=1,
+    )
