@@ -1,3 +1,4 @@
+import os
 import pytest
 import tempfile
 from unittest import mock
@@ -30,6 +31,67 @@ class TestTrain:
                     "--no-resume",
                 ]
             )
+
+    @mock.patch("blaze.model.apex.train")
+    def test_train_with_non_existant_directory(self, mock_train):
+        env_config = get_env_config()
+        eval_dir = "/tmp/some_random_directory_that_doesnt_exist"
+        train_config = TrainConfig(
+            experiment_name="experiment_name", model_dir="/tmp/tmp_dir", num_cpus=4, max_timesteps=100
+        )
+        config = get_config(env_config, eval_dir)
+        with tempfile.NamedTemporaryFile() as env_file:
+            env_config.save_file(env_file.name)
+            try:
+                train(
+                    [
+                        train_config.experiment_name,
+                        "--dir",
+                        train_config.model_dir,
+                        "--cpus",
+                        str(train_config.num_cpus),
+                        "--timesteps",
+                        str(train_config.max_timesteps),
+                        "--model",
+                        "APEX",
+                        "--manifest_file",
+                        env_file.name,
+                        "--eval_results_dir",
+                        eval_dir
+                    ]
+                )
+                mock_train.assert_called_with(train_config, config)
+            finally:
+                os.rmdir(eval_dir)
+
+    @mock.patch("blaze.model.apex.train")
+    def test_train_with_existing_directory(self, mock_train):
+        env_config = get_env_config()
+        train_config = TrainConfig(
+            experiment_name="experiment_name", model_dir="/tmp/tmp_dir", num_cpus=4, max_timesteps=100
+        )
+        with tempfile.NamedTemporaryFile() as env_file:
+            env_config.save_file(env_file.name)
+            with tempfile.TemporaryDirectory() as eval_dir:
+                config = get_config(env_config, eval_dir)
+                train(
+                    [
+                        train_config.experiment_name,
+                        "--dir",
+                        train_config.model_dir,
+                        "--cpus",
+                        str(train_config.num_cpus),
+                        "--timesteps",
+                        str(train_config.max_timesteps),
+                        "--model",
+                        "APEX",
+                        "--manifest_file",
+                        env_file.name,
+                        "--eval_results_dir",
+                        eval_dir
+                    ]
+                )
+                mock_train.assert_called_with(train_config, config)
 
     @mock.patch("blaze.model.apex.train")
     def test_train_apex(self, mock_train):
