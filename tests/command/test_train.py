@@ -57,7 +57,7 @@ class TestTrain:
                         "--manifest_file",
                         env_file.name,
                         "--eval_results_dir",
-                        eval_dir
+                        eval_dir,
                     ]
                 )
                 mock_train.assert_called_with(train_config, config)
@@ -88,7 +88,7 @@ class TestTrain:
                         "--manifest_file",
                         env_file.name,
                         "--eval_results_dir",
-                        eval_dir
+                        eval_dir,
                     ]
                 )
                 mock_train.assert_called_with(train_config, config)
