@@ -102,10 +102,10 @@ class TestAnalyzer:
             files = glob.glob("{}/*.json".format(temp_dir))
             assert len(files) == 1
 
-            result = json.load(open(files[0], 'r'))
-            assert result['url'] == analyzer.config.env_config.request_url
-            assert result['speed_index'] == 10000
+            result = json.load(open(files[0], "r"))
+            assert result["url"] == analyzer.config.env_config.request_url
+            assert result["speed_index"] == 10000
             for (source_url, push_urls) in policy.as_dict.items():
-                assert sorted(result['policy'][source_url]) == sorted(push_urls)
+                assert sorted(result["policy"][source_url]) == sorted(push_urls)
             for (k, v) in analyzer.client_environment._asdict().items():
-                assert result['client_environment'][k] == v
+                assert result["client_environment"][k] == v

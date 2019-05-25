@@ -76,11 +76,15 @@ class Analyzer:
         if not dirname or not os.path.isdir(dirname):
             self.log.debug("skipping write_eval_result due to invalid eval_results_dir", eval_results_dir=dirname)
             return
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', dir=dirname, delete=False) as f:
-            json.dump({
-                "url": self.config.env_config.request_url,
-                "speed_index": speed_index,
-                "policy": policy.as_dict,
-                "client_environment": self.client_environment._asdict(),
-            }, f.file, indent=2)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", dir=dirname, delete=False) as f:
+            json.dump(
+                {
+                    "url": self.config.env_config.request_url,
+                    "speed_index": speed_index,
+                    "policy": policy.as_dict,
+                    "client_environment": self.client_environment._asdict(),
+                },
+                f.file,
+                indent=2,
+            )
             self.log.debug("wrote eval result", url=self.config.env_config.request_url, path=f.name)

@@ -86,6 +86,7 @@ def get_random_client_environment():
         cpu_slowdown=cpu_slowdown,
     )
 
+
 def get_fast_mobile_client_environment():
     """ Returns a ClientEnvironment with 40ms latency, 48 Mbps throughput, and no device slowdown """
     return ClientEnvironment(

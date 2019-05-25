@@ -27,7 +27,9 @@ class Environment(gym.Env):
 
         self.config = config
         self.env_config = config.env_config
-        log.info("initialized trainable push groups", groups=[group.name for group in self.env_config.trainable_push_groups])
+        log.info(
+            "initialized trainable push groups", groups=[group.name for group in self.env_config.trainable_push_groups]
+        )
 
         self.observation_space = get_observation_space()
         self.analyzer = Analyzer(self.config)

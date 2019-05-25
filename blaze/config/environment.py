@@ -55,6 +55,7 @@ class EnvironmentConfig(NamedTuple):
 
     @property
     def trainable_push_groups(self):
+        """ Returns the subset of push_groups that is trainable """
         return [group for group in self.push_groups if group.trainable]
 
     def save_file(self, file_name):

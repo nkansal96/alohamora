@@ -15,7 +15,12 @@ from . import command
 @command.argument("--dir", help="The location to save the model", required=True)
 @command.argument("--model", help="The RL technique to use while training", default="APEX", choices=["APEX", "PPO"])
 @command.argument("--cpus", help="Number of CPUs to use for training", default=multiprocessing.cpu_count(), type=int)
-@command.argument("--eval_results_dir", help="Directory to store intermediate policy evalution results (for debugging)", default=None, type=str)
+@command.argument(
+    "--eval_results_dir",
+    help="Directory to store intermediate policy evalution results (for debugging)",
+    default=None,
+    type=str,
+)
 @command.argument("--timesteps", help="Maximum number of timesteps to train for", default=10000000, type=int)
 @command.argument(
     "--manifest_file",
