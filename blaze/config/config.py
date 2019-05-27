@@ -29,13 +29,14 @@ class Config(NamedTuple):
     nghttpx_bin: str
     chrome_bin: str
     env_config: Optional[EnvironmentConfig] = None
+    eval_results_dir: Optional[str] = None
 
     def items(self):
         """ Return the dictionary items() method for this object """
         return self._asdict().items()  # pylint: disable=no-member
 
 
-def get_config(env_config: Optional[EnvironmentConfig] = None) -> Config:
+def get_config(env_config: Optional[EnvironmentConfig] = None, eval_results_dir: Optional[str] = None) -> Config:
     """
     get_config returns the runtime configuration, taking values from environment variables
     when available to override the defaults
@@ -47,4 +48,5 @@ def get_config(env_config: Optional[EnvironmentConfig] = None) -> Config:
         nghttpx_bin=os.environ.get("NGHTTPX_BIN", DEFAULT_NGHTTPX_BIN),
         chrome_bin=os.environ.get("CHROME_BIN", DEFAULT_CHROME_BIN),
         env_config=env_config,
+        eval_results_dir=eval_results_dir,
     )

@@ -42,15 +42,25 @@ class Policy:
     @property
     def observable(self):
         """
-    Returns the observable push policy, which is only the set of items that are a subset
-    of the trainable push groups
-    """
+        Returns the observable push policy, which is only the set of items that are a subset
+        of the trainable push groups
+        """
         return iter(self.source_to_push.items())
+
+    @property
+    def as_dict(self):
+        """
+        Constructs a dictionary representation of the push policy for JSON seralization
+        """
+        policy = {}
+        for source, push_list in self:
+            policy[source.url] = [p.url for p in push_list]
+        return policy
 
     def apply_action(self, action_id: int):
         """ Given an encoded action, applies the action towards the push policy """
         action = self.action_space.decode_action_id(action_id)
-        if not action.is_noop:
+        if not action.is_noop and action.push not in self.push_to_source:
             self.push_to_source[action.push] = action.source
             self.source_to_push[action.source].add(action.push)
             self.action_space.use_action(action)
@@ -59,15 +69,15 @@ class Policy:
 
     def add_default_action(self, source: Resource, push: Resource):
         """
-    Adds a default entry to the push policy, which is always pushed but not
-    observable to the environment
-    """
+        Adds a default entry to the push policy, which is always pushed but not
+        observable to the environment
+        """
         self.default_source_to_push[source].add(push)
 
     def resource_pushed_from(self, push: Resource) -> Optional[Resource]:
         """
-    Returns the resource that the given resource is pushed from, or None if none
-    """
+        Returns the resource that the given resource is pushed from, or None if none
+        """
         if push not in self.push_to_source:
             return None
         return self.push_to_source[push]

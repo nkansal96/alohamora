@@ -36,6 +36,16 @@ class TestPolicy:
             policy.apply_action(0)
         assert policy.completed
 
+    def test_as_dict(self):
+        action_space = ActionSpace(self.push_groups)
+        policy = Policy(action_space)
+        for _ in range(len(action_space)):
+            policy.apply_action(action_space.sample())
+
+        policy_dict = policy.as_dict
+        for (source, push) in policy:
+            assert all(p.url in policy_dict[source.url] for p in push)
+
     def test_apply_action_noop_as_first_action(self):
         action_space = ActionSpace(self.push_groups)
         policy = Policy(action_space)

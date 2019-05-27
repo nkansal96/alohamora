@@ -59,11 +59,7 @@ def view_manifest(args):
 
     print("[[ Request URL ]]\n{}\n".format(env_config.request_url))
     print("[[ Replay Dir ]]\n{}\n".format(env_config.replay_dir))
-    print(
-        "[[ Trainable Groups ]]\n{}\n".format(
-            "\n".join(group.name for group in env_config.push_groups if group.trainable)
-        )
-    )
+    print("[[ Trainable Groups ]]\n{}\n".format("\n".join(group.name for group in env_config.trainable_push_groups)))
     print("[[ Push Groups]]")
 
     for group in env_config.push_groups:

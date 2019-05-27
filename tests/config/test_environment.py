@@ -40,6 +40,12 @@ class TestEnvironmentConfig:
         c = EnvironmentConfig(replay_dir="/replay/dir", request_url="http://example.com", push_groups=[])
         assert isinstance(c, EnvironmentConfig)
 
+    def test_trainable_push_groups(self):
+        c = get_env_config()
+        assert all(group.trainable for group in c.trainable_push_groups)
+        assert all(group in c.push_groups for group in c.trainable_push_groups)
+        assert all(group not in c.trainable_push_groups for group in c.push_groups if not group.trainable)
+
     def test_pickle(self):
         c = get_env_config()
         with tempfile.NamedTemporaryFile() as tmp_file:

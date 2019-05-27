@@ -144,8 +144,8 @@ def get_serve_config() -> ServeConfig:
     return ServeConfig(host="0.0.0.0", port=41568, max_workers=1)
 
 
-def get_config() -> Config:
-    return Config(**{**_get_config()._asdict(), "env_config": get_env_config()})
+def get_config(eval_results_dir=None) -> Config:
+    return _get_config(env_config=get_env_config(), eval_results_dir=eval_results_dir)
 
 
 def get_mahimahi_config() -> MahiMahiConfig:

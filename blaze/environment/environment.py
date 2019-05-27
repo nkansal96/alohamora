@@ -20,25 +20,26 @@ class Environment(gym.Env):
     generation, and evaluation of the policy/action in the simulated environment.
     """
 
-    def __init__(self, config: Config, client_environment=client.get_random_client_environment()):
+    def __init__(self, config: Config):
         # make sure config is an instance of Config or a dict
         assert isinstance(config, (Config, dict))
         config = config if isinstance(config, Config) else Config(**config)
 
         self.config = config
         self.env_config = config.env_config
-        self.trainable_push_groups = [group for group in self.env_config.push_groups if group.trainable]
-        log.info("initialized trainable push groups", groups=[group.name for group in self.trainable_push_groups])
+        log.info(
+            "initialized trainable push groups", groups=[group.name for group in self.env_config.trainable_push_groups]
+        )
 
         self.observation_space = get_observation_space()
         self.analyzer = Analyzer(self.config)
-        self.initialize_environment(client_environment)
+        self.initialize_environment()
 
     def reset(self):
         self.initialize_environment()
         return self.observation
 
-    def initialize_environment(self, client_environment=client.get_random_client_environment()):
+    def initialize_environment(self, client_environment=client.get_fast_mobile_client_environment()):
         """ Initialize the environment """
         log.info(
             "initialized environment",
@@ -52,7 +53,7 @@ class Environment(gym.Env):
         self.client_environment = client_environment
         self.analyzer.reset(self.client_environment)
 
-        self.action_space = ActionSpace(self.trainable_push_groups)
+        self.action_space = ActionSpace(self.env_config.trainable_push_groups)
         self.policy = Policy(self.action_space)
 
         # choose a random non-trainable push group to simulate as if it's already pushed
