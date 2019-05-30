@@ -6,7 +6,7 @@ sudo yum clean -y all
 curl https://rpm.nodesource.com/setup_10.x | sudo bash -
 sudo yum install -y nodejs
 
-# Install mahimahi dependencies
+# Install mahimahi and other development dependencies
 sudo yum install -y \
   make automake gcc gcc-c++ \
   python36 python36-pip python36-devel \
@@ -20,14 +20,16 @@ sudo yum install -y \
   openvpn openvpn-devel \
   squid \
   dnsmasq \
-  nghttp2 libnghttp2 libnghttp2-devel
+  nghttp2 libnghttp2 libnghttp2-devel \
+  screen htop pv tree
 
 # create the snakeoil cert that mahimahi expects from ubuntu
 if [[ -d /etc/ssl/certs && -f /etc/ssl/certs/make-dummy-cert ]]; then
-  sudo /etc/ssl/certs/make-dummy-cert /etc/ssl/certs/ssl-cert-snakeoil.pem
-  sudo chmod 644 /etc/ssl/certs/ssl-cert-snakeoil.pem
+  sudo mkdir -p /etc/ssl/private
+  sudo /etc/ssl/certs/make-dummy-cert /etc/ssl/private/ssl-cert-snakeoil.key
+  sudo chmod 644 /etc/ssl/private/ssl-cert-snakeoil.key
 else
   echo "The directory /etc/ssl/certs does not exist or the file /etc/ssl/certs/make-dummy-cert does not exist"
+  echo "Manually create the snakeoil certificate in /etc/ssl/private"
   exit 1
 fi
-
