@@ -47,3 +47,8 @@ blaze preprocess \
 	--record_dir "$train_dir/www.buzzfeed.com" \
 	--output "$train_dir/www.buzzfeed.com.manifest" \
 	--train_domain_globs "*buzzfeed.com"
+blaze preprocess \
+	"https://www.yelp.com" \
+	--record_dir "$train_dir/www.yelp.com" \
+	--output "$train_dir/www.yelp.com.manifest" \
+	--train_domain_globs "*yelp*"
