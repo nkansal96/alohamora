@@ -102,3 +102,12 @@ class TestGetMetrics:
         )
         with pytest.raises(subprocess.CalledProcessError):
             assert get_metrics(self.config, self.mahimahi_config).speed_index == 1000
+
+    @mock.patch("builtins.open", new_callable=mock.mock_open, read_data='{ "runs": [] }')
+    @mock.patch("subprocess.run")
+    def test_get_metrics_should_retry_if_index_error(self, mock_run, mock_open):
+        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout='{ "runs": [] }')
+        max_retries = 3
+        with pytest.raises(IndexError):
+            assert not get_metrics(self.config, self.mahimahi_config, max_retries=max_retries)
+        assert mock_run.call_count == max_retries + 1
