@@ -37,7 +37,7 @@ class Policy:
     @property
     def completed(self):
         """ Returns true if all actions have been taken """
-        return self.actions_taken >= self.total_actions
+        return self.actions_taken >= min(self.total_actions, max(10, self.total_actions // 2))
 
     @property
     def observable(self):
