@@ -38,7 +38,7 @@ def parse_pw_output(output: dict) -> Result:
     return Result(**{k["id"]: k["timing"] for k in res["timings"]})
 
 
-def get_metrics(config: Config, mahimahi_config: MahiMahiConfig) -> Result:
+def get_metrics(config: Config, mahimahi_config: MahiMahiConfig, max_retries=5) -> Result:
     """
     Sets up and executes the Mahimahi environment and pwmetrics application (wrapper
     around Lighthouse) to load a webpage and returns the recorded metrics
@@ -89,4 +89,10 @@ def get_metrics(config: Config, mahimahi_config: MahiMahiConfig) -> Result:
                 return parse_pw_output(json.load(f))
         except subprocess.CalledProcessError as e:
             log.error("lighthouse error", code=e.returncode, stdout=e.stdout, stderr=e.stderr, cmd=e.cmd)
+            raise
+        except IndexError:
+            if max_retries > 0:
+                log.error("failed to parse output from lighthouse, trying again", tries_left=max_retries - 1)
+                return get_metrics(config, mahimahi_config, max_retries - 1)
+            log.error("failed to parse output from lighthouse, reached max retries")
             raise
