@@ -11,11 +11,12 @@ def train(train_config: TrainConfig, config: Config):
     """ Trains an PPO agent with the given training and environment configuration """
     # lazy load modules so that they aren't imported if they're not necessary
     import ray
+    from ray.tune import run_experiments
 
     ray.init(num_cpus=train_config.num_cpus)
 
     name = train_config.experiment_name
-    ray.tune.run_experiments(
+    run_experiments(
         {
             name: {
                 "run": "PPO",
