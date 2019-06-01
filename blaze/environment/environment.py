@@ -79,7 +79,7 @@ class Environment(gym.Env):
             "trying action",
             action=repr(decoded_action),
             steps_taken=self.policy.steps_taken,
-            steps_remaining=self.policy.steps_remaining
+            steps_remaining=self.policy.steps_remaining,
         )
 
         reward = NOOP_ACTION_REWARD

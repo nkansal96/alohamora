@@ -36,17 +36,18 @@ class Policy:
 
     @property
     def total_steps(self):
-        """ Returns the maximum number of steps  to take before completing the policy """
+        """ Returns the maximum number of steps to take before completing the policy """
         return min(self.total_actions, max(10, self.total_actions // 2))
 
     @property
     def steps_remaining(self):
+        """ Returns the number of steps remaining before the policy is complete """
         return self.total_steps - self.steps_taken
 
     @property
     def completed(self):
-        """ Returns true if all actions have been taken """
-        return self.steps_taken >= self.total_steps
+        """ Returns true if all steps have been taken """
+        return self.steps_remaining <= 0
 
     @property
     def observable(self):
