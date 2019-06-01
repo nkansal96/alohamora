@@ -16,8 +16,7 @@ def train(train_config: TrainConfig, config: Config):
 
     ray.init(num_cpus=train_config.num_cpus)
 
-    action_space = ActionSpace(config.env_config.trainable_push_groups)
-    policy = Policy(action_space)
+    policy = Policy(ActionSpace(config.env_config.trainable_push_groups))
     name = train_config.experiment_name
     run_experiments(
         {
