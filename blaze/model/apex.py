@@ -1,5 +1,6 @@
 """ This module defines the model for training and instantiating APEX agents """
 
+from blaze.action import ActionSpace, Policy
 from blaze.config.config import Config
 from blaze.config.train import TrainConfig
 from blaze.environment import Environment
@@ -11,12 +12,13 @@ def train(train_config: TrainConfig, config: Config):
     """ Trains an APEX agent with the given training and environment configuration """
     # lazy load modules so that they aren't imported if they're not necessary
     import ray
+    from ray.tune import run_experiments
 
     ray.init(num_cpus=train_config.num_cpus)
 
+    policy = Policy(ActionSpace(config.env_config.trainable_push_groups))
     name = train_config.experiment_name
-    total_urls = sum(len(group.resources) for group in config.env_config.push_groups)
-    ray.tune.run_experiments(
+    run_experiments(
         {
             name: {
                 "run": "APEX",
@@ -28,8 +30,8 @@ def train(train_config: TrainConfig, config: Config):
                 "config": {
                     "sample_batch_size": 50,
                     "train_batch_size": 512,
-                    "timesteps_per_iteration": total_urls,
-                    "target_network_update_freq": total_urls * 5,
+                    "timesteps_per_iteration": policy.total_steps,
+                    "target_network_update_freq": policy.total_steps * 4,
                     "batch_mode": "complete_episodes",
                     "collect_metrics_timeout": 1200,
                     "num_workers": train_config.num_cpus // 2,

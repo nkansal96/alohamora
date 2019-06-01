@@ -75,14 +75,20 @@ class Environment(gym.Env):
     def step(self, action):
         decoded_action = self.action_space.decode_action_id(action)
         action_applied = self.policy.apply_action(action)
-        log.info("trying action", action=repr(decoded_action), total_actions=self.policy.actions_taken)
+        log.info(
+            "trying action",
+            action=repr(decoded_action),
+            steps_taken=self.policy.steps_taken,
+            steps_remaining=self.policy.steps_remaining,
+        )
 
         reward = NOOP_ACTION_REWARD
         if action_applied:
             reward = self.analyzer.get_reward(self.policy) or NOOP_ACTION_REWARD
         log.info("got reward", action=repr(decoded_action), reward=reward)
 
-        return self.observation, reward, self.policy.completed, {"action": decoded_action}
+        info = {"action": decoded_action, "policy": self.policy.as_dict}
+        return self.observation, reward, self.policy.completed, info
 
     def render(self, mode="human"):
         return super(Environment, self).render(mode=mode)
