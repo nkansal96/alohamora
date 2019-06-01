@@ -20,7 +20,7 @@ class Policy:
     def __init__(self, action_space: ActionSpace):
         self.action_space = action_space
         self.total_actions = len(action_space)
-        self.actions_taken = 0
+        self.steps_taken = 0
         self.push_to_source = {}
         self.source_to_push = collections.defaultdict(set)
         self.default_source_to_push = collections.defaultdict(set)
@@ -32,12 +32,21 @@ class Policy:
         return iter(source_to_push.items())
 
     def __len__(self):
-        return self.actions_taken
+        return self.steps_taken
+
+    @property
+    def total_steps(self):
+        """ Returns the maximum number of steps  to take before completing the policy """
+        return min(self.total_actions, max(10, self.total_actions // 2))
+
+    @property
+    def steps_remaining(self):
+        return self.total_steps - self.steps_taken
 
     @property
     def completed(self):
         """ Returns true if all actions have been taken """
-        return self.actions_taken >= min(self.total_actions, max(10, self.total_actions // 2))
+        return self.steps_taken >= self.total_steps
 
     @property
     def observable(self):
@@ -64,7 +73,7 @@ class Policy:
             self.push_to_source[action.push] = action.source
             self.source_to_push[action.source].add(action.push)
             self.action_space.use_action(action)
-        self.actions_taken += 1
+        self.steps_taken += 1
         return not action.is_noop
 
     def add_default_action(self, source: Resource, push: Resource):

@@ -39,25 +39,25 @@ class TestPolicy:
     def test_completed_when_small_number_of_actions(self):
         policy = Policy(ActionSpace(self.push_groups))
         policy.total_actions = 5
-        policy.actions_taken = 5
+        policy.steps_taken = 5
         assert policy.completed
-        policy.actions_taken = 4
+        policy.steps_taken = 4
         assert not policy.completed
 
     def test_completed_when_medium_number_of_action(self):
         policy = Policy(ActionSpace(self.push_groups))
         policy.total_actions = 15
-        policy.actions_taken = 10
+        policy.steps_taken = 10
         assert policy.completed
-        policy.actions_taken = 9
+        policy.steps_taken = 9
         assert not policy.completed
 
     def test_completed_when_large_number_of_actions(self):
         policy = Policy(ActionSpace(self.push_groups))
         policy.total_actions = 40
-        policy.actions_taken = 20
+        policy.steps_taken = 20
         assert policy.completed
-        policy.actions_taken = 19
+        policy.steps_taken = 19
         assert not policy.completed
 
     def test_as_dict(self):

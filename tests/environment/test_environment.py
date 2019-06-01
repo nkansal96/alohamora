@@ -55,12 +55,12 @@ class TestEnvironment:
         # step the environment and check that an action was successfully taken
         self.environment.step(action_id)
         assert len(self.environment.action_space) < num_push_resources
-        assert self.environment.policy.actions_taken == 1
+        assert self.environment.policy.steps_taken == 1
 
         # check that resetting the environment works
         obs = self.environment.reset()
         assert len(self.environment.action_space) == num_push_resources
-        assert self.environment.policy.actions_taken == 0
+        assert self.environment.policy.steps_taken == 0
         assert obs and isinstance(obs, dict)
         assert self.environment.observation_space.contains(obs)
 
@@ -84,7 +84,7 @@ class TestEnvironment:
             obs, reward, _, info = self.environment.step(noop_action.action_id)
             assert reward == NOOP_ACTION_REWARD
             assert info["action"] == noop_action
-            assert self.environment.policy.actions_taken == 1
+            assert self.environment.policy.steps_taken == 1
             # res[3] refers to the third item in the resource_space for res
             assert all(res[3] == 0 for res in obs["resources"].values())
         finally:
@@ -103,7 +103,7 @@ class TestEnvironment:
             assert reward == action_rew
             assert not complete
             assert info["action"] == action
-            assert self.environment.policy.actions_taken == 1
+            assert self.environment.policy.steps_taken == 1
             assert self.environment.policy.resource_pushed_from(action.push) == action.source
             assert obs["resources"][str(action.push.order)][3] == action.source.order + 1
         finally:
