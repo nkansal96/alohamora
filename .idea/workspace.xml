@@ -7,6 +7,8 @@
   <component name="ChangeListManager">
     <list default="true" id="db36d0b7-c17d-4bff-8609-83a5ebbc6a31" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/blaze/command/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/blaze/command/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/blaze/command/preprocess.py" beforeDir="false" afterPath="$PROJECT_DIR$/blaze/command/preprocess.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/command/test_preprocess.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/command/test_preprocess.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -32,67 +34,21 @@
     <favorites_list name="blaze" />
   </component>
   <component name="FileEditorManager">
-    <leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/blaze/command/preprocess.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-874" />
+          </provider>
+        </entry>
+      </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/blaze/evaluator/analytics.py">
+        <entry file="file://$PROJECT_DIR$/tests/command/test_preprocess.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1324">
-              <caret line="31" column="16" selection-start-line="31" selection-start-column="16" selection-end-line="31" selection-end-column="16" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/blaze/model/ppo.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="350">
-              <caret line="18" column="9" lean-forward="true" selection-start-line="18" selection-start-column="9" selection-end-line="18" selection-end-column="9" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/blaze/config/train.py">
-          <provider selected="true" editor-type-id="text-editor" />
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/blaze/command/train.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="350">
-              <caret line="23" column="91" selection-start-line="23" selection-start-column="91" selection-end-line="23" selection-end-column="91" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/blaze/environment/environment.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="416">
-              <caret line="40" column="12" selection-start-line="40" selection-start-column="12" selection-end-line="40" selection-end-column="12" />
+            <state relative-caret-position="526">
+              <caret line="97" column="90" selection-start-line="97" selection-start-column="90" selection-end-line="97" selection-end-column="90" />
               <folding>
-                <element signature="e#73#86#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/blaze/mahimahi/mahimahi.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="898">
-              <caret line="101" column="38" lean-forward="true" selection-start-line="101" selection-start-column="38" selection-end-line="101" selection-end-column="38" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/blaze/mahimahi/trace.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="600">
-              <caret line="24" column="67" selection-start-line="24" selection-start-column="67" selection-end-line="24" selection-end-column="67" />
-              <folding>
-                <element signature="e#75#105#0" expanded="true" />
+                <element signature="e#0#15#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -117,6 +73,7 @@
         <option value="$PROJECT_DIR$/tests/config/test_client.py" />
         <option value="$PROJECT_DIR$/blaze/command/train.py" />
         <option value="$PROJECT_DIR$/blaze/environment/environment.py" />
+        <option value="$PROJECT_DIR$/tests/command/test_preprocess.py" />
       </list>
     </option>
   </component>
@@ -144,7 +101,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -213,22 +169,18 @@
               <item name="blaze" type="b2602c69:ProjectViewProjectNode" />
               <item name="blaze" type="462c0819:PsiDirectoryNode" />
               <item name="tests" type="462c0819:PsiDirectoryNode" />
-              <item name="config" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="blaze" type="b2602c69:ProjectViewProjectNode" />
-              <item name="blaze" type="462c0819:PsiDirectoryNode" />
-              <item name="tests" type="462c0819:PsiDirectoryNode" />
-              <item name="model" type="462c0819:PsiDirectoryNode" />
+              <item name="command" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="full.screen.before.presentation.mode" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
@@ -250,7 +202,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python tests.pytest for test_client.TestClientEnvironment">
+  <component name="RunManager" selected="Python tests.pytest for test_preprocess.TestViewManifest.test_view_manifest_only_trainable">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <module name="blaze" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -271,22 +223,6 @@
       <option name="MODULE_MODE" value="false" />
       <option name="REDIRECT_INPUT" value="false" />
       <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="pytest for test_analyze.TestAnalyze.test_analyze" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
-      <module name="blaze" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests/command" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="_new_keywords" value="&quot;&quot;" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;test_analyze.TestAnalyze.test_analyze&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
     <configuration name="pytest for test_client.TestClientEnvironment" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
@@ -337,6 +273,22 @@
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
+    <configuration name="pytest for test_preprocess.TestViewManifest.test_view_manifest_only_trainable" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
+      <module name="blaze" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests/command" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="_new_keywords" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;test_preprocess.TestViewManifest.test_view_manifest_only_trainable&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
     <configuration name="pytest in tests" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
       <module name="blaze" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -355,11 +307,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python tests.pytest for test_preprocess.TestViewManifest.test_view_manifest_only_trainable" />
         <item itemvalue="Python tests.pytest for test_client.TestClientEnvironment" />
         <item itemvalue="Python tests.pytest for test_client.TestClientEnvironment.test_get_fast_mobile_env" />
         <item itemvalue="Python tests.pytest for test_client.TestClientEnvironment.test_get_random_fast_lte_env" />
         <item itemvalue="Python tests.pytest in tests" />
-        <item itemvalue="Python tests.pytest for test_analyze.TestAnalyze.test_analyze" />
       </list>
     </recent_temporary>
   </component>
@@ -375,13 +327,11 @@
       <updated>1559065738427</updated>
       <workItem from="1559065746869" duration="1117000" />
       <workItem from="1559068087260" duration="27622000" />
+      <workItem from="1559410697971" duration="637000" />
     </task>
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="pytest_for_test_analyze_TestAnalyze_test_analyze - 2019.05.28 at 21h 46m 51s.xml">
-      <configuration name="pytest for test_analyze.TestAnalyze.test_analyze" configurationId="tests" />
-    </history-entry>
     <history-entry file="pytest_for_test_analyze_TestAnalyze_test_analyze - 2019.05.28 at 21h 47m 00s.xml">
       <configuration name="pytest for test_analyze.TestAnalyze.test_analyze" configurationId="tests" />
     </history-entry>
@@ -409,9 +359,12 @@
     <history-entry file="pytest_for_test_client_TestClientEnvironment - 2019.05.30 at 14h 37m 54s.xml">
       <configuration name="pytest for test_client.TestClientEnvironment" configurationId="tests" />
     </history-entry>
+    <history-entry file="pytest_for_test_preprocess_TestViewManifest_test_view_manifest_only_trainable - 2019.06.01 at 10h 41m 07s.xml">
+      <configuration name="pytest for test_preprocess.TestViewManifest.test_view_manifest_only_trainable" configurationId="tests" />
+    </history-entry>
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="28739000" />
+    <option name="totallyTimeSpent" value="29376000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -426,7 +379,7 @@
     <frame x="1280" y="0" width="1920" height="1200" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.49719888" visible="true" weight="0.10702875" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49719888" visible="true" weight="0.108093716" />
       <window_info id="Structure" order="1" sideWeight="0.5028011" side_tool="true" weight="0.16235864" />
       <window_info id="Favorites" order="2" sideWeight="0.5012531" side_tool="true" weight="0.24958949" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -442,13 +395,13 @@
       <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
       <window_info anchor="bottom" id="Terminal" order="11" weight="0.32492998" />
       <window_info anchor="bottom" id="Python Console" order="12" weight="0.32633054" />
-      <window_info anchor="right" id="Coverage" side_tool="true" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.24959612" />
       <window_info anchor="right" id="SciView" order="3" weight="0.63408726" />
-      <window_info anchor="right" x="771" y="77" width="401" height="596" id="Documentation" order="4" side_tool="true" weight="0.32875606" />
+      <window_info anchor="right" x="771" y="77" width="401" height="596" id="Documentation" order="4" side_tool="true" weight="0.328541" />
       <window_info anchor="right" id="Database" order="5" weight="0.32875606" />
+      <window_info anchor="right" id="Coverage" order="6" side_tool="true" />
     </layout>
     <layout-to-restore>
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49874687" visible="true" weight="0.165625" />
@@ -494,6 +447,7 @@
     <SUITE FILE_PATH="coverage/blaze$pytest_for_test_analyze_TestAnalyze_test_analyze.coverage" NAME="pytest for test_analyze.TestAnalyze.test_analyze Coverage Results" MODIFIED="1559178281488" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests/command" />
     <SUITE FILE_PATH="coverage/blaze$pytest_for_test_client_TestClientEnvironment_test_get_fast_mobile_env.coverage" NAME="pytest for test_client.TestClientEnvironment.test_get_fast_mobile_env Coverage Results" MODIFIED="1559252267174" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests/config" />
     <SUITE FILE_PATH="coverage/blaze$policy.coverage" NAME="policy Coverage Results" MODIFIED="1559066851144" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/blaze/action" />
+    <SUITE FILE_PATH="coverage/blaze$pytest_for_test_preprocess_TestViewManifest_test_view_manifest_only_trainable.coverage" NAME="pytest for test_preprocess.TestViewManifest.test_view_manifest_only_trainable Coverage Results" MODIFIED="1559411451120" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests/command" />
   </component>
   <component name="debuggerHistoryManager">
     <expressions id="evaluateExpression">
@@ -759,10 +713,17 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/blaze/evaluator/analytics.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="618">
+          <caret line="47" column="17" lean-forward="true" selection-start-line="47" selection-start-column="17" selection-end-line="47" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/blaze/model/ppo.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="350">
-          <caret line="18" column="9" lean-forward="true" selection-start-line="18" selection-start-column="9" selection-end-line="18" selection-end-column="9" />
+          <caret line="18" column="9" selection-start-line="18" selection-start-column="9" selection-end-line="18" selection-end-column="9" />
         </state>
       </provider>
     </entry>
@@ -778,7 +739,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/blaze/environment/environment.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="416">
+        <state relative-caret-position="1000">
           <caret line="40" column="12" selection-start-line="40" selection-start-column="12" selection-end-line="40" selection-end-column="12" />
           <folding>
             <element signature="e#73#86#0" expanded="true" />
@@ -788,8 +749,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/blaze/mahimahi/mahimahi.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="898">
-          <caret line="101" column="38" lean-forward="true" selection-start-line="101" selection-start-column="38" selection-end-line="101" selection-end-column="38" />
+        <state relative-caret-position="2375">
+          <caret line="101" column="38" selection-start-line="101" selection-start-column="38" selection-end-line="101" selection-end-column="38" />
         </state>
       </provider>
     </entry>
@@ -803,10 +764,25 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/blaze/evaluator/analytics.py">
+    <entry file="file://$PROJECT_DIR$/blaze/command/preprocess.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1324">
-          <caret line="31" column="16" selection-start-line="31" selection-start-column="16" selection-end-line="31" selection-end-column="16" />
+        <state relative-caret-position="-874" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/blaze/preprocess/resource.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="100">
+          <caret line="9" column="4" selection-start-line="9" selection-start-column="4" selection-end-line="9" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/command/test_preprocess.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="526">
+          <caret line="97" column="90" selection-start-line="97" selection-start-column="90" selection-end-line="97" selection-end-column="90" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
