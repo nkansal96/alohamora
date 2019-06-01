@@ -91,3 +91,22 @@ class TestViewManifest:
         assert all(
             Url.parse(res.url).resource[:61] in printed_text for group in config.push_groups for res in group.resources
         )
+
+    def test_view_manifest_only_trainable(self):
+        har = generate_har()
+        res_list = har_entries_to_resources(har.log.entries)
+        push_groups = resource_list_to_push_groups(res_list, train_domain_globs=["*reddit*"])
+        config = EnvironmentConfig(
+            request_url="http://cs.ucla.edu/", replay_dir="/tmp/tmp_dir", push_groups=push_groups
+        )
+        with mock.patch("builtins.print") as mock_print:
+            with tempfile.NamedTemporaryFile() as config_file:
+                config.save_file(config_file.name)
+                view_manifest(["--trainable", config_file.name])
+        assert mock_print.call_count > 5
+
+        printed_text = "\n".join(call[0][0] for call in mock_print.call_args_list if call[0])
+        assert config.replay_dir in printed_text
+        assert config.request_url in printed_text
+        assert all(group.name in printed_text for group in config.push_groups if group.trainable)
+        assert not any(group.name in printed_text for group in config.push_groups if not group.trainable)

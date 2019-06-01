@@ -50,6 +50,7 @@ def preprocess(args):
 
 
 @command.argument("manifest_file", help="The file path to the saved manifest file from `blaze preprocess`")
+@command.argument("--trainable", "-t", help="Only show trainable push groups", action="store_true", default=False)
 @command.argument("--verbose", "-v", help="Show more information", action="store_true", default=False)
 @command.command
 def view_manifest(args):
@@ -60,9 +61,11 @@ def view_manifest(args):
     print("[[ Request URL ]]\n{}\n".format(env_config.request_url))
     print("[[ Replay Dir ]]\n{}\n".format(env_config.replay_dir))
     print("[[ Trainable Groups ]]\n{}\n".format("\n".join(group.name for group in env_config.trainable_push_groups)))
-    print("[[ Push Groups]]")
+    print("[[ {}Push Groups]]".format("Trainable " if args.trainable else ""))
 
     for group in env_config.push_groups:
+        if args.trainable and not group.trainable:
+            continue
         print("  [{id}: {name} ({num} resources)]".format(id=group.id, name=group.name, num=len(group.resources)))
         for res in group.resources:
             url = Url.parse(res.url).resource
