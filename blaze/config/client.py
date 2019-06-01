@@ -87,6 +87,24 @@ def get_random_client_environment():
     )
 
 
+def get_random_fast_lte_client_environment():
+    """ Returns a random fast mobile LTE ClientEnvironment"""
+    network_type = NetworkType.LTE
+    network_speed = NetworkSpeed.FAST
+    device_speed = random.choice([DeviceSpeed.FAST_MOBILE, DeviceSpeed.SLOW_MOBILE])
+    bandwidth_range = network_to_bandwidth_range(network_type, network_speed)
+    latency_range = network_to_latency_range(network_type)
+    cpu_slowdown = device_speed_to_cpu_slowdown(device_speed)
+    return ClientEnvironment(
+        network_type=network_type,
+        network_speed=network_speed,
+        device_speed=device_speed,
+        bandwidth=random.randrange(*bandwidth_range, 100),
+        latency=random.randrange(*latency_range, 2),
+        cpu_slowdown=cpu_slowdown,
+    )
+
+
 def get_fast_mobile_client_environment():
     """ Returns a ClientEnvironment with 40ms latency, 48 Mbps throughput, and no device slowdown """
     return ClientEnvironment(

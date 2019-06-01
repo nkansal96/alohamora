@@ -62,6 +62,26 @@ class TestClientEnvironment:
         assert isinstance(env.bandwidth, int) and env.bandwidth > 0
         assert isinstance(env.latency, int) and env.latency > 0
 
+    def test_get_fast_mobile_env(self):
+        env = client.get_fast_mobile_client_environment()
+        assert env.latency == 40
+        assert env.bandwidth == 48000
+        assert env.cpu_slowdown == 1
+
+    def test_get_random_fast_lte_env(self):
+        env = client.get_random_fast_lte_client_environment()
+        assert isinstance(env, client.ClientEnvironment)
+        assert env.network_type == client.NetworkType.LTE
+        assert env.network_speed == client.NetworkSpeed.FAST
+        assert env.device_speed in {client.DeviceSpeed.FAST_MOBILE, client.DeviceSpeed.SLOW_MOBILE}
+
+        bandwidth_range = client.network_to_bandwidth_range(env.network_type, env.network_speed)
+        latency_range = client.network_to_latency_range(env.network_type)
+
+        assert latency_range[0] <= env.latency <= latency_range[1]
+        assert bandwidth_range[0] <= env.bandwidth <= bandwidth_range[1]
+        assert env.cpu_slowdown == client.device_speed_to_cpu_slowdown(env.device_speed)
+
     def test_generates_correct_range_for_network(self):
         for _ in range(100):
             env = client.get_random_client_environment()

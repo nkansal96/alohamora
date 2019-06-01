@@ -1,13 +1,14 @@
 """ Defines the environment that the training of the agent occurs in """
 import random
+from typing import Union
 
 import gym
 
+from blaze.action import ActionSpace, Policy
 from blaze.config import client, Config
 from blaze.evaluator import Analyzer
 from blaze.logger import logger as log
 
-from blaze.action import ActionSpace, Policy
 from .observation import get_observation, get_observation_space
 
 NOOP_ACTION_REWARD = 0
@@ -16,30 +17,35 @@ NOOP_ACTION_REWARD = 0
 class Environment(gym.Env):
     """
     Environment virtualizes a randomly chosen network and browser environment and
-    faciliates the training for a given webpage. This includes action selection, policy
+    facilitates the training for a given web page. This includes action selection, policy
     generation, and evaluation of the policy/action in the simulated environment.
     """
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Union[Config, dict]):
         # make sure config is an instance of Config or a dict
         assert isinstance(config, (Config, dict))
         config = config if isinstance(config, Config) else Config(**config)
 
         self.config = config
         self.env_config = config.env_config
+
         log.info(
             "initialized trainable push groups", groups=[group.name for group in self.env_config.trainable_push_groups]
         )
 
         self.observation_space = get_observation_space()
         self.analyzer = Analyzer(self.config)
-        self.initialize_environment()
+
+        self.action_space = None
+        self.client_environment = None
+        self.policy = None
+        self.initialize_environment(client.get_random_fast_lte_client_environment())
 
     def reset(self):
-        self.initialize_environment()
+        self.initialize_environment(client.get_random_fast_lte_client_environment())
         return self.observation
 
-    def initialize_environment(self, client_environment=client.get_fast_mobile_client_environment()):
+    def initialize_environment(self, client_environment):
         """ Initialize the environment """
         log.info(
             "initialized environment",
