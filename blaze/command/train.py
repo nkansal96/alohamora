@@ -13,7 +13,9 @@ from . import command
 
 @command.argument("name", help="The name of the experiment")
 @command.argument("--dir", help="The location to save the model", required=True)
-@command.argument("--model", help="The RL technique to use while training", default="APEX", choices=["APEX", "PPO"])
+@command.argument(
+    "--model", help="The RL technique to use while training", default="PPO", choices=["A3C", "APEX", "PPO"]
+)
 @command.argument("--cpus", help="Number of CPUs to use for training", default=multiprocessing.cpu_count(), type=int)
 @command.argument(
     "--eval_results_dir",
@@ -42,11 +44,7 @@ def train(args):
     """
     # check for ambiguous options
     if args.resume and args.no_resume:
-        log.error(
-            "invalid options: cannot specify both --resume and --no-resume",
-            resume=args.resume,
-            no_resume=args.no_resume,
-        )
+        log.error("invalid options: cannot specify both --resume and --no-resume")
         sys.exit(1)
 
     # check and create eval results directory
@@ -56,6 +54,8 @@ def train(args):
     log.info("starting train", name=args.name, model=args.model, eval_results_dir=args.eval_results_dir)
 
     # import specified model
+    if args.model == "A3C":
+        from blaze.model import a3c as model
     if args.model == "APEX":
         from blaze.model import apex as model
     if args.model == "PPO":

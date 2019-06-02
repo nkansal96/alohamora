@@ -93,6 +93,34 @@ class TestTrain:
                 )
                 mock_train.assert_called_with(train_config, config)
 
+    @mock.patch("blaze.model.a3c.train")
+    def test_train_a3c(self, mock_train):
+        env_config = get_env_config()
+        train_config = TrainConfig(
+            experiment_name="experiment_name", model_dir="/tmp/tmp_dir", num_cpus=4, max_timesteps=100
+        )
+        config = get_config(env_config)
+        with tempfile.NamedTemporaryFile() as env_file:
+            env_config.save_file(env_file.name)
+            train(
+                [
+                    train_config.experiment_name,
+                    "--dir",
+                    train_config.model_dir,
+                    "--cpus",
+                    str(train_config.num_cpus),
+                    "--timesteps",
+                    str(train_config.max_timesteps),
+                    "--model",
+                    "A3C",
+                    "--manifest_file",
+                    env_file.name,
+                ]
+            )
+
+        mock_train.assert_called_once()
+        mock_train.assert_called_with(train_config, config)
+
     @mock.patch("blaze.model.apex.train")
     def test_train_apex(self, mock_train):
         env_config = get_env_config()
