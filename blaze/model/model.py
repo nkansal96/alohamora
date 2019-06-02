@@ -1,5 +1,5 @@
 """ Defines methods and classes for representing and instantiating saved models """
-from typing import NamedTuple
+from typing import NamedTuple, Type
 
 import gym
 from ray.rllib.agents import Agent
@@ -54,8 +54,8 @@ class SavedModel(NamedTuple):
     checkpoint file from training the model
     """
 
-    cls: Agent
-    env: gym.Env
+    cls: Type[Agent]
+    env: Type[gym.Env]
     location: str
 
     def instantiate(self, env_config: EnvironmentConfig, client_environment: ClientEnvironment) -> ModelInstance:
