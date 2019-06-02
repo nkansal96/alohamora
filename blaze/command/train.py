@@ -13,7 +13,9 @@ from . import command
 
 @command.argument("name", help="The name of the experiment")
 @command.argument("--dir", help="The location to save the model", required=True)
-@command.argument("--model", help="The RL technique to use while training", default="PPO", choices=["A3C", "APEX", "PPO"])
+@command.argument(
+    "--model", help="The RL technique to use while training", default="PPO", choices=["A3C", "APEX", "PPO"]
+)
 @command.argument("--cpus", help="Number of CPUs to use for training", default=multiprocessing.cpu_count(), type=int)
 @command.argument(
     "--eval_results_dir",

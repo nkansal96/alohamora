@@ -9,4 +9,5 @@ pushd /tmp
     rm -rf eval_results_dir
     tar -xzf eval_results_7.tgz && ls -l eval_results_dir | wc -l
     tar -xzf eval_results_8.tgz && ls -l eval_results_dir | wc -l
+    grep -rh '"url":'  eval_results_dir | sort | uniq -c
 popd

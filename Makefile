@@ -33,4 +33,4 @@ test:
 test-ci:
 	CI=true pytest --cov=blaze -p no:warnings
 
-.PHONY: setup proto clean lint test test-ci
+.PHONY: setup proto clean lint format check-format test test-ci
