@@ -1,4 +1,5 @@
-from blaze.action import ActionSpace, Policy
+from blaze.action import ActionSpace
+from blaze.config.config import get_config
 from blaze.config.client import get_random_client_environment
 from blaze.environment.environment import Environment
 from blaze.environment.observation import get_observation_space
@@ -60,7 +61,7 @@ class TestSavedModel:
         assert isinstance(model_instance, ModelInstance)
         assert isinstance(model_instance.agent, MockAgent)
         assert model_instance.agent.kwargs["env"] == Environment
-        assert model_instance.agent.kwargs["config"] == {"env_config": env_config}
+        assert model_instance.agent.kwargs["config"] == {"env_config": get_config(env_config)}
         assert model_instance.agent.file_path == saved_model.location
         assert model_instance.env_config == env_config
         assert model_instance.client_environment == client_environment
