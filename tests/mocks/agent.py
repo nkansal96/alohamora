@@ -3,7 +3,7 @@ from blaze.action import ActionSpace
 
 
 def mock_agent_with_action_space(action_space: ActionSpace):
-    return lambda *args, **kwargs: MockAgent(action_space, *args, **kwargs)
+    return lambda **kwargs: MockAgent(action_space, **kwargs)
 
 
 class MockAgent:
