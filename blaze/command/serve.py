@@ -8,7 +8,7 @@ from blaze.logger import logger as log
 from . import command
 
 
-@command.argument("location", help="The path to the folder containing the saved model")
+@command.argument("location", help="The path to the saved model")
 @command.argument(
     "--model",
     help="The RL technique used during training for the saved model",
@@ -34,8 +34,8 @@ def serve(args):
     )
 
     # check that the passed model location exists
-    if not os.path.exists(args.location) or not os.path.isdir(args.location):
-        raise IOError("The model location must be a valid directory")
+    if not os.path.exists(args.location) or not os.path.isfile(args.location):
+        raise IOError("The model location must be a valid file")
 
     # lazy load import statements
     from blaze.serve.server import Server

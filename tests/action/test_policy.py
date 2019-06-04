@@ -1,6 +1,7 @@
 import itertools
 
 from blaze.action import Action, ActionSpace, Policy
+from blaze.config.environment import Resource
 
 from tests.mocks.config import get_push_groups
 
@@ -154,3 +155,17 @@ class TestPolicy:
         assert policy.resource_pushed_from(action.push) is None
         assert policy.apply_action(action_id)
         assert policy.resource_pushed_from(action.push) is action.source
+
+    def test_from_dict(self):
+        policy_dict = {"A": ["B", "C"], "B": ["D", "E", "F"]}
+        policy = Policy.from_dict(policy_dict)
+        assert policy.total_actions == 0
+        assert policy.action_space is not None
+        for (source, deps) in policy:
+            assert isinstance(source, Resource)
+            assert all(isinstance(push, Resource) for push in deps)
+            assert sorted(policy_dict[source.url]) == sorted([push.url for push in deps])
+            for push in deps:
+                assert policy.push_to_source[push] == source
+                assert push.url in policy_dict[source.url]
+        assert len(policy.source_to_push) == len(policy_dict)
