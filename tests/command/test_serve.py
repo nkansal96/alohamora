@@ -22,8 +22,10 @@ class TestServe:
             serve(["--model", "APEX", "/non/existent/dir"])
 
     @mock.patch("time.sleep")
-    def test_serve_apex(self, mock_sleep):
-        mock_sleep.side_effect = KeyboardInterrupt()
+    @mock.patch("ray.init")
+    @mock.patch("ray.shutdown")
+    def test_serve_apex(self, mock_sd, mock_init, mock_sleep):
+        mock_sleep.side_effect = (KeyboardInterrupt(), None, None, None, None)
         with mock.patch("blaze.serve.server.Server", new=MockServer()) as mock_server:
             with tempfile.TemporaryDirectory() as model_location:
                 serve(
@@ -39,7 +41,9 @@ class TestServe:
         assert mock_server.stop_called
 
     @mock.patch("time.sleep")
-    def test_serve_ppo(self, mock_sleep):
+    @mock.patch("ray.init")
+    @mock.patch("ray.shutdown")
+    def test_serve_ppo(self, mock_sd, mock_init, mock_sleep):
         mock_sleep.side_effect = KeyboardInterrupt()
         with mock.patch("blaze.serve.server.Server", new=MockServer()) as mock_server:
             with tempfile.TemporaryDirectory() as model_location:
