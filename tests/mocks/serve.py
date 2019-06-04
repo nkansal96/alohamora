@@ -18,6 +18,7 @@ def get_page(url: str, client_environment=get_random_client_environment()) -> po
         network_type=client_environment.network_type.value,
         device_speed=client_environment.device_speed.value,
         resources=page_resources,
+        train_domain_globs=[group.name for group in push_groups if group.trainable],
     )
 
 
@@ -94,3 +95,20 @@ class MockServer:
 
     def stop(self):
         self.stop_called = True
+
+
+class MockClient:
+    def __init__(self):
+        self.args = None
+        self.kwargs = None
+        self.get_policy_args = None
+        self.get_policy_kwargs = None
+
+    def __call__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+        return self
+
+    def get_policy(self, *args, **kwargs):
+        self.get_policy_args = args
+        self.get_policy_kwargs = kwargs

@@ -34,7 +34,6 @@ class TestServer:
     def test_set_policy_service(self, mock_grpc_server):
         server = Server(self.serve_config)
         server.set_policy_service(PolicyService(self.saved_model))
-        print(server.grpc_server)
         server.grpc_server.add_generic_rpc_handlers.assert_called_once()
 
     @mock.patch("blaze.serve.server.grpc._server._Server")

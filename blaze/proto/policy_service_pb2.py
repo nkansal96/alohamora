@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x14policy_service.proto\"U\n\x08Resource\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x0c\n\x04size\x18\x02 \x01(\x05\x12\x1b\n\x04type\x18\x03 \x01(\x0e\x32\r.ResourceType\x12\x11\n\ttimestamp\x18\x04 \x01(\x05\"y\n\x04Page\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\"\n\x0cnetwork_type\x18\x02 \x01(\x0e\x32\x0c.NetworkType\x12\"\n\x0c\x64\x65vice_speed\x18\x03 \x01(\x0e\x32\x0c.DeviceSpeed\x12\x1c\n\tresources\x18\x04 \x03(\x0b\x32\t.Resource\"4\n\x0bPolicyEntry\x12\x12\n\nsource_url\x18\x01 \x01(\t\x12\x11\n\tpush_urls\x18\x02 \x03(\t\"&\n\x06Policy\x12\x1c\n\x06policy\x18\x01 \x03(\x0b\x32\x0c.PolicyEntry*5\n\x0bNetworkType\x12\t\n\x05WIRED\x10\x00\x12\x08\n\x04WIFI\x10\x01\x12\x07\n\x03LTE\x10\x02\x12\x08\n\x04UMTS\x10\x03*<\n\x0b\x44\x65viceSpeed\x12\x0b\n\x07\x44\x45SKTOP\x10\x00\x12\x0f\n\x0b\x46\x41ST_MOBILE\x10\x01\x12\x0f\n\x0bSLOW_MOBILE\x10\x02*W\n\x0cResourceType\x12\x08\n\x04NONE\x10\x00\x12\x08\n\x04HTML\x10\x01\x12\n\n\x06SCRIPT\x10\x02\x12\x07\n\x03\x43SS\x10\x03\x12\t\n\x05IMAGE\x10\x04\x12\x08\n\x04\x46ONT\x10\x05\x12\t\n\x05OTHER\x10\x06\x32,\n\rPolicyService\x12\x1b\n\tGetPolicy\x12\x05.Page\x1a\x07.Policyb\x06proto3')
+  serialized_pb=_b('\n\x14policy_service.proto\"U\n\x08Resource\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x0c\n\x04size\x18\x02 \x01(\x05\x12\x1b\n\x04type\x18\x03 \x01(\x0e\x32\r.ResourceType\x12\x11\n\ttimestamp\x18\x04 \x01(\x05\"\x95\x01\n\x04Page\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\"\n\x0cnetwork_type\x18\x02 \x01(\x0e\x32\x0c.NetworkType\x12\"\n\x0c\x64\x65vice_speed\x18\x03 \x01(\x0e\x32\x0c.DeviceSpeed\x12\x1c\n\tresources\x18\x04 \x03(\x0b\x32\t.Resource\x12\x1a\n\x12train_domain_globs\x18\x05 \x03(\t\"4\n\x0bPolicyEntry\x12\x12\n\nsource_url\x18\x01 \x01(\t\x12\x11\n\tpush_urls\x18\x02 \x03(\t\"&\n\x06Policy\x12\x1c\n\x06policy\x18\x01 \x03(\x0b\x32\x0c.PolicyEntry*5\n\x0bNetworkType\x12\t\n\x05WIRED\x10\x00\x12\x08\n\x04WIFI\x10\x01\x12\x07\n\x03LTE\x10\x02\x12\x08\n\x04UMTS\x10\x03*<\n\x0b\x44\x65viceSpeed\x12\x0b\n\x07\x44\x45SKTOP\x10\x00\x12\x0f\n\x0b\x46\x41ST_MOBILE\x10\x01\x12\x0f\n\x0bSLOW_MOBILE\x10\x02*W\n\x0cResourceType\x12\x08\n\x04NONE\x10\x00\x12\x08\n\x04HTML\x10\x01\x12\n\n\x06SCRIPT\x10\x02\x12\x07\n\x03\x43SS\x10\x03\x12\t\n\x05IMAGE\x10\x04\x12\x08\n\x04\x46ONT\x10\x05\x12\t\n\x05OTHER\x10\x06\x32,\n\rPolicyService\x12\x1b\n\tGetPolicy\x12\x05.Page\x1a\x07.Policyb\x06proto3')
 )
 
 _NETWORKTYPE = _descriptor.EnumDescriptor(
@@ -48,8 +48,8 @@ _NETWORKTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=328,
-  serialized_end=381,
+  serialized_start=357,
+  serialized_end=410,
 )
 _sym_db.RegisterEnumDescriptor(_NETWORKTYPE)
 
@@ -75,8 +75,8 @@ _DEVICESPEED = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=383,
-  serialized_end=443,
+  serialized_start=412,
+  serialized_end=472,
 )
 _sym_db.RegisterEnumDescriptor(_DEVICESPEED)
 
@@ -118,8 +118,8 @@ _RESOURCETYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=445,
-  serialized_end=532,
+  serialized_start=474,
+  serialized_end=561,
 )
 _sym_db.RegisterEnumDescriptor(_RESOURCETYPE)
 
@@ -228,6 +228,13 @@ _PAGE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='train_domain_globs', full_name='Page.train_domain_globs', index=4,
+      number=5, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -240,8 +247,8 @@ _PAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=111,
-  serialized_end=232,
+  serialized_start=112,
+  serialized_end=261,
 )
 
 
@@ -278,8 +285,8 @@ _POLICYENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=234,
-  serialized_end=286,
+  serialized_start=263,
+  serialized_end=315,
 )
 
 
@@ -309,8 +316,8 @@ _POLICY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=288,
-  serialized_end=326,
+  serialized_start=317,
+  serialized_end=355,
 )
 
 _RESOURCE.fields_by_name['type'].enum_type = _RESOURCETYPE
@@ -363,8 +370,8 @@ _POLICYSERVICE = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=534,
-  serialized_end=578,
+  serialized_start=563,
+  serialized_end=607,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetPolicy',
