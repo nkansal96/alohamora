@@ -1,4 +1,4 @@
-""" Implements the commands for training """
+""" Implements the command for serving a trained policy """
 import time
 import os
 
@@ -10,7 +10,10 @@ from . import command
 
 @command.argument("location", help="The path to the folder containing the saved model")
 @command.argument(
-    "--model", help="The RL technique used during training for the saved model", required=True, choices=["APEX", "PPO"]
+    "--model",
+    help="The RL technique used during training for the saved model",
+    required=True,
+    choices=["A3C", "APEX", "PPO"],
 )
 @command.argument("--host", help="The host to bind the gRPC server to", default="0.0.0.0")
 @command.argument("--port", help="The port to bind the gRPC server to", default=24450, type=int)
@@ -38,10 +41,16 @@ def serve(args):
     from blaze.serve.server import Server
     from blaze.serve.policy_service import PolicyService
 
+    if args.model == "A3C":
+        from blaze.model import a3c as model
     if args.model == "APEX":
         from blaze.model import apex as model
     if args.model == "PPO":
         from blaze.model import ppo as model
+
+    import ray
+
+    ray.init()
 
     serve_config = ServeConfig(host=args.host, port=args.port, max_workers=args.max_workers)
     saved_model = model.get_model(args.location)
@@ -56,3 +65,4 @@ def serve(args):
     except KeyboardInterrupt:
         log.info("stopping server")
         server.stop()
+        ray.shutdown()
