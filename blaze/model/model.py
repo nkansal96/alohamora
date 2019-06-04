@@ -5,6 +5,7 @@ import gym
 from ray.rllib.agents import Agent
 
 from blaze.action import ActionSpace, Policy
+from blaze.config.config import get_config
 from blaze.config.environment import EnvironmentConfig
 from blaze.config.client import ClientEnvironment
 from blaze.environment.observation import get_observation
@@ -60,7 +61,7 @@ class SavedModel(NamedTuple):
 
     def instantiate(self, env_config: EnvironmentConfig, client_environment: ClientEnvironment) -> ModelInstance:
         """ Instantiates the saved model and returns a ModelInstance for the given environment """
-        agent = self.cls(env=self.env, config={"env_config": env_config})
+        agent = self.cls(env=self.env, config={"env_config": get_config(env_config)})
         agent.restore(self.location)
         model_instance = ModelInstance(agent, env_config, client_environment)
         return model_instance
