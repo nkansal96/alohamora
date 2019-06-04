@@ -7,7 +7,7 @@ representation and the actual URL representation
 import collections
 from typing import Optional
 
-from blaze.config.environment import Resource
+from blaze.config.environment import Resource, ResourceType
 from .action_space import ActionSpace
 
 
@@ -91,3 +91,21 @@ class Policy:
         if push not in self.push_to_source:
             return None
         return self.push_to_source[push]
+
+    @staticmethod
+    def from_dict(policy_dict: dict):
+        """
+        Returns a Policy instantiated from a simple dictionary of source URLs to lists of push URLs. The returned
+        Policy will only be useful for display purposes, as the action space will be instantiated with an empty
+        list of push groups.
+        """
+        policy = Policy(ActionSpace([]))
+        for (source, deps) in policy_dict.items():
+            policy.source_to_push[Resource(url=source, size=0, type=ResourceType.NONE)] = set(
+                Resource(url=push, size=0, type=ResourceType.NONE) for push in deps
+            )
+            for push in deps:
+                policy.push_to_source[Resource(url=push, size=0, type=ResourceType.NONE)] = Resource(
+                    url=source, size=0, type=ResourceType.NONE
+                )
+        return policy
