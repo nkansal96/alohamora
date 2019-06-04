@@ -1,3 +1,5 @@
+import random
+
 from typing import List, Tuple
 
 from blaze.action import ActionSpace, Policy
@@ -141,7 +143,7 @@ def get_train_config() -> TrainConfig:
 
 
 def get_serve_config() -> ServeConfig:
-    return ServeConfig(host="0.0.0.0", port=41568, max_workers=1)
+    return ServeConfig(host="0.0.0.0", port=41568 + random.randint(0, 1000), max_workers=1)
 
 
 def get_config(eval_results_dir=None) -> Config:
