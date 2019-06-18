@@ -15,9 +15,10 @@ class TestPageLoadTime:
         with pytest.raises(SystemExit):
             page_load_time([])
 
+    @mock.patch("os.rmdir")
     @mock.patch("blaze.command.analyze.record_webpage")
     @mock.patch("blaze.command.analyze.capture_har_in_mahimahi")
-    def test_page_load_time(self, mock_capture_har_in_mahimahi, mock_record_webpage):
+    def test_page_load_time(self, mock_capture_har_in_mahimahi, mock_record_webpage, mock_rmdir):
         mock_capture_har_in_mahimahi.return_value = har_from_json(get_har_json())
         url = "https://www.reddit.com/"
         page_load_time([url])
@@ -33,3 +34,5 @@ class TestPageLoadTime:
         assert capture_har_in_mahimahi_args[0] == url
         assert capture_har_in_mahimahi_args[1] == config
         assert capture_har_in_mahimahi_args[2] == client_env
+
+        mock_rmdir.assert_called_with(record_webpage_args[1])

@@ -1,4 +1,5 @@
 """ Implements the commands for analyzing training progress """
+import os
 import tempfile
 
 from blaze.chrome.devtools import capture_har_in_mahimahi
@@ -26,6 +27,12 @@ def page_load_time(args):
     client_env = get_default_client_environment()
 
     with tempfile.TemporaryDirectory() as record_dir:
+        # this is to work around the fact that mahimahi needs an empty directory
+        # so we use TemporaryDirectory to get a unique name for a directory and
+        # then delete it. After mahimahi runs and create the dir, then TemporaryDirectory
+        # can delete it as normal
+        os.rmdir(record_dir)
+
         config = get_config(EnvironmentConfig(replay_dir=record_dir, request_url=args.url))
         log.info("recording webpage in Mahimahi")
         record_webpage(args.url, record_dir, config)
