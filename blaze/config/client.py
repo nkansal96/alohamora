@@ -111,7 +111,19 @@ def get_fast_mobile_client_environment():
         network_type=NetworkType.LTE,
         network_speed=NetworkSpeed.FAST,
         device_speed=DeviceSpeed.DESKTOP,
-        bandwidth=48000,
-        latency=40,
+        bandwidth=24000,
+        latency=20,
+        cpu_slowdown=1,
+    )
+
+
+def get_default_client_environment():
+    """ Returns a ClientEnvironment with 0ms latency and 96 Mbps throughput, no device slowdown """
+    return ClientEnvironment(
+        network_type=NetworkType.WIRED,
+        network_speed=NetworkSpeed.FAST,
+        device_speed=DeviceSpeed.DESKTOP,
+        bandwidth=96000,
+        latency=0,
         cpu_slowdown=1,
     )
