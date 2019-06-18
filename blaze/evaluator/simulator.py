@@ -1,3 +1,8 @@
+"""
+This module defines the classes and methods to implement a way to simulate
+loading a webpage and simulating its page load time from a dependency graph
+"""
+
 from queue import PriorityQueue
 from typing import List, NamedTuple, Optional, Set, Tuple
 
@@ -42,7 +47,7 @@ class RequestQueue:
         self.delayed: List[QueueItem] = []
         self.connected_origins: Set[str] = set()
         # convert kilobits per second (kbps) to bytes per second (Bps)
-        self.link_bandwidth_Bps = bandwidth_kbps * (1000 / 8)
+        self.link_bandwidth_bps = bandwidth_kbps * (1000 / 8)
         self.rtt_latency_ms = rtt_latency_ms
 
     def __contains__(self, node: Node):
@@ -62,7 +67,7 @@ class RequestQueue:
         downloading files, but could be made more sophisticated by taking into account
         per-domain bandwidth limits.
         """
-        return self.link_bandwidth_Bps / (len(self.queue) or 1)
+        return self.link_bandwidth_bps / (len(self.queue) or 1)
 
     def add(self, node: Node):
         """ Adds an item to the queue for immediate download """
@@ -132,6 +137,13 @@ class RequestQueue:
 
 
 class Simulator:
+    """
+    The main class that simulates a web page load. It is initialized using an EnvironmentConfig,
+    which specifies the har_resources (a flat, ordered list of resources recorded from
+    blaze.chrome.devtools.capture_har or blaze.chrome.devtools.capture_har_in_mahimahi that
+    includes timing information about each request).
+    """
+
     def __init__(self, env_config: EnvironmentConfig):
         self.root = None
         self.node_map = {}
@@ -139,6 +151,13 @@ class Simulator:
         self.create_execution_graph(env_config)
 
     def simulate_load_time(self, client_env: ClientEnvironment, policy: Optional[Policy] = None) -> float:
+        """
+        Simulates the page load time of a webpage in the given client environment
+        with an optional push policy to also simulate.
+
+        :return: The predicted page load time in milliseconds
+        """
+
         pq = PriorityQueue()
         request_queue = RequestQueue(client_env.bandwidth, client_env.latency)
         completed_nodes = {}
@@ -164,7 +183,9 @@ class Simulator:
                     # Server processing delay
                     delay = next_node.resource.time_to_first_byte_ms
                     # CPU slowdown for script exection time
-                    delay += (execution_delay_so_far * client_env.cpu_slowdown) + next_node.resource.fetch_delay_ms
+                    delay += execution_delay_so_far * client_env.cpu_slowdown
+                    # Amount of time the fetch was delayed since the script started
+                    delay += next_node.resource.fetch_delay_ms
                     # if some of the fetch_delay overlaps with the parent script execution, delay that part of the time
                     delay += min(curr_node.resource.execution_ms, next_node.resource.fetch_delay_ms) * (
                         client_env.cpu_slowdown - 1
@@ -212,10 +233,18 @@ class Simulator:
         self.root = self.node_map[0]
 
     def print_execution_map(self):
+        """
+        Prints the execution graph
+        """
+
         def recursive_print(root, depth=0):
+            """
+            Recursive helper method for printing the execution map
+            """
             print(
                 ("  " * depth)
-                + f"({root.resource.order}, {root.resource.execution_ms}, {root.resource.fetch_delay_ms}, {ResourceType(root.resource.type).name}, {root.resource.url})"
+                + f"({root.resource.order}, {root.resource.execution_ms}, {root.resource.fetch_delay_ms}, "
+                + f"{ResourceType(root.resource.type).name}, {root.resource.url})"
             )
             for next_node in root.children:
                 recursive_print(next_node, depth + 1)
