@@ -1,5 +1,7 @@
 #! /usr/bin/env node
 
+const fs = require("fs");
+
 const chromeLauncher = require('chrome-launcher');
 const commandLineArgs = require('command-line-args');
 const chromeRemoteDebugger = require('chrome-remote-interface');
@@ -8,6 +10,7 @@ const { arrayMin, arraySum, asyncWait } = require('./utils');
 
 const argumentsDefinition = [
   { name: 'verbose', alias: 'v', defaultValue: false, type: Boolean },
+  { name: 'output_file', alias: 'f', defaultValue: '', type: String },
   { name: 'url', defaultOption: true },
 ];
 
@@ -222,7 +225,12 @@ const main = async (options = commandLineArgs(argumentsDefinition)) => {
     const capturer = new HarCapturer(options);
     const res = await capturer.captureHar();
     const result = JSON.stringify(res);
-    console.log(result);
+
+    if (options.output_file) {
+      fs.writeFileSync(options.output_file, result);
+    } else {
+      console.log(result);
+    }
   } catch (e) {
     console.error(e);
   } finally {

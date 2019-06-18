@@ -1,5 +1,6 @@
 import pytest
 import subprocess
+import tempfile
 from unittest import mock
 
 from blaze.chrome.devtools import capture_har, capture_har_in_mahimahi
@@ -57,6 +58,20 @@ class TestCaptureHar:
         assert har.timings
         assert har.log.entries[0].request.url == url
 
+    def test_capture_har_for_real_to_file(self, is_ci):
+        # don't perform this test in CI since it's currently a pain
+        if is_ci:
+            assert True
+            return
+
+        # perform a real run through of capture_har on a small webpage
+        url = "https://varvy.com/pagespeed/wicked-fast.html"
+        with tempfile.NamedTemporaryFile() as output_file:
+            har = capture_har(url, self.config, output_filepath=output_file.name)
+            assert har.log.entries
+            assert har.timings
+            assert har.log.entries[0].request.url == url
+
 
 class TestCaptureHarInMahimahi:
     def setup(self):
@@ -74,11 +89,11 @@ class TestCaptureHarInMahimahi:
             capture_har_in_mahimahi("https://www.cs.ucla.edu", config, self.client_env)
 
     @mock.patch("tempfile.TemporaryDirectory")
-    @mock.patch("builtins.open", new_callable=mock.mock_open)
+    @mock.patch("builtins.open", new_callable=mock.mock_open, read_data=get_har_json())
     @mock.patch("subprocess.run")
     def test_writes_mahimahi_files_correctly(self, mock_run, mock_open, mock_tmpdir):
         tmp_dir = "/tmp/blaze_test_123"
-        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout=self.har_json)
+        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0)
         mock_tmpdir.return_value.__enter__.return_value = tmp_dir
         config = _get_config(EnvironmentConfig(request_url="https://www.cs.ucla.edu", replay_dir=tmp_dir))
 
@@ -89,15 +104,16 @@ class TestCaptureHarInMahimahi:
         assert mock_open.call_args_list[0][0][1] == "w"
         assert mock_open.call_args_list[1][0][1] == "w"
 
+    @mock.patch("builtins.open", new_callable=mock.mock_open, read_data=get_har_json())
     @mock.patch("subprocess.run")
-    def test_calls_capture_har_with_correct_arguments(self, mock_run):
-        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout=self.har_json)
+    def test_calls_capture_har_with_correct_arguments(self, mock_run, mock_open):
+        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0)
 
         config = _get_config(EnvironmentConfig(request_url="https://www.cs.ucla.edu", replay_dir="/tmp/dir"))
         har = capture_har_in_mahimahi("https://www.cs.ucla.edu", config, self.client_env)
 
         run_args = mock_run.call_args_list[0][0][0]
         assert run_args[0] == "mm-proxyreplay"
-        assert run_args[-3].endswith("capture_har.js")
-        assert run_args[-1] == "https://www.cs.ucla.edu"
+        assert run_args[-5].endswith("capture_har.js")
+        assert run_args[-3] == "https://www.cs.ucla.edu"
         assert har == self.har
