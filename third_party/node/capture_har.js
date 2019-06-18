@@ -21,6 +21,7 @@ const chromeFlags = [
   "--no-check-certificate",
   "--no-default-browser-check",
   "--no-first-run",
+  "--no-sandbox",
 ];
 
 class HarCapturer {
