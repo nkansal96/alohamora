@@ -26,12 +26,14 @@ class Timing(NamedTuple):
 
 class Request(NamedTuple):
     """ The request made by the HAR capturer """
+
     url: str
     method: str
 
 
 class Response(NamedTuple):
     """ The response captured by the HAR capturer """
+
     status: int
     body_size: int
     headers_size: int
@@ -40,6 +42,7 @@ class Response(NamedTuple):
 
 class HarEntry(NamedTuple):
     """ A resource recorded by the HAR capturer """
+
     started_date_time: str
     request: Request
     response: Response
@@ -47,11 +50,13 @@ class HarEntry(NamedTuple):
 
 class HarLog(NamedTuple):
     """ The HAR "log", whatever that means """
+
     entries: List[HarEntry]
 
 
 class Har(NamedTuple):
     """ The captured HAR information, in addition to timing information for each resource """
+
     log: HarLog
     # maps resource URL to timing information about it
     timings: Dict[str, Timing]

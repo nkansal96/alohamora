@@ -35,20 +35,20 @@ def compute_parent_child_relationships(res_list: List[Resource], timings: Dict[s
         timing = timings.get(res.url, None)
         parent = order_map.get(timing.initiator, 0) if timing else 0
 
-        new_res_list.append(Resource(
-            url=res.url,
-            type=res.type,
-            size=res.size,
-
-            order=res.order,
-            group_id=res.group_id,
-            source_id=res.source_id,
-            initiator=parent,
-
-            execution_ms=timing.execution_ms if timing else 0,
-            fetch_delay_ms=timing.fetch_delay_ms if timing else 0,
-            time_to_first_byte_ms=timing.time_to_first_byte_ms if timing else 0,
-        ))
+        new_res_list.append(
+            Resource(
+                url=res.url,
+                type=res.type,
+                size=res.size,
+                order=res.order,
+                group_id=res.group_id,
+                source_id=res.source_id,
+                initiator=parent,
+                execution_ms=timing.execution_ms if timing else 0,
+                fetch_delay_ms=timing.fetch_delay_ms if timing else 0,
+                time_to_first_byte_ms=timing.time_to_first_byte_ms if timing else 0,
+            )
+        )
 
     return new_res_list
 

@@ -41,10 +41,7 @@ class TestPreprocess:
                 assert config.har_resources == har_resources
 
         client_env = get_default_client_environment()
-        config = get_config(EnvironmentConfig(
-            replay_dir=output_dir,
-            request_url="https://cs.ucla.edu"
-        ))
+        config = get_config(EnvironmentConfig(replay_dir=output_dir, request_url="https://cs.ucla.edu"))
 
         mock_capture_har_in_mahimahi.assert_called_once()
         mock_capture_har_in_mahimahi.assert_called_with("https://cs.ucla.edu", config, client_env)
@@ -79,10 +76,7 @@ class TestPreprocess:
                 assert config.har_resources == har_resources
 
         client_env = get_default_client_environment()
-        config = get_config(EnvironmentConfig(
-            replay_dir=output_dir,
-            request_url="https://cs.ucla.edu"
-        ))
+        config = get_config(EnvironmentConfig(replay_dir=output_dir, request_url="https://cs.ucla.edu"))
 
         mock_capture_har_in_mahimahi.assert_called_once()
         mock_capture_har_in_mahimahi.assert_called_with("https://cs.ucla.edu", config, client_env)
@@ -98,10 +92,7 @@ class TestViewManifest:
         res_list = har_entries_to_resources(har)
         push_groups = resource_list_to_push_groups(res_list)
         config = EnvironmentConfig(
-            replay_dir="",
-            request_url="https://www.reddit.com/",
-            push_groups=push_groups,
-            har_resources=res_list,
+            replay_dir="", request_url="https://www.reddit.com/", push_groups=push_groups, har_resources=res_list
         )
 
         with mock.patch("builtins.print") as mock_print:
@@ -124,10 +115,7 @@ class TestViewManifest:
         res_list = har_entries_to_resources(har)
         push_groups = resource_list_to_push_groups(res_list, train_domain_globs=["*reddit.com"])
         config = EnvironmentConfig(
-            replay_dir="",
-            request_url="https://www.reddit.com/",
-            push_groups=push_groups,
-            har_resources=res_list,
+            replay_dir="", request_url="https://www.reddit.com/", push_groups=push_groups, har_resources=res_list
         )
         with mock.patch("builtins.print") as mock_print:
             with tempfile.NamedTemporaryFile() as config_file:

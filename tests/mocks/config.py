@@ -19,19 +19,49 @@ def get_push_groups() -> List[PushGroup]:
             trainable=True,
             resources=[
                 Resource(
-                    url="http://example.com/", size=1024, order=0, group_id=0, source_id=0, initiator=0, type=ResourceType.HTML
+                    url="http://example.com/",
+                    size=1024,
+                    order=0,
+                    group_id=0,
+                    source_id=0,
+                    initiator=0,
+                    type=ResourceType.HTML,
                 ),
                 Resource(
-                    url="http://example.com/A", size=1024, order=1, group_id=0, source_id=1, initiator=0, type=ResourceType.IMAGE
+                    url="http://example.com/A",
+                    size=1024,
+                    order=1,
+                    group_id=0,
+                    source_id=1,
+                    initiator=0,
+                    type=ResourceType.IMAGE,
                 ),
                 Resource(
-                    url="http://example.com/B", size=1024, order=5, group_id=0, source_id=2, initiator=0, type=ResourceType.IMAGE
+                    url="http://example.com/B",
+                    size=1024,
+                    order=5,
+                    group_id=0,
+                    source_id=2,
+                    initiator=0,
+                    type=ResourceType.IMAGE,
                 ),
                 Resource(
-                    url="http://example.com/C", size=1024, order=8, group_id=0, source_id=3, initiator=0, type=ResourceType.IMAGE
+                    url="http://example.com/C",
+                    size=1024,
+                    order=8,
+                    group_id=0,
+                    source_id=3,
+                    initiator=0,
+                    type=ResourceType.IMAGE,
                 ),
                 Resource(
-                    url="http://example.com/F", size=1024, order=12, group_id=0, source_id=4, initiator=0, type=ResourceType.IMAGE
+                    url="http://example.com/F",
+                    size=1024,
+                    order=12,
+                    group_id=0,
+                    source_id=4,
+                    initiator=0,
+                    type=ResourceType.IMAGE,
                 ),
             ],
         ),
@@ -41,7 +71,13 @@ def get_push_groups() -> List[PushGroup]:
             trainable=True,
             resources=[
                 Resource(
-                    url="http://img.example.com/D", size=1024, order=9, group_id=1, source_id=0, initiator=0, type=ResourceType.IMAGE
+                    url="http://img.example.com/D",
+                    size=1024,
+                    order=9,
+                    group_id=1,
+                    source_id=0,
+                    initiator=0,
+                    type=ResourceType.IMAGE,
                 ),
                 Resource(
                     url="http://img.example.com/E",

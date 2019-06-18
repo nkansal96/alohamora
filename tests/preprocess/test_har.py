@@ -73,10 +73,7 @@ class TestHarEntriesToResources:
 
                 new_entry = HarEntry(
                     started_date_time=entry.started_date_time,
-                    request=Request(
-                        url=new_url,
-                        method=entry.request.url,
-                    ),
+                    request=Request(url=new_url, method=entry.request.url),
                     response=Response(
                         status=new_status,
                         body_size=entry.response.body_size,
@@ -91,10 +88,7 @@ class TestHarEntriesToResources:
                 entry_urls.add(entry.request.url)
 
         invalid_entries = invalid_entries - set(entry_urls)
-        resources = har_entries_to_resources(Har(
-            log=HarLog(entries=entries),
-            timings={},
-        ))
+        resources = har_entries_to_resources(Har(log=HarLog(entries=entries), timings={}))
 
         assert len(resources) < len(entries) - len(invalid_entries)
         assert not any(res.url in invalid_entries for res in resources)

@@ -9,13 +9,14 @@ from blaze.config.environment import EnvironmentConfig
 
 from tests.mocks.har import get_har_json
 
+
 class TestPageLoadTime:
     def test_page_load_time_raises_without_url(self):
         with pytest.raises(SystemExit):
             page_load_time([])
 
-    @mock.patch('blaze.command.analyze.record_webpage')
-    @mock.patch('blaze.command.analyze.capture_har_in_mahimahi')
+    @mock.patch("blaze.command.analyze.record_webpage")
+    @mock.patch("blaze.command.analyze.capture_har_in_mahimahi")
     def test_page_load_time(self, mock_capture_har_in_mahimahi, mock_record_webpage):
         mock_capture_har_in_mahimahi.return_value = har_from_json(get_har_json())
         url = "https://www.reddit.com/"
@@ -23,10 +24,7 @@ class TestPageLoadTime:
 
         record_webpage_args = mock_record_webpage.call_args_list[0][0]
         client_env = get_default_client_environment()
-        config = get_config(EnvironmentConfig(
-            replay_dir=record_webpage_args[1],
-            request_url=url,
-        ))
+        config = get_config(EnvironmentConfig(replay_dir=record_webpage_args[1], request_url=url))
         assert record_webpage_args[0] == url
         assert record_webpage_args[1]
         assert record_webpage_args[2] == config

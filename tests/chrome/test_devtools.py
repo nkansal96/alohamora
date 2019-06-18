@@ -78,9 +78,7 @@ class TestCaptureHarInMahimahi:
     @mock.patch("subprocess.run")
     def test_writes_mahimahi_files_correctly(self, mock_run, mock_open, mock_tmpdir):
         tmp_dir = "/tmp/blaze_test_123"
-        mock_run.return_value = subprocess.CompletedProcess(
-            args=[], returncode=0, stdout=self.har_json
-        )
+        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout=self.har_json)
         mock_tmpdir.return_value.__enter__.return_value = tmp_dir
         config = _get_config(EnvironmentConfig(request_url="https://www.cs.ucla.edu", replay_dir=tmp_dir))
 
@@ -93,9 +91,7 @@ class TestCaptureHarInMahimahi:
 
     @mock.patch("subprocess.run")
     def test_calls_capture_har_with_correct_arguments(self, mock_run):
-        mock_run.return_value = subprocess.CompletedProcess(
-            args=[], returncode=0, stdout=self.har_json
-        )
+        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout=self.har_json)
 
         config = _get_config(EnvironmentConfig(request_url="https://www.cs.ucla.edu", replay_dir="/tmp/dir"))
         har = capture_har_in_mahimahi("https://www.cs.ucla.edu", config, self.client_env)

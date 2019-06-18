@@ -9,6 +9,7 @@ from blaze.preprocess.url import Url
 
 class Node(NamedTuple):
     """ A Node in the Simulator graph """
+
     resource: Resource
     priority: int
     children: List["Node"] = []
@@ -22,6 +23,7 @@ class Node(NamedTuple):
 
 class QueueItem:
     """ An item in the RequestQueue """
+
     def __init__(self, node: Node, size: int, origin: str, delay_ms: int = 0):
         self.node = node
         self.bytes_left = size
@@ -34,6 +36,7 @@ class RequestQueue:
     RequestQueue simulates ongoing network requests and the amount of time it would
     take to complete them.
     """
+
     def __init__(self, bandwidth_kbps: int, rtt_latency_ms: int):
         self.queue: List[QueueItem] = []
         self.delayed: List[QueueItem] = []
@@ -46,8 +49,7 @@ class RequestQueue:
         """
         :return: True if the given node is already scheduled for download
         """
-        return (any(qi.node == node for qi in self.queue) or
-                any(qi.node == node for qi in self.delayed))
+        return any(qi.node == node for qi in self.queue) or any(qi.node == node for qi in self.delayed)
 
     def __len__(self):
         return len(self.queue) + len(self.delayed)
@@ -91,7 +93,7 @@ class RequestQueue:
 
         # check if the queue is empty
         if not self.queue and not self.delayed:
-            return [], 0.
+            return [], 0.0
 
         # find the item with the least number of bytes left to download
         if self.queue:
@@ -164,7 +166,9 @@ class Simulator:
                     # CPU slowdown for script exection time
                     delay += (execution_delay_so_far * client_env.cpu_slowdown) + next_node.resource.fetch_delay_ms
                     # if some of the fetch_delay overlaps with the parent script execution, delay that part of the time
-                    delay += min(curr_node.resource.execution_ms, next_node.resource.fetch_delay_ms) * (client_env.cpu_slowdown - 1)
+                    delay += min(curr_node.resource.execution_ms, next_node.resource.fetch_delay_ms) * (
+                        client_env.cpu_slowdown - 1
+                    )
                     # if the previous node was a script, then don't consider its execution delay (speculative fetching)
                     if i > 0 and curr_node.children[i - 1].resource.type == ResourceType.SCRIPT:
                         delay -= curr_node.children[i - 1].resource.execution_ms
@@ -178,9 +182,6 @@ class Simulator:
                             request_queue.add_with_delay(push_node, delay)
 
                 execution_delay_so_far += next_node.resource.execution_ms
-
-        import pprint
-        pprint.pprint([(node.resource.order, time_ms) for node, time_ms in sorted(list(completed_nodes.items()), key=lambda r: r[1])])
 
         return max(completed_nodes.values())
 
@@ -212,7 +213,11 @@ class Simulator:
 
     def print_execution_map(self):
         def recursive_print(root, depth=0):
-            print(("  " * depth) + f"({root.resource.order}, {root.resource.execution_ms}, {root.resource.fetch_delay_ms}, {ResourceType(root.resource.type).name}, {root.resource.url})")
+            print(
+                ("  " * depth)
+                + f"({root.resource.order}, {root.resource.execution_ms}, {root.resource.fetch_delay_ms}, {ResourceType(root.resource.type).name}, {root.resource.url})"
+            )
             for next_node in root.children:
                 recursive_print(next_node, depth + 1)
+
         recursive_print(self.root)

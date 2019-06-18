@@ -26,10 +26,7 @@ def page_load_time(args):
     client_env = get_default_client_environment()
 
     with tempfile.TemporaryDirectory() as record_dir:
-        config = get_config(EnvironmentConfig(
-            replay_dir=record_dir,
-            request_url=args.url,
-        ))
+        config = get_config(EnvironmentConfig(replay_dir=record_dir, request_url=args.url))
         log.info("recording webpage in Mahimahi")
         record_webpage(args.url, record_dir, config)
 
@@ -39,12 +36,7 @@ def page_load_time(args):
         res_list = har_entries_to_resources(har)
         push_groups = resource_list_to_push_groups(res_list)
 
-    env_config = EnvironmentConfig(
-        replay_dir="",
-        request_url=args.url,
-        push_groups=push_groups,
-        har_resources=res_list,
-    )
+    env_config = EnvironmentConfig(replay_dir="", request_url=args.url, push_groups=push_groups, har_resources=res_list)
 
     log.info("simulating page load time...")
     sim = Simulator(env_config)

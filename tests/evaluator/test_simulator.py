@@ -37,6 +37,7 @@ from tests.mocks.har import get_har_json
 #             # print(rq.step())
 #         assert count == 4
 
+
 class TestSimulator:
     def test_simulator(self):
         # with open("/tmp/har.json", "r") as f:
@@ -47,10 +48,7 @@ class TestSimulator:
         res_list = har_entries_to_resources(har)
         push_groups = resource_list_to_push_groups(res_list)
         env_config = EnvironmentConfig(
-            replay_dir="",
-            request_url="https://www.reddit.com/",
-            push_groups=push_groups,
-            har_resources=res_list,
+            replay_dir="", request_url="https://www.reddit.com/", push_groups=push_groups, har_resources=res_list
         )
 
         # env_config = get_env_config()

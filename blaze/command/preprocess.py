@@ -43,10 +43,7 @@ def preprocess(args):
 
     log.info("capturing execution")
     client_env = get_default_client_environment()
-    config = get_config(env_config=EnvironmentConfig(
-        replay_dir=args.record_dir,
-        request_url=args.website,
-    ))
+    config = get_config(env_config=EnvironmentConfig(replay_dir=args.record_dir, request_url=args.website))
     har = capture_har_in_mahimahi(args.website, config, client_env)
     har_resources = har_entries_to_resources(har)
 
@@ -58,10 +55,7 @@ def preprocess(args):
 
     log.info("generating configuration...")
     env_config = EnvironmentConfig(
-        replay_dir=args.record_dir,
-        request_url=args.website,
-        push_groups=push_groups,
-        har_resources=har_resources,
+        replay_dir=args.record_dir, request_url=args.website, push_groups=push_groups, har_resources=har_resources
     )
     env_config.save_file(args.output)
     log.info("successfully prepared website for training", output=args.output)

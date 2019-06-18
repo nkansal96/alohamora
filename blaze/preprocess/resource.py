@@ -31,12 +31,10 @@ def resource_list_to_push_groups(res_list: List[Resource], train_domain_globs=No
             url=res.url,
             size=res.size,
             type=res.type,
-
             order=order,
             group_id=group_id,
             source_id=len(push_groups[group_id].resources),
             initiator=old_to_new_order_map[res.initiator],
-
             execution_ms=res.execution_ms,
             fetch_delay_ms=res.fetch_delay_ms,
             time_to_first_byte_ms=res.time_to_first_byte_ms,
