@@ -5,7 +5,7 @@ representation and the actual URL representation
 """
 
 import collections
-from typing import Optional
+from typing import Optional, Set
 
 from blaze.config.environment import Resource, ResourceType
 from .action_space import ActionSpace
@@ -91,6 +91,12 @@ class Policy:
         if push not in self.push_to_source:
             return None
         return self.push_to_source[push]
+
+    def push_set_for_resource(self, source: Resource) -> Set[Resource]:
+        """
+        Returns the set of resources pushed for the given source resource
+        """
+        return self.source_to_push[source]
 
     @staticmethod
     def from_dict(policy_dict: dict):
