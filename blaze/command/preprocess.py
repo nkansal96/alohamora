@@ -1,8 +1,12 @@
 """ Implements the commands for preprocessing webpages before training """
+from blaze.chrome.devtools import capture_har_in_mahimahi
+from blaze.config.client import get_default_client_environment
 from blaze.config.config import get_config
 from blaze.config.environment import EnvironmentConfig
+from blaze.evaluator.simulator import Simulator
 from blaze.logger import logger as log
 
+from blaze.preprocess.har import har_entries_to_resources
 from blaze.preprocess.record import record_webpage, find_url_stable_set
 from blaze.preprocess.resource import resource_list_to_push_groups
 from blaze.preprocess.url import Url
@@ -37,6 +41,15 @@ def preprocess(args):
     log.info("saving recorded webpage...")
     record_webpage(args.website, args.record_dir, config)
 
+    log.info("capturing execution")
+    client_env = get_default_client_environment()
+    config = get_config(env_config=EnvironmentConfig(
+        replay_dir=args.record_dir,
+        request_url=args.website,
+    ))
+    har = capture_har_in_mahimahi(args.website, config, client_env)
+    har_resources = har_entries_to_resources(har)
+
     log.info("finding dependency stable set...")
     res_list = find_url_stable_set(args.website, config)
 
@@ -44,7 +57,12 @@ def preprocess(args):
     push_groups = resource_list_to_push_groups(res_list, train_domain_globs=train_domain_globs)
 
     log.info("generating configuration...")
-    env_config = EnvironmentConfig(replay_dir=args.record_dir, request_url=args.website, push_groups=push_groups)
+    env_config = EnvironmentConfig(
+        replay_dir=args.record_dir,
+        request_url=args.website,
+        push_groups=push_groups,
+        har_resources=har_resources,
+    )
     env_config.save_file(args.output)
     log.info("successfully prepared website for training", output=args.output)
 
@@ -77,3 +95,7 @@ def view_manifest(args):
                 )
             )
         print()
+
+    print("[[ Execution Graph ]]")
+    sim = Simulator(env_config)
+    sim.print_execution_map()
