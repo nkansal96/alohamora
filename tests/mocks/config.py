@@ -19,16 +19,19 @@ def get_push_groups() -> List[PushGroup]:
             trainable=True,
             resources=[
                 Resource(
-                    url="http://example.com/A", size=1024, order=0, group_id=0, source_id=0, type=ResourceType.IMAGE
+                    url="http://example.com/", size=1024, order=0, group_id=0, source_id=0, initiator=0, type=ResourceType.HTML
                 ),
                 Resource(
-                    url="http://example.com/B", size=1024, order=4, group_id=0, source_id=1, type=ResourceType.IMAGE
+                    url="http://example.com/A", size=1024, order=1, group_id=0, source_id=1, initiator=0, type=ResourceType.IMAGE
                 ),
                 Resource(
-                    url="http://example.com/C", size=1024, order=7, group_id=0, source_id=2, type=ResourceType.IMAGE
+                    url="http://example.com/B", size=1024, order=5, group_id=0, source_id=2, initiator=0, type=ResourceType.IMAGE
                 ),
                 Resource(
-                    url="http://example.com/F", size=1024, order=11, group_id=0, source_id=3, type=ResourceType.IMAGE
+                    url="http://example.com/C", size=1024, order=8, group_id=0, source_id=3, initiator=0, type=ResourceType.IMAGE
+                ),
+                Resource(
+                    url="http://example.com/F", size=1024, order=12, group_id=0, source_id=4, initiator=0, type=ResourceType.IMAGE
                 ),
             ],
         ),
@@ -38,22 +41,24 @@ def get_push_groups() -> List[PushGroup]:
             trainable=True,
             resources=[
                 Resource(
-                    url="http://img.example.com/D", size=1024, order=8, group_id=1, source_id=0, type=ResourceType.IMAGE
+                    url="http://img.example.com/D", size=1024, order=9, group_id=1, source_id=0, initiator=0, type=ResourceType.IMAGE
                 ),
                 Resource(
                     url="http://img.example.com/E",
                     size=1024,
-                    order=10,
+                    order=11,
                     group_id=1,
                     source_id=1,
+                    initiator=0,
                     type=ResourceType.IMAGE,
                 ),
                 Resource(
                     url="http://img.example.com/G",
                     size=1024,
-                    order=12,
+                    order=13,
                     group_id=1,
                     source_id=2,
+                    initiator=0,
                     type=ResourceType.IMAGE,
                 ),
             ],
@@ -66,25 +71,28 @@ def get_push_groups() -> List[PushGroup]:
                 Resource(
                     url="http://serve.ads.googleads.com/script.1.js",
                     size=1024,
-                    order=3,
+                    order=4,
                     group_id=2,
                     source_id=0,
+                    initiator=0,
                     type=ResourceType.SCRIPT,
                 ),
                 Resource(
                     url="http://serve.ads.googleads.com/script.2.js",
                     size=1024,
-                    order=6,
+                    order=7,
                     group_id=2,
                     source_id=1,
+                    initiator=4,
                     type=ResourceType.SCRIPT,
                 ),
                 Resource(
                     url="http://serve.ads.googleads.com/script.3.js",
                     size=1024,
-                    order=9,
+                    order=10,
                     group_id=2,
                     source_id=2,
+                    initiator=7,
                     type=ResourceType.SCRIPT,
                 ),
             ],
@@ -97,25 +105,28 @@ def get_push_groups() -> List[PushGroup]:
                 Resource(
                     url="http://static.example.com/script.js",
                     size=1024,
-                    order=1,
+                    order=2,
                     group_id=3,
                     source_id=0,
+                    initiator=4,
                     type=ResourceType.SCRIPT,
                 ),
                 Resource(
                     url="http://static.example.com/font.woff",
                     size=1024,
-                    order=2,
+                    order=3,
                     group_id=3,
                     source_id=1,
+                    initiator=10,
                     type=ResourceType.FONT,
                 ),
                 Resource(
                     url="http://static.example.com/image.jpg",
                     size=1024,
-                    order=5,
+                    order=6,
                     group_id=3,
                     source_id=2,
+                    initiator=0,
                     type=ResourceType.IMAGE,
                 ),
             ],
@@ -134,7 +145,7 @@ def convert_push_groups_to_push_pairs(push_groups: List[PushGroup]) -> List[Tupl
 
 def get_env_config() -> EnvironmentConfig:
     return EnvironmentConfig(
-        replay_dir="/tmp/replay_dir", request_url="http://cs.ucla.edu/", push_groups=get_push_groups()
+        replay_dir="/tmp/replay_dir", request_url="http://example.com/", push_groups=get_push_groups()
     )
 
 

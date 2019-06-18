@@ -45,7 +45,7 @@ class TestActionSpace:
     def setup(self):
         self.push_groups = [group for group in get_push_groups() if group.trainable]
         self.action_space = ActionSpace(self.push_groups)
-        self.action_space.seed(1024)  # for deterministic output
+        self.action_space.seed(2048)  # for deterministic output
         self.sampled_actions = collections.Counter(self.action_space.sample() for i in range(1000))
 
     def test_init_push_resources(self):

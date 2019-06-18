@@ -1,3 +1,4 @@
+import collections
 import itertools
 
 from blaze.action import Action, ActionSpace, Policy
@@ -144,6 +145,23 @@ class TestPolicy:
             assert any(
                 action.source == source and action.push == push for source, push_res in policy for push in push_res
             )
+
+    def test_push_list_for_source(self):
+        action_space = ActionSpace(self.push_groups)
+        policy = Policy(action_space)
+
+        push_map = collections.defaultdict(set)
+        while not policy.completed:
+            action_id = action_space.sample()
+            policy.apply_action(action_id)
+
+            action = action_space.decode_action_id(action_id)
+            if not action.is_noop:
+                push_map[action.source].add(action.push)
+
+        assert push_map
+        for (source, push_set) in push_map.items():
+            assert policy.push_set_for_resource(source) == push_set
 
     def test_resource_push_from(self):
         action_space = ActionSpace(self.push_groups)
