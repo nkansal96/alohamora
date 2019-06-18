@@ -9,6 +9,7 @@ from .url import Url
 
 def resource_list_to_push_groups(res_list: List[Resource], train_domain_globs=None) -> List[PushGroup]:
     """ Convert an ordered list of resources to a list of PushGroups """
+
     # extract the list of domains and sort
     domains = sorted(list(set(Url.parse(res.url).domain for res in res_list)))
     # map domain to push group
@@ -20,6 +21,8 @@ def resource_list_to_push_groups(res_list: List[Resource], train_domain_globs=No
         PushGroup(id=i, name=domain, resources=[], trainable=(domain in trainable_domains))
         for (i, domain) in enumerate(domains)
     ]
+    # map the old order to the new order so that the initiators can be translated in place
+    old_to_new_order_map = {res.order: order for (order, res) in enumerate(res_list)}
 
     for (order, res) in enumerate(res_list):
         url = Url.parse(res.url)
@@ -27,10 +30,16 @@ def resource_list_to_push_groups(res_list: List[Resource], train_domain_globs=No
         new_res = Resource(
             url=res.url,
             size=res.size,
+            type=res.type,
+
             order=order,
             group_id=group_id,
             source_id=len(push_groups[group_id].resources),
-            type=res.type,
+            initiator=old_to_new_order_map[res.initiator],
+
+            execution_ms=res.execution_ms,
+            fetch_delay_ms=res.fetch_delay_ms,
+            time_to_first_byte_ms=res.time_to_first_byte_ms,
         )
         push_groups[new_res.group_id].resources.append(new_res)
 

@@ -8,12 +8,14 @@ from xml.etree import ElementTree
 
 import requests
 
+from blaze.chrome.har import Har
 from blaze.config import Config
 from blaze.config.environment import Resource
 from blaze.chrome.config import get_chrome_command, get_chrome_flags
 from blaze.chrome.devtools import capture_har
 from blaze.logger import logger
 from blaze.mahimahi import MahiMahiConfig
+from blaze.preprocess.har import compute_parent_child_relationships
 from blaze.util.seq import ordered_uniq
 
 from .har import har_entries_to_resources
@@ -47,12 +49,13 @@ def find_url_stable_set(url: str, config: Config) -> List[Resource]:
     relative ordering, and returns a list of PushGroups for the webpage
     """
     log = logger.with_namespace("find_url_stable_set")
+    hars: List[Har] = []
     resource_lists: List[Set[Resource]] = []
     pos_dict = collections.defaultdict(lambda: collections.defaultdict(int))
     for n in range(STABLE_SET_NUM_RUNS):
         log.debug("capturing HAR...", run=n + 1, url=url)
         har = capture_har(url, config)
-        resource_list = har_entries_to_resources(har.log.entries)
+        resource_list = har_entries_to_resources(har)
         if not resource_list:
             log.warn("no response received", run=n + 1)
             continue
@@ -61,12 +64,19 @@ def find_url_stable_set(url: str, config: Config) -> List[Resource]:
         for i in range(len(resource_list)):  # pylint: disable=consider-using-enumerate
             for j in range(i + 1, len(resource_list)):
                 pos_dict[resource_list[i].url][resource_list[j].url] += 1
+
         resource_lists.append(set(resource_list))
+        hars.append(har)
 
     log.debug("resource list lengths", resource_lens=list(map(len, resource_lists)))
-    common_res = list(set.intersection(*resource_lists)) if resource_lists else []
+    if not resource_lists:
+        return []
+
+    common_res = list(set.intersection(*resource_lists))
     common_res.sort(key=functools.cmp_to_key(lambda a, b: -pos_dict[a.url][b.url] + (len(resource_lists) // 2)))
-    return common_res
+
+    common_res = [Resource(**{**r._asdict(), "order": i}) for (i, r) in enumerate(common_res)]
+    return compute_parent_child_relationships(common_res, hars[0].timings)
 
 
 def get_page_links(url: str, max_depth: int = 1) -> List[str]:
