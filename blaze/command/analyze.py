@@ -16,6 +16,8 @@ from . import command
 
 
 @command.argument("url", help="The URL to analyze the page load time for")
+@command.argument("--from_record_dir", help="The recorded webpage to use as the baseline PLT")
+@command.argument("--from_manifest", help="The training manifest file to use as input to the simulator")
 @command.command
 def page_load_time(args):
     """
@@ -26,16 +28,20 @@ def page_load_time(args):
     log.info("calculating page load time", url=args.url)
     client_env = get_default_client_environment()
 
-    with tempfile.TemporaryDirectory() as record_dir:
+    with tempfile.TemporaryDirectory() as tmp_record_dir:
         # this is to work around the fact that mahimahi needs an empty directory
         # so we use TemporaryDirectory to get a unique name for a directory and
         # then delete it. After mahimahi runs and create the dir, then TemporaryDirectory
         # can delete it as normal
-        os.rmdir(record_dir)
-
+        record_dir = args.from_record_dir or tmp_record_dir
         config = get_config(EnvironmentConfig(replay_dir=record_dir, request_url=args.url))
-        log.info("recording webpage in Mahimahi")
-        record_webpage(args.url, record_dir, config)
+        if not args.from_record_dir:
+            log.info("recording webpage in Mahimahi")
+            os.rmdir(record_dir)
+            record_webpage(args.url, record_dir, config)
+
+        else:
+            log.info("using pre-recorded webpage", record_dir=record_dir)
 
         log.info("recording page execution in Mahimahi")
         log.debug("using client environment", **client_env._asdict())
@@ -43,7 +49,12 @@ def page_load_time(args):
         res_list = har_entries_to_resources(har)
         push_groups = resource_list_to_push_groups(res_list)
 
-    env_config = EnvironmentConfig(replay_dir="", request_url=args.url, push_groups=push_groups, har_resources=res_list)
+    if not args.from_manifest:
+        env_config = EnvironmentConfig(
+            replay_dir="", request_url=args.url, push_groups=push_groups, har_resources=res_list
+        )
+    else:
+        env_config = EnvironmentConfig.load_file(args.from_manifest)
 
     log.info("simulating page load time...")
     sim = Simulator(env_config)

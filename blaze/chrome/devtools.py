@@ -67,7 +67,7 @@ def capture_har_in_mahimahi(url: str, config: Config, client_env: ClientEnvironm
 
         # spawn the HAR capturer process
         log.debug("spawning har capturer", url=url, cmd=cmd)
-        har_capture_proc = subprocess.run(cmd, stdout=subprocess.PIPE)
+        har_capture_proc = subprocess.run(cmd, stdout=subprocess.DEVNULL)
         har_capture_proc.check_returncode()
 
         with open(output_file, "r") as f:

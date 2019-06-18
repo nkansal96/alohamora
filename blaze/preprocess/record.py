@@ -38,7 +38,7 @@ def record_webpage(url: str, save_dir: str, config: Config):
         mm_config = MahiMahiConfig(config)
         cmd = mm_config.record_shell_with_cmd(save_dir, chrome_cmd)
 
-        proc = subprocess.run(" ".join(cmd), shell=True)
+        proc = subprocess.run(" ".join(cmd), shell=True, stdout=subprocess.DEVNULL)
         proc.check_returncode()
 
 
