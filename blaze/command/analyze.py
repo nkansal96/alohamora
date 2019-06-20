@@ -46,13 +46,16 @@ def page_load_time(args):
         log.debug("using client environment", **client_env._asdict())
         hars = []
         for i in range(5):
-            log.info("recording page execution in Mahimahi", run=(i+1), total_runs=5)
+            log.info("recording page execution in Mahimahi", run=(i + 1), total_runs=5)
             har = capture_har_in_mahimahi(args.url, config, client_env)
             hars.append(har)
-            log.debug("captured page execution", num_requests=len(har.log.entries), page_load_time=har.page_load_time_ms)
-        res_list = min(map(har_entries_to_resources, hars), key=lambda l: len(l))
-        log.debug("chose har with resources", num_resources=len(res_list))
+            log.debug("captured page execution", page_load_time=har.page_load_time_ms)
+
+        hars.sort(key=lambda h: h.page_load_time_ms)
+        median_har = hars[len(hars) // 2]
+        res_list = har_entries_to_resources(median_har)
         push_groups = resource_list_to_push_groups(res_list)
+        log.debug("chose har", num_resources=len(res_list), page_load_time_ms=har.page_load_time_ms)
 
     if not args.from_manifest:
         env_config = EnvironmentConfig(
