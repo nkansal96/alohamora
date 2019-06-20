@@ -64,7 +64,8 @@ class Policy:
         """
         policy = {}
         for source, push_list in self:
-            policy[source.url] = [p.url for p in push_list]
+            if push_list:
+                policy[source.url] = [p.url for p in push_list]
         return policy
 
     def apply_action(self, action_id: int):
