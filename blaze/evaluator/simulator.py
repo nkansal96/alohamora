@@ -170,8 +170,8 @@ class Simulator:
         # schedule push resources for the root
         push_resources = policy.push_set_for_resource(self.root.resource) if policy else []
         for push_res in push_resources:
-            if push_res not in completed_nodes and push_res not in request_queue and push_res in self.res_to_node_map:
-                push_node = self.res_to_node_map[push_res]
+            push_node = self.res_to_node_map.get(push_res)
+            if push_node and push_node not in completed_nodes and push_node not in request_queue:
                 request_queue.add(push_node)
 
         while not pq.empty():
