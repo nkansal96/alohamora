@@ -11,11 +11,11 @@ from typing import Optional
 
 from blaze.action import Policy
 from blaze.config import client, Config
-from blaze.evaluator import lighthouse
+from blaze.evaluator import simulator
 from blaze.logger import logger
-from blaze.mahimahi import mahimahi
+# from blaze.mahimahi import mahimahi
 
-MIN_SPEED_INDEX = 1000000.0
+MIN_PAGE_LOAD_TIME = 1000000.0
 BEST_REWARD_COEFF = 200000.0
 REGRESSION_REWARD_COEFF = -2.0
 PROGRESSION_REWARD_COEFF = 4.0
@@ -33,15 +33,16 @@ class Analyzer:
     def __init__(self, config: Config, client_environment: Optional[client.ClientEnvironment] = None):
         self.config = config
         self.client_environment = client_environment
-        self.min_speed_index = MIN_SPEED_INDEX
-        self.last_speed_index = None
+        self.min_plt = MIN_PAGE_LOAD_TIME
+        self.last_plt = None
+        self.simulator = simulator.Simulator(config.env_config)
         self.log = logger.with_namespace("analyzer")
 
     def reset(self, client_environment: Optional[client.ClientEnvironment] = None):
         """ Resets the analyzer's state and optionally changes the client environment """
         self.client_environment = client_environment or self.client_environment
-        self.min_speed_index = MIN_SPEED_INDEX
-        self.last_speed_index = None
+        self.min_plt = MIN_PAGE_LOAD_TIME
+        self.last_plt = None
 
     def get_reward(self, policy: Policy):
         """
@@ -50,21 +51,22 @@ class Analyzer:
         resulting speed index returned from Lighthouse
         """
         self.log.debug("analyzing web page...")
-        mm_config = mahimahi.MahiMahiConfig(self.config, policy, self.client_environment)
-        metrics = lighthouse.get_metrics(self.config, mm_config)
-        speed_index = float(metrics.speed_index)
+        # mm_config = mahimahi.MahiMahiConfig(self.config, policy, self.client_environment)
+        # metrics = lighthouse.get_metrics(self.config, mm_config)
+        # speed_index = float(metrics.speed_index)
+        plt = self.simulator.simulate_load_time(self.client_environment, policy)
         reward = 0
-        if speed_index < self.min_speed_index:
-            self.log.debug("received best speed index", speed_index=speed_index)
-            reward = BEST_REWARD_COEFF / speed_index
+        if plt < self.min_plt:
+            self.log.debug("received best page load time", plt=plt)
+            reward = BEST_REWARD_COEFF / plt
         else:
-            a, b = sorted([speed_index, self.last_speed_index])
-            sign = REGRESSION_REWARD_COEFF if speed_index > self.last_speed_index else PROGRESSION_REWARD_COEFF
-            self.log.debug("received {} speed index".format("better" if sign > 0 else "worse"), speed_index=speed_index)
+            a, b = sorted([plt, self.last_plt])
+            sign = REGRESSION_REWARD_COEFF if plt > self.last_plt else PROGRESSION_REWARD_COEFF
+            self.log.debug("received {} page load time".format("better" if sign > 0 else "worse"), plt=plt)
             reward = sign * (b / a)
-        self.min_speed_index = min(self.min_speed_index, speed_index)
-        self.last_speed_index = speed_index
-        self.write_eval_result(speed_index, policy)
+        self.min_plt = min(self.min_plt, plt)
+        self.last_plt = plt
+        self.write_eval_result(plt, policy)
         return reward
 
     def write_eval_result(self, speed_index: float, policy: Policy):

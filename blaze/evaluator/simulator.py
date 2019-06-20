@@ -165,7 +165,14 @@ class Simulator:
 
         # start the initial item
         pq.put((self.root.priority, self.root))
-        request_queue.add(self.root)
+        request_queue.add_with_delay(self.root, self.root.resource.time_to_first_byte_ms)
+
+        # schedule push resources for the root
+        push_resources = policy.push_set_for_resource(self.root.resource) if policy else []
+        for push_res in push_resources:
+            if push_res not in completed_nodes and push_res not in request_queue and push_res in self.res_to_node_map:
+                push_node = self.res_to_node_map[push_res]
+                request_queue.add(push_node)
 
         while not pq.empty():
             _, curr_node = pq.get()
@@ -198,7 +205,7 @@ class Simulator:
 
                     push_resources = policy.push_set_for_resource(next_node.resource) if policy else []
                     for push_res in push_resources:
-                        if push_res not in completed_nodes and push_res not in request_queue:
+                        if push_res not in completed_nodes and push_res not in request_queue and push_res in self.res_to_node_map:
                             push_node = self.res_to_node_map[push_res]
                             request_queue.add_with_delay(push_node, delay)
 

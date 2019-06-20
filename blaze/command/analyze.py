@@ -14,6 +14,8 @@ from blaze.preprocess.resource import resource_list_to_push_groups
 
 from . import command
 
+EXECUTION_CAPTURE_RUNS = 5
+
 
 @command.argument("url", help="The URL to analyze the page load time for")
 @command.argument("--from_record_dir", help="The recorded webpage to use as the baseline PLT")
@@ -45,8 +47,8 @@ def page_load_time(args):
 
         log.debug("using client environment", **client_env._asdict())
         hars = []
-        for i in range(5):
-            log.info("recording page execution in Mahimahi", run=(i + 1), total_runs=5)
+        for i in range(EXECUTION_CAPTURE_RUNS):
+            log.info("recording page execution in Mahimahi", run=(i + 1), total_runs=EXECUTION_CAPTURE_RUNS)
             har = capture_har_in_mahimahi(args.url, config, client_env)
             hars.append(har)
             log.debug("captured page execution", page_load_time=har.page_load_time_ms)
