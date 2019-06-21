@@ -147,7 +147,7 @@ class Simulator:
     def __init__(self, env_config: EnvironmentConfig):
         self.root = None
         self.node_map = {}
-        self.res_to_node_map = {}
+        self.url_to_node_map = {}
         self.create_execution_graph(env_config)
 
     def simulate_load_time(self, client_env: ClientEnvironment, policy: Optional[Policy] = None) -> float:
@@ -170,7 +170,7 @@ class Simulator:
         # schedule push resources for the root
         push_resources = policy.push_set_for_resource(self.root.resource) if policy else []
         for push_res in push_resources:
-            push_node = self.res_to_node_map.get(push_res)
+            push_node = self.url_to_node_map.get(push_res.url)
             if push_node and push_node not in completed_nodes and push_node not in request_queue:
                 request_queue.add(push_node)
 
@@ -205,7 +205,7 @@ class Simulator:
 
                     push_resources = policy.push_set_for_resource(next_node.resource) if policy else []
                     for push_res in push_resources:
-                        push_node = self.res_to_node_map.get(push_res)
+                        push_node = self.url_to_node_map.get(push_res.url)
                         if push_node and push_node not in completed_nodes and push_node not in request_queue:
                             request_queue.add_with_delay(push_node, delay)
 
@@ -225,7 +225,7 @@ class Simulator:
         # res_list = [res for group in env_config.push_groups for res in group.resources]
         res_list = env_config.har_resources
         self.node_map = {res.order: Node(resource=res, priority=res.order, children=[]) for res in res_list}
-        self.res_to_node_map = {node.resource: node for node in self.node_map.values()}
+        self.url_to_node_map = {node.resource.url: node for node in self.node_map.values()}
 
         # The root is the node corresponding to the 0th order
         self.root = self.node_map.get(0)
