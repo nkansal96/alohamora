@@ -51,8 +51,8 @@ class TestCaptureHar:
             assert True
             return
         # perform a real run through of capture_har on a small webpage
-        url = "https://varvy.com/pagespeed/wicked-fast.html"
-        # url = "https://www.buzzfeed.com/"
+        # url = "https://varvy.com/pagespeed/wicked-fast.html"
+        url = "https://www.buzzfeed.com/"
         har = capture_har(url, self.config)
         assert har.log.entries
         assert har.timings

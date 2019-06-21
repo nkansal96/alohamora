@@ -181,7 +181,10 @@ def convert_push_groups_to_push_pairs(push_groups: List[PushGroup]) -> List[Tupl
 
 def get_env_config() -> EnvironmentConfig:
     return EnvironmentConfig(
-        replay_dir="/tmp/replay_dir", request_url="http://example.com/", push_groups=get_push_groups()
+        replay_dir="/tmp/replay_dir",
+        request_url="http://example.com/",
+        push_groups=get_push_groups(),
+        har_resources=sorted([res for group in get_push_groups() for res in group.resources], key=lambda r: r.order),
     )
 
 
