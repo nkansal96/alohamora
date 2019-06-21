@@ -24,6 +24,7 @@ EXECUTION_CAPTURE_RUNS = 5
 @command.argument("--from_manifest", help="The training manifest file to use as input to the simulator")
 @command.argument(
     "--only_simulator",
+    action="store_true",
     help="Only evaluate the page load time on the simulator (must be loaded from manifest to use this)",
 )
 @command.argument("--push_policy", help="The file path to a JSON-formatted push policy to simulate the PLT for")
@@ -65,8 +66,9 @@ def page_load_time(args):
     if args.from_manifest:
         env_config = EnvironmentConfig.load_file(args.from_manifest)
         config = get_config(env_config)
-        log.debug("using pre-recorded webpage", record_dir=config.env_config.replay_dir)
-        plt, _, _ = get_page_load_time_in_mahimahi(config.env_config.request_url, config)
+        if not args.only_simulator:
+            log.debug("using pre-recorded webpage", record_dir=config.env_config.replay_dir)
+            plt, _, _ = get_page_load_time_in_mahimahi(config.env_config.request_url, config)
 
     else:
         with tempfile.TemporaryDirectory() as record_dir:
