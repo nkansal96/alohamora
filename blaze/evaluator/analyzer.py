@@ -13,6 +13,7 @@ from blaze.action import Policy
 from blaze.config import client, Config
 from blaze.evaluator import simulator
 from blaze.logger import logger
+
 # from blaze.mahimahi import mahimahi
 
 MIN_PAGE_LOAD_TIME = 1000000.0
@@ -51,22 +52,19 @@ class Analyzer:
         resulting speed index returned from Lighthouse
         """
         self.log.debug("analyzing web page...")
-        # mm_config = mahimahi.MahiMahiConfig(self.config, policy, self.client_environment)
-        # metrics = lighthouse.get_metrics(self.config, mm_config)
-        # speed_index = float(metrics.speed_index)
         plt = self.simulator.simulate_load_time(self.client_environment, policy)
         reward = 0
         if plt < self.min_plt:
             self.log.debug("received best page load time", plt=plt)
+            self.write_eval_result(plt, policy)
             reward = BEST_REWARD_COEFF / plt
         else:
             a, b = sorted([plt, self.last_plt])
-            sign = REGRESSION_REWARD_COEFF if plt > self.last_plt else PROGRESSION_REWARD_COEFF
-            self.log.debug("received {} page load time".format("better" if sign > 0 else "worse"), plt=plt)
-            reward = sign * (b / a)
+            coeff = REGRESSION_REWARD_COEFF if plt > self.last_plt else PROGRESSION_REWARD_COEFF
+            self.log.debug("received {} page load time".format("better" if coeff > 0 else "worse"), plt=plt)
+            reward = coeff * (b / a)
         self.min_plt = min(self.min_plt, plt)
         self.last_plt = plt
-        self.write_eval_result(plt, policy)
         return reward
 
     def write_eval_result(self, speed_index: float, policy: Policy):
