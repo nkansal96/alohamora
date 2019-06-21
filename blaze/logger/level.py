@@ -28,3 +28,16 @@ class Level(enum.IntEnum):
         return [Style.DIM + Fore.LIGHTWHITE_EX, Fore.LIGHTBLUE_EX, Fore.YELLOW, Fore.LIGHTRED_EX, Fore.RED][
             int(self.value)
         ]
+
+    @staticmethod
+    def from_string(level_str: str):
+        """
+        Returns the log Level from the given level string
+        """
+        if not level_str:
+            return Level.INFO
+        valid_level_strings = ["debu", "info", "warn", "erro", "crit"]
+        for i, level in enumerate(valid_level_strings):
+            if level_str.lower().startswith(level):
+                return Level(i)
+        return Level.INFO
