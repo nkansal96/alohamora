@@ -97,5 +97,6 @@ def page_load_time(args):
     sim = Simulator(env_config)
     sim_plt = sim.simulate_load_time(client_env, policy)
 
-    log.info("real page load time", page_load_time=plt)
+    if not args.only_simulator:
+        log.info("real page load time", page_load_time=plt)
     log.info("simulated page load time", page_load_time=sim_plt)
