@@ -1,8 +1,10 @@
 """ Implements the commands for analyzing training progress """
+import json
 import os
 import sys
 import tempfile
 
+from blaze.action import Policy
 from blaze.chrome.devtools import capture_har_in_mahimahi
 from blaze.config.client import get_default_client_environment
 from blaze.config.config import get_config, Config
@@ -24,6 +26,7 @@ EXECUTION_CAPTURE_RUNS = 5
     "--only_simulator",
     help="Only evaluate the page load time on the simulator (must be loaded from manifest to use this)",
 )
+@command.argument("--push_policy", help="The file path to a JSON-formatted push policy to simulate the PLT for")
 @command.command
 def page_load_time(args):
     """
@@ -81,9 +84,16 @@ def page_load_time(args):
                 replay_dir=record_dir, request_url=args.url, push_groups=push_groups, har_resources=res_list
             )
 
+    policy = None
+    if args.push_policy:
+        log.debug("reading push policy", push_policy=args.push_policy)
+        with open(args.push_policy, "r") as policy_file:
+            policy_dict = json.load(policy_file)
+        policy = Policy.from_dict(policy_dict)
+
     log.debug("running simulator...")
     sim = Simulator(env_config)
-    sim_plt = sim.simulate_load_time(client_env)
+    sim_plt = sim.simulate_load_time(client_env, policy)
 
     log.info("real page load time", page_load_time=plt)
     log.info("simulated page load time", page_load_time=sim_plt)
