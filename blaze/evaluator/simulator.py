@@ -228,7 +228,7 @@ class Simulator:
         self.res_to_node_map = {node.resource: node for node in self.node_map.values()}
 
         # The root is the node corresponding to the 0th order
-        self.root = self.node_map[0]
+        self.root = self.node_map.get(0)
 
         # for each resource, unless it's the start resource, add it as a child of its initiator
         for res in res_list:
