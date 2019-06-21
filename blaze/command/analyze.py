@@ -1,10 +1,11 @@
 """ Implements the commands for analyzing training progress """
 import os
+import sys
 import tempfile
 
 from blaze.chrome.devtools import capture_har_in_mahimahi
 from blaze.config.client import get_default_client_environment
-from blaze.config.config import get_config
+from blaze.config.config import get_config, Config
 from blaze.config.environment import EnvironmentConfig
 from blaze.evaluator.simulator import Simulator
 from blaze.logger import logger as log
@@ -17,9 +18,12 @@ from . import command
 EXECUTION_CAPTURE_RUNS = 5
 
 
-@command.argument("url", help="The URL to analyze the page load time for")
-@command.argument("--from_record_dir", help="The recorded webpage to use as the baseline PLT")
+@command.argument("url", nargs="?", help="The URL to analyze the page load time for")
 @command.argument("--from_manifest", help="The training manifest file to use as input to the simulator")
+@command.argument(
+    "--only_simulator",
+    help="Only evaluate the page load time on the simulator (must be loaded from manifest to use this)",
+)
 @command.command
 def page_load_time(args):
     """
@@ -27,48 +31,59 @@ def page_load_time(args):
     in a fast, no-latency Mahimahi shell. Then simulates the load based on profiling
     the page in the same Mahimahi shell.
     """
+    # Validate the arguments
+    if args.from_manifest and args.url:
+        log.warn("ignoring url since manifest was specified")
+    if not args.url and not args.from_manifest:
+        log.critical("either --from_manifest or a URL must be specified")
+        sys.exit(1)
+    if args.only_simulator and not args.from_manifest:
+        log.critical("--from_manifest must be specified to use with --only_simulator")
+        sys.exit(1)
+
     log.info("calculating page load time", url=args.url)
     client_env = get_default_client_environment()
 
-    with tempfile.TemporaryDirectory() as tmp_record_dir:
-        # this is to work around the fact that mahimahi needs an empty directory
-        # so we use TemporaryDirectory to get a unique name for a directory and
-        # then delete it. After mahimahi runs and create the dir, then TemporaryDirectory
-        # can delete it as normal
-        record_dir = args.from_record_dir or tmp_record_dir
-        config = get_config(EnvironmentConfig(replay_dir=record_dir, request_url=args.url))
-        if not args.from_record_dir:
-            log.info("recording webpage in Mahimahi")
-            os.rmdir(record_dir)
-            record_webpage(args.url, record_dir, config)
-
-        else:
-            log.info("using pre-recorded webpage", record_dir=record_dir)
-
+    def get_page_load_time_in_mahimahi(request_url: str, config: Config):
         log.debug("using client environment", **client_env._asdict())
         hars = []
         for i in range(EXECUTION_CAPTURE_RUNS):
-            log.info("recording page execution in Mahimahi", run=(i + 1), total_runs=EXECUTION_CAPTURE_RUNS)
-            har = capture_har_in_mahimahi(args.url, config, client_env)
+            log.debug("recording page execution in Mahimahi", run=(i + 1), total_runs=EXECUTION_CAPTURE_RUNS)
+            har = capture_har_in_mahimahi(request_url, config, client_env)
             hars.append(har)
             log.debug("captured page execution", page_load_time=har.page_load_time_ms)
 
         hars.sort(key=lambda h: h.page_load_time_ms)
         median_har = hars[len(hars) // 2]
-        res_list = har_entries_to_resources(median_har)
-        push_groups = resource_list_to_push_groups(res_list)
-        log.debug("chose har", num_resources=len(res_list), page_load_time_ms=har.page_load_time_ms)
+        har_res_list = har_entries_to_resources(median_har)
+        har_push_groups = resource_list_to_push_groups(har_res_list)
+        return median_har.page_load_time_ms, har_res_list, har_push_groups
 
-    if not args.from_manifest:
-        env_config = EnvironmentConfig(
-            replay_dir="", request_url=args.url, push_groups=push_groups, har_resources=res_list
-        )
-    else:
+    if args.from_manifest:
         env_config = EnvironmentConfig.load_file(args.from_manifest)
+        config = get_config(env_config)
+        log.debug("using pre-recorded webpage", record_dir=config.env_config.replay_dir)
+        plt, _, _ = get_page_load_time_in_mahimahi(config.env_config.request_url, config)
 
-    log.info("simulating page load time...")
+    else:
+        with tempfile.TemporaryDirectory() as record_dir:
+            # this is to work around the fact that mahimahi needs an empty directory
+            # so we use TemporaryDirectory to get a unique name for a directory and
+            # then delete it. After mahimahi runs and create the dir, then TemporaryDirectory
+            # can delete it as normal
+            os.rmdir(record_dir)
+            config = get_config(EnvironmentConfig(replay_dir=record_dir, request_url=args.url))
+            log.debug("recording webpage in Mahimahi", record_dir=record_dir)
+            record_webpage(args.url, record_dir, config)
+
+            plt, res_list, push_groups = get_page_load_time_in_mahimahi(config.env_config.request_url, config)
+            env_config = EnvironmentConfig(
+                replay_dir=record_dir, request_url=args.url, push_groups=push_groups, har_resources=res_list
+            )
+
+    log.debug("running simulator...")
     sim = Simulator(env_config)
     sim_plt = sim.simulate_load_time(client_env)
 
-    log.info("real page load time", page_load_time=har.page_load_time_ms)
+    log.info("real page load time", page_load_time=plt)
     log.info("simulated page load time", page_load_time=sim_plt)
