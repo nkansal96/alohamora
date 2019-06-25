@@ -10,17 +10,19 @@ import requests
 
 from blaze.chrome.har import Har
 from blaze.config import Config
+from blaze.config.client import ClientEnvironment
 from blaze.config.environment import Resource
 from blaze.chrome.config import get_chrome_command, get_chrome_flags
-from blaze.chrome.devtools import capture_har
+from blaze.chrome.devtools import capture_har, capture_har_in_mahimahi
 from blaze.logger import logger
 from blaze.mahimahi import MahiMahiConfig
-from blaze.preprocess.har import compute_parent_child_relationships
 from blaze.util.seq import ordered_uniq
 
-from .har import har_entries_to_resources
+from .har import har_entries_to_resources, compute_parent_child_relationships
+from .resource import resource_list_to_push_groups
 from .url import Url
 
+EXECUTION_CAPTURE_RUNS = 5
 STABLE_SET_NUM_RUNS = 10
 
 
@@ -123,3 +125,24 @@ def get_page_links(url: str, max_depth: int = 1) -> List[str]:
         links.append(link_url)
         links.extend(get_page_links(link_url, max_depth - 1))
     return ordered_uniq(links)
+
+
+def get_page_load_time_in_mahimahi(request_url: str, client_env: ClientEnvironment, config: Config):
+    """
+    Return the page load time, the HAR resources captured, and the push groups detected
+    by loading the page in the given mahimahi record directory
+    """
+    log = logger.with_namespace("get_page_load_time_in_mahimahi")
+    log.debug("using client environment", **client_env._asdict())
+    hars = []
+    for i in range(EXECUTION_CAPTURE_RUNS):
+        log.debug("recording page execution in Mahimahi", run=(i + 1), total_runs=EXECUTION_CAPTURE_RUNS)
+        har = capture_har_in_mahimahi(request_url, config, client_env)
+        hars.append(har)
+        log.debug("captured page execution", page_load_time=har.page_load_time_ms)
+
+    hars.sort(key=lambda h: h.page_load_time_ms)
+    median_har = hars[len(hars) // 2]
+    har_res_list = har_entries_to_resources(median_har)
+    har_push_groups = resource_list_to_push_groups(har_res_list)
+    return median_har.page_load_time_ms, har_res_list, har_push_groups

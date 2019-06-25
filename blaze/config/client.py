@@ -127,3 +127,24 @@ def get_default_client_environment():
         latency=0,
         cpu_slowdown=1,
     )
+
+
+def get_client_environment_from_parameters(bandwidth: int, latency: int, cpu_slowdown: int):
+    """
+    Returns a fully configured client environment for valid values of bandwidth, latency, and CPU slowdown
+    """
+    network_type, network_speed = next(
+        (nt, ns)
+        for nt in NetworkType
+        for ns in NetworkSpeed
+        if network_to_bandwidth_range(nt, ns)[0] <= bandwidth <= network_to_bandwidth_range(nt, ns)[1]
+    )
+    device_speed = next(ds for ds in DeviceSpeed if device_speed_to_cpu_slowdown(ds) == cpu_slowdown)
+    return ClientEnvironment(
+        network_type=network_type,
+        network_speed=network_speed,
+        device_speed=device_speed,
+        bandwidth=bandwidth,
+        latency=latency,
+        cpu_slowdown=cpu_slowdown,
+    )
