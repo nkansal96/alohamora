@@ -46,6 +46,7 @@ class ActionSpace(gym.spaces.Discrete):
         self.rand.seed(seed)
 
     def sample(self):
+        # xxTODO: LIMIT THIS TO THE ACTION SPACE DEPTH RATHER THAN ALL RESOURCES IN THE PUSH GROUP
         # First decide whether we will push anything at all
         if self.rand.rand() < 0.2:
             return 0
