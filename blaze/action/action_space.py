@@ -31,7 +31,7 @@ class ActionSpace(gym.spaces.Discrete):
         self.action_id_map: Dict[Tuple[int, int, int], int] = {}
         self.actions: List[Action] = [Action()]
         for group in push_groups:
-            max_depth = max(20, len(group.resources) // 3)
+            max_depth = 100  # max(20, len(group.resources) // 3)
             for source in group.resources:
                 if source.source_id != 0:
                     self.push_resources.append(source)
@@ -52,7 +52,7 @@ class ActionSpace(gym.spaces.Discrete):
             return 0
 
         # Otherwise choose a push URL
-        i = (self.rand.geometric(0.2) - 1) % len(self.push_resources)
+        i = (self.rand.geometric(0.1) - 1) % len(self.push_resources)
         push_res = self.push_resources[i]
         p = push_res.source_id
         g = push_res.group_id
@@ -61,7 +61,7 @@ class ActionSpace(gym.spaces.Discrete):
         group = next(group for group in self.push_groups if group.id == g)
         source_resources = [res for res in group.resources if res.order < push_res.order]
         source_resources.sort(key=lambda r: r.order)
-        j = len(source_resources) - 1 - (self.rand.geometric(0.2) - 1) % len(source_resources)
+        j = len(source_resources) - 1 - (self.rand.geometric(0.01) - 1) % len(source_resources)
         s = source_resources[j].source_id
 
         return self.action_id_map[(g, s, p)]
