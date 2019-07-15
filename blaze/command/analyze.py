@@ -65,7 +65,7 @@ def page_load_time(args):
         config = get_config(env_config)
         if not args.only_simulator:
             log.debug("using pre-recorded webpage", record_dir=config.env_config.replay_dir)
-            plt, _, _ = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config)
+            plt, _, _, _ = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config)
 
     else:
         with tempfile.TemporaryDirectory() as record_dir:
@@ -78,9 +78,18 @@ def page_load_time(args):
             log.debug("recording webpage in Mahimahi", record_dir=record_dir)
             record_webpage(args.url, record_dir, config)
 
-            plt, res_list, push_groups = get_page_load_time_in_mahimahi(
+            plt, res_list, push_groups, median_har = get_page_load_time_in_mahimahi(
                 config.env_config.request_url, client_env, config
             )
+            json.dump(
+                {
+                    "timings": {k: v._asdict() for (k, v) in median_har.timings.items()},
+                    "page_load_time_ms": median_har.page_load_time_ms,
+                },
+                sys.stderr,
+                indent=4,
+            )
+            sys.stderr.write("\n")
             env_config = EnvironmentConfig(
                 replay_dir=record_dir, request_url=args.url, push_groups=push_groups, har_resources=res_list
             )

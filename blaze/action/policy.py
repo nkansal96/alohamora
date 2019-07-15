@@ -115,4 +115,5 @@ class Policy:
                 policy.push_to_source[Resource(url=push, size=0, type=ResourceType.NONE)] = Resource(
                     url=source, size=0, type=ResourceType.NONE
                 )
+        policy.steps_taken = sum(map(len, policy.source_to_push.values()))
         return policy

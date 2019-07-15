@@ -197,10 +197,13 @@ class HarCapturer {
       }
     });
 
+    // remove all resources started after the plt time
+    const first_load_time_ms = arrayMin(Object.values(this.timings).map(t => t.initiated_at).filter(t => t > 0));
+    const filtered_res = Object.values(this.resources).filter(r => this.timings[r.request.url].finished_at <= first_load_time_ms + pageLoadTimeMs);
+
     return {
       log: {
-        entries: Object
-          .values(this.resources)
+        entries: filtered_res
           .sort((a, b) => a.started_date_time < b.started_date_time ? -1 : 1),
       },
       timings: this.timings,
