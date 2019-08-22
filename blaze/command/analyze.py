@@ -52,7 +52,6 @@ def page_load_time(args):
         log.critical("provided cpu slodown must be 1, 2, or 4")
         sys.exit(1)
 
-    log.info("calculating page load time", url=args.url)
     default_client_env = get_default_client_environment()
     client_env = get_client_environment_from_parameters(
         args.bandwidth or default_client_env.bandwidth,
@@ -60,14 +59,23 @@ def page_load_time(args):
         args.cpu_slowdown or default_client_env.cpu_slowdown,
     )
 
+    policy = None
+    if args.push_policy:
+        log.debug("reading push policy", push_policy=args.push_policy)
+        with open(args.push_policy, "r") as policy_file:
+            policy_dict = json.load(policy_file)
+        policy = Policy.from_dict(policy_dict)
+
     if args.from_manifest:
         env_config = EnvironmentConfig.load_file(args.from_manifest)
         config = get_config(env_config)
+        log.info("calculating page load time", manifest=args.from_manifest, url=env_config.request_url)
         if not args.only_simulator:
             log.debug("using pre-recorded webpage", record_dir=config.env_config.replay_dir)
-            plt, _, _, _ = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config)
+            plt, *_ = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config, policy)
 
     else:
+        log.info("calculating page load time", url=args.url)
         with tempfile.TemporaryDirectory() as record_dir:
             # this is to work around the fact that mahimahi needs an empty directory
             # so we use TemporaryDirectory to get a unique name for a directory and
@@ -77,32 +85,27 @@ def page_load_time(args):
             config = get_config(EnvironmentConfig(replay_dir=record_dir, request_url=args.url))
             log.debug("recording webpage in Mahimahi", record_dir=record_dir)
             record_webpage(args.url, record_dir, config)
+            log.debug("capturing median PLT in mahimahi with given environment")
+            plt, res_list, push_groups = get_page_load_time_in_mahimahi(
+                config.env_config.request_url, client_env, config, policy
+            )
 
-            plt, res_list, push_groups, median_har = get_page_load_time_in_mahimahi(
-                config.env_config.request_url, client_env, config
-            )
-            json.dump(
-                {
-                    "timings": {k: v._asdict() for (k, v) in median_har.timings.items()},
-                    "page_load_time_ms": median_har.page_load_time_ms,
-                },
-                sys.stderr,
-                indent=4,
-            )
-            sys.stderr.write("\n")
+            # If the user passed in a custom environment, we want to use the PLT from that environment
+            # but we want to use the HAR from the default page load to run in the simulator. This is to
+            # allow the simulator to simulate the custom environment on top of the default environment
+            # and to prevent conflating environments
+            if args.bandwidth or args.latency or args.cpu_slowdown:
+                log.debug("capturing median HAR in mahimahi for simulator in default environment")
+                _, res_list, push_groups = get_page_load_time_in_mahimahi(
+                    config.env_config.request_url, default_client_env, config
+                )
             env_config = EnvironmentConfig(
                 replay_dir=record_dir, request_url=args.url, push_groups=push_groups, har_resources=res_list
             )
 
-    policy = None
-    if args.push_policy:
-        log.debug("reading push policy", push_policy=args.push_policy)
-        with open(args.push_policy, "r") as policy_file:
-            policy_dict = json.load(policy_file)
-        policy = Policy.from_dict(policy_dict)
-
     log.debug("running simulator...")
     sim = Simulator(env_config)
+    sim.print_execution_map()
     sim_plt = sim.simulate_load_time(client_env, policy)
 
     if not args.only_simulator:

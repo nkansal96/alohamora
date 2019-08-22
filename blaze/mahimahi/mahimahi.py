@@ -87,10 +87,7 @@ class MahiMahiConfig:
         if self.policy is None:
             raise AttributeError("Push policy must be specified in the constructor")
         return "\n".join(
-            [
-                "{parent}\t{dependencies}".format(parent=parent.url, dependencies="\t".join(dep.url for dep in deps))
-                for (parent, deps) in self.policy
-            ]
+            [f"{parent.url}\n{push.url}\n{push.type.name}" for (parent, deps) in self.policy for push in deps]
         )
 
     @property
