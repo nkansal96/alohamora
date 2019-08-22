@@ -1,4 +1,5 @@
 """ Implements the commands for analyzing training progress """
+import json
 import os
 import random
 import tempfile
@@ -106,6 +107,8 @@ def _test_push(
             push_groups = resource_list_to_push_groups(res_list)
 
         policy = policy_generator(push_groups)
+        log.debug("getting HAR in mahimahi with push policy:")
+        log.debug(json.dumps(policy.as_dict, indent=4))
         push_plt, *_ = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config, policy)
 
         env_config = EnvironmentConfig(
