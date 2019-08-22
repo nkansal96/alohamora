@@ -138,24 +138,27 @@ class HarCapturer {
         ts: (e.ts - tsOffset)/1000
       }));
 
-    // process events
-    const executedAtMap = events
-      .filter(e => ["FunctionCall", "EvaluateScript"].includes(e.name) && e.args.data && e.args.data.url)
+    let executionTimeMap = events
+      .filter(e => e.name === "EvaluateScript" && e.args.data && e.args.data.url)
+      .map(e => ({ url: e.args.data.url, ts: e.ts, dur: e.dur }))
       .reduce((acc, e) => ({
         ...acc,
-        [e.args.data.url]: Math.min(acc[e.args.data.url] || e.ts, e.ts),
+        [e.url]: [...(acc[e.url] || []), e]
       }), {});
 
-    const executionTimeMap = events
-      .filter(e => ["FunctionCall", "EvaluateScript"].includes(e.name) && e.args.data && e.args.data.url)
+    executionTimeMap = events
+      .filter(e => e.name === "FunctionCall")
+      .map((e, i, arr) => e.ph === "B" && i < arr.length - 1 && ({ url: e.args.data.url, ts: e.ts, dur: (arr[i+1].ts - e.ts)}))
+      .filter(e => !!e)
       .reduce((acc, e) => ({
         ...acc,
-        [e.args.data.url]: [...(acc[e.args.data.url] || []), e]
-      }), {});
+        [e.url]: [...(acc[e.url] || []), e]
+      }), executionTimeMap);
 
     const parseTimeMap = events
+      .filter(e => e.name === "ParseHTML")
       .filter(e => ["ParseHTML"].includes(e.name))
-      .map((e, i, arr) => e.ph === "B" && ({ url: e.args.beginData.url, ts: e.ts, dur: (arr[i+1].ts - e.ts) }))
+      .map((e, i, arr) => e.ph === "B" && i < arr.length - 1 && ({ url: e.args.beginData.url, ts: e.ts, dur: (arr[i+1].ts - e.ts) }))
       .filter(e => !!e)
       .reduce((acc, e) => ({
         ...acc,
@@ -183,23 +186,20 @@ class HarCapturer {
         arraySum((executionTimeMap[url] || []).map(e => e.dur)) +
         arraySum((parseTimeMap[url] || []).map(e => e.dur));
 
-      if (parseTimeMap[timing.initiator]) {
-        this.timings[url].fetch_delay_ms = arraySum(
-          parseTimeMap[timing.initiator]
-            .filter(p => p.ts < timing.initiated_at)
-            .map(e => e.dur)
-        );
-      } else {
-        const parentExecutedAt = executedAtMap[timing.initiator];
-        if (parentExecutedAt) {
-          this.timings[url].fetch_delay_ms = Math.max(0, timing.initiated_at - (this.navStart + parentExecutedAt));
-        }
+      const parentTiming = this.timings[timing.initiator];
+      if (parentTiming) {
+        this.timings[url].fetch_delay_ms = Math.max(0, timing.initiated_at - parentTiming.finished_at);
       }
     });
 
     // remove all resources started after the plt time
-    const first_load_time_ms = arrayMin(Object.values(this.timings).map(t => t.initiated_at).filter(t => t > 0));
-    const filtered_res = Object.values(this.resources).filter(r => this.timings[r.request.url].finished_at <= first_load_time_ms + pageLoadTimeMs);
+    const first_load_time_ms = arrayMin(
+      Object.values(this.timings)
+        .map(t => t.initiated_at)
+        .filter(t => t > 0)
+    );
+    const filtered_res = Object.values(this.resources)
+      .filter(r => this.timings[r.request.url].initiated_at <= first_load_time_ms + pageLoadTimeMs);
 
     return {
       log: {
@@ -208,10 +208,6 @@ class HarCapturer {
       },
       timings: this.timings,
       page_load_time_ms: pageLoadTimeMs,
-      // events: this.events,
-      // executedAtMap,
-      // executionTimeMap,
-      // parseTimeMap,
     };
   }
 }
