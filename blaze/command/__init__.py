@@ -4,4 +4,5 @@ from . import client
 from . import command
 from . import preprocess
 from . import serve
+from . import test
 from . import train

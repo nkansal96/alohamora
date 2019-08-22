@@ -3,6 +3,7 @@ This module defines the classes and methods to implement a way to simulate
 loading a webpage and simulating its page load time from a dependency graph
 """
 
+import copy
 from queue import PriorityQueue
 from typing import List, NamedTuple, Optional, Set, Tuple
 
@@ -49,6 +50,7 @@ class RequestQueue:
         self.connected_origins: Set[str] = set()
         # convert kilobits per second (kbps) to bytes per second (Bps)
         self.link_bandwidth_bps = bandwidth_kbps * (1000 / 8)
+        self.bandwidth_kbps = bandwidth_kbps
         self.rtt_latency_ms = rtt_latency_ms
 
     def __contains__(self, node: Node):
@@ -59,6 +61,16 @@ class RequestQueue:
 
     def __len__(self):
         return len(self.queue) + len(self.delayed)
+
+    def copy(self) -> "RequestQueue":
+        """
+        :return: a copy of the request queue
+        """
+        rq = RequestQueue(self.bandwidth_kbps, self.rtt_latency_ms)
+        rq.queue = [copy.copy(qi) for qi in self.queue]
+        rq.delayed = [copy.copy(qi) for qi in self.delayed]
+        rq.connected_origins = set(self.connected_origins)
+        return rq
 
     @property
     def bandwidth(self):
@@ -74,16 +86,46 @@ class RequestQueue:
         """ Adds an item to the queue for immediate download """
         self.add_with_delay(node, 0)
 
+    def remove(self, node: Node):
+        """
+        Removes the given node from the request queue
+        :param node: the node to remove
+        """
+
+        self.queue = [qi for qi in self.queue if qi.node != node]
+        self.delayed = [qi for qi in self.delayed if qi.node != node]
+
     def add_with_delay(self, node: Node, delay_ms: int):
         """
         Adds an item to the queue but does not start it until the delay has occurred. Additionally,
         this method checks to see if a connection has been opened for the resource's origin. If not,
         it adds 2-RTT delay for the resource.
         """
+
         domain = Url.parse(node.resource.url).domain
-        if domain not in self.connected_origins:
-            delay_ms += 2 * self.rtt_latency_ms
+        multiplier = 2 if domain not in self.connected_origins else 1
+        delay_ms += multiplier * self.rtt_latency_ms
         self.delayed.append(QueueItem(node, node.resource.size, domain, delay_ms))
+
+    def estimated_completion_time(self, node: Node) -> float:
+        """
+        Runs through a copy of the request queue and returns the relative time offset
+        at which the given node would have completed.
+
+        :param node: The node to estimate the completion time of
+        :return: 0 if the node is not in the request queue; the relative time offset
+                 of completion otherwise
+        """
+
+        if node not in self:
+            return 0
+        rq = self.copy()
+        total_time = 0
+        completed_nodes, step_ms = [], 0
+        while rq and node not in completed_nodes:
+            completed_nodes, step_ms = rq.step()
+            total_time += step_ms
+        return total_time
 
     def step(self) -> Tuple[List[Node], float]:
         """
@@ -103,12 +145,12 @@ class RequestQueue:
 
         # find the item with the least number of bytes left to download
         if self.queue:
-            bytes_to_download = min([qi.bytes_left for qi in self.queue])
+            bytes_to_download = min(qi.bytes_left for qi in self.queue)
             time_ms_to_download = 1000 * bytes_to_download / self.bandwidth
 
         # OR, if the queue is empty, find the next delayed item to enqueue
         else:
-            time_ms_to_download = min([qi.delay_ms_left for qi in self.delayed])
+            time_ms_to_download = min(qi.delay_ms_left for qi in self.delayed)
             bytes_to_download = (time_ms_to_download * self.bandwidth) / 1000
 
         # Reduce all delayed items by time_ms_to_download
@@ -149,29 +191,56 @@ class Simulator:
         self.root = None
         self.node_map = {}
         self.url_to_node_map = {}
-        self.create_execution_graph(env_config)
         self.log = logger.with_namespace("simulator")
+        self.create_execution_graph(env_config)
 
         self.pq = None
         self.request_queue = None
         self.completed_nodes = {}
+        self.pushed_nodes = set()
         self.total_time_ms = 0
 
     def reset_simulation(self, client_env: ClientEnvironment):
+        """
+        Resets the state of the simulator with the given client environment
+
+        :param client_env: the client environment to reset with
+        """
+
         self.pq = PriorityQueue()
         self.request_queue = RequestQueue(client_env.bandwidth, client_env.latency)
         self.completed_nodes = {}
+        self.pushed_nodes = set()
         self.total_time_ms = 0
 
     def schedule_push_resources(self, node: Node, delay: float, policy: Optional[Policy] = None):
+        """
+        Schedule all push resources for a given node with the given delay.
+
+        :param node: The node to push resources for
+        :param delay: The delay to schedule each pushed resource with
+        :param policy: The push policy to use to look up which resources to push
+        """
+
         push_resources = policy.push_set_for_resource(node.resource) if policy else []
         for push_res in push_resources:
             push_node = self.url_to_node_map.get(push_res.url)
             if push_node and push_node not in self.completed_nodes and push_node not in self.request_queue:
+                self.pq.put((push_node.priority, push_node))
                 self.request_queue.add_with_delay(push_node, delay)
-                self.log.debug("push resource", source=node.resource.url, push=push_res.url)
+                self.pushed_nodes.add(push_node)
+                self.log.debug(
+                    "push resource", time=self.total_time_ms, delay=delay, source=node.resource.url, push=push_res.url
+                )
 
     def step_request_queue(self, client_env: ClientEnvironment, policy: Optional[Policy] = None):
+        """
+        Steps through the request queue once and updates the simulator state based on the results
+
+        :param client_env: the client environment to simulate
+        :param policy: the push policy to simulate
+        """
+
         completed_this_step, time_ms_this_step = self.request_queue.step()
         self.total_time_ms += time_ms_this_step
         for node in completed_this_step:
@@ -179,39 +248,87 @@ class Simulator:
             self.log.debug("resource completed", resource=node.resource.url, time=self.completed_nodes[node])
             self.schedule_child_requests(node, client_env, policy)
 
-    def schedule_child_requests(self, node: Node, client_env: ClientEnvironment, policy: Optional[Policy] = None):
-        execution_delay_so_far = 0
-        for (i, next_node) in enumerate(node.children):
-            self.pq.put((next_node.priority, next_node))
-            if next_node not in self.completed_nodes and next_node not in self.request_queue:
-                # Server processing delay
-                delay = next_node.resource.time_to_first_byte_ms
-                # CPU slowdown for script exection time
-                delay += execution_delay_so_far * client_env.cpu_slowdown
-                # Amount of time the fetch was delayed since the script started
-                delay += next_node.resource.fetch_delay_ms
-                # if some of the fetch_delay overlaps with the parent script execution, delay that part of the time
-                delay += min(node.resource.execution_ms, next_node.resource.fetch_delay_ms) * (
-                        client_env.cpu_slowdown - 1
-                )
-                # if the previous node was a script, then don't consider its execution delay (speculative fetching)
-                if i > 0 and node.children[i - 1].resource.type == ResourceType.SCRIPT:
-                    delay -= node.children[i - 1].resource.execution_ms
+    def schedule_child_requests(self, parent: Node, client_env: ClientEnvironment, policy: Optional[Policy] = None):
+        """
+        Schedules all children for the given node
 
-                self.request_queue.add_with_delay(next_node, delay)
+        :param parent: The node to schedule children for
+        :param client_env: The client environment to simulate
+        :param policy: The push policy to simulate
+        """
+
+        fetch_delay_correction = 0
+        execution_delay = 0
+        last_execution_delay = 0
+
+        for child in parent.children:
+            # Server processing delay
+            child_delay = child.resource.time_to_first_byte_ms
+            # Amount of time the fetch was delayed since the parent finished, minus the amount of time saved
+            # from pushing
+            child_delay += child.resource.fetch_delay_ms - fetch_delay_correction
+            # Adjust the delay to account for slowed-down execution delay (and speculative fetching)
+            child_delay += (execution_delay - last_execution_delay) * (client_env.cpu_slowdown - 1)
+            # if some of the fetch_delay overlaps with the parent script execution, delay that part of the time
+            child_delay += min(parent.resource.execution_ms, child.resource.fetch_delay_ms) * (
+                client_env.cpu_slowdown - 1
+            )
+
+            # If it was pushed, calculate its delay as the difference between
+            # when it was scheduled and how much time has passed since then
+            if child in self.pushed_nodes:
+                # get the time that the pushed resource would be complete
+                push_completion_time = self.request_queue.estimated_completion_time(child)
+                # get the time that this resource would have completed if it wasn't pushed
+                rq = self.request_queue.copy()
+                rq.remove(child)
+                rq.add_with_delay(child, child_delay)
+                completion_time = rq.estimated_completion_time(child)
+
+                child_fetch_delay_correction = 0
+                # case 1: pushed resource was partially downloaded at the point when this resource would have downloaded
+                #         --> subtract the time already spent downloading
+                if child_delay < push_completion_time < completion_time:
+                    child_fetch_delay_correction = push_completion_time - child_delay
+                # case 2: pushed resource completed downloading before this resource would have started downloading
+                #         --> subtract the entire download time
+                if push_completion_time < child_delay:
+                    child_fetch_delay_correction = completion_time - child_delay
+                # case 3: pushed resource will finish after this resource would have finished
+                #         --> add the extra time spent downloading
+                if push_completion_time > completion_time:
+                    child_fetch_delay_correction = -(push_completion_time - completion_time)
+
+                fetch_delay_correction += child_fetch_delay_correction
+                self.pushed_nodes.remove(child)
+                self.log.debug(
+                    "correcting fetch delay",
+                    parent=parent.resource.url,
+                    resource=child.resource.url,
+                    push_completion_time=push_completion_time,
+                    orig_completion_time=completion_time,
+                    download_time=completion_time - child_delay,
+                    child_fetch_delay_correction=child_fetch_delay_correction,
+                    total_fetch_delay_correction=fetch_delay_correction,
+                )
+
+            if child.resource.type == ResourceType.SCRIPT:
+                execution_delay += child.resource.execution_ms
+                last_execution_delay = child.resource.execution_ms
+
+            if child not in self.completed_nodes and child not in self.request_queue:
+                self.pq.put((child.priority, child))
+                self.request_queue.add_with_delay(child, child_delay)
                 self.log.debug(
                     "scheduled resource",
-                    resource=next_node.resource.url,
-                    delay=delay,
-                    ttfb=next_node.resource.time_to_first_byte_ms,
-                    execution_delay_so_far=execution_delay_so_far,
-                    fetch_delay=next_node.resource.fetch_delay_ms,
-                    execution=next_node.resource.execution_ms,
+                    resource=child.resource.url,
+                    delay=child_delay,
+                    ttfb=child.resource.time_to_first_byte_ms,
+                    fetch_delay=child.resource.fetch_delay_ms,
+                    execution=child.resource.execution_ms,
                     total_time=self.total_time_ms,
                 )
-
-                self.schedule_push_resources(next_node, delay, policy)
-            execution_delay_so_far += next_node.resource.execution_ms
+                self.schedule_push_resources(child, child_delay, policy)
 
     def simulate_load_time(self, client_env: ClientEnvironment, policy: Optional[Policy] = None) -> float:
         """
@@ -220,8 +337,6 @@ class Simulator:
 
         :return: The predicted page load time in milliseconds
         """
-        self.log.debug("simulation environment", **client_env._asdict())
-
         self.reset_simulation(client_env)
 
         # start the initial item
@@ -249,7 +364,6 @@ class Simulator:
         """
 
         # create a map of Nodes, mapping their order (basically their ID) to a Node for that resource
-        # res_list = [res for group in env_config.push_groups for res in group.resources]
         res_list = env_config.har_resources
         self.node_map = {res.order: Node(resource=res, priority=res.order, children=[]) for res in res_list}
         self.url_to_node_map = {node.resource.url: node for node in self.node_map.values()}
@@ -275,9 +389,12 @@ class Simulator:
             """
             Recursive helper method for printing the execution map
             """
+            if not root:
+                return
             print(
                 ("  " * depth)
-                + f"({root.resource.order}, {root.resource.execution_ms}, {root.resource.fetch_delay_ms}, "
+                + f"({root.resource.order}, {root.resource.execution_ms:.3f}, "
+                + f"{root.resource.fetch_delay_ms:.3f}, {root.resource.size} B, "
                 + f"{ResourceType(root.resource.type).name}, {root.resource.url})"
             )
             for next_node in root.children:

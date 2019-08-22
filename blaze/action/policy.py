@@ -65,7 +65,7 @@ class Policy:
         policy = {}
         for source, push_list in self:
             if push_list:
-                policy[source.url] = [p.url for p in push_list]
+                policy[source.url] = [{"url": p.url, "type": p.type.name} for p in push_list]
         return policy
 
     def apply_action(self, action_id: int):
@@ -109,10 +109,10 @@ class Policy:
         policy = Policy(ActionSpace([]))
         for (source, deps) in policy_dict.items():
             policy.source_to_push[Resource(url=source, size=0, type=ResourceType.NONE)] = set(
-                Resource(url=push, size=0, type=ResourceType.NONE) for push in deps
+                Resource(url=push["url"], size=0, type=ResourceType[push["type"]]) for push in deps
             )
             for push in deps:
-                policy.push_to_source[Resource(url=push, size=0, type=ResourceType.NONE)] = Resource(
+                policy.push_to_source[Resource(url=push["url"], size=0, type=ResourceType[push["type"]])] = Resource(
                     url=source, size=0, type=ResourceType.NONE
                 )
         policy.steps_taken = sum(map(len, policy.source_to_push.values()))
