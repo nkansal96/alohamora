@@ -54,6 +54,7 @@ def _simple_push_policy_generator() -> Callable[[List[PushGroup]], Policy]:
         )
         policy = Policy(ActionSpace([]))
         policy.add_default_action(source_res, push_res)
+        policy.steps_taken += 1
         return policy
 
     return _simple_push_policy
@@ -68,6 +69,7 @@ def _random_push_policy_generator(chance: float) -> Callable[[List[PushGroup]], 
                     continue
                 source = random.randint(0, push - 1)
                 policy.add_default_action(group.resources[source], group.resources[push])
+                policy.steps_taken += 1
 
         return policy
 
