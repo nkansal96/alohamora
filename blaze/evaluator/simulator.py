@@ -4,6 +4,7 @@ loading a webpage and simulating its page load time from a dependency graph
 """
 
 import copy
+import json
 from queue import PriorityQueue
 from typing import List, NamedTuple, Optional, Set, Tuple
 
@@ -223,6 +224,7 @@ class Simulator:
         """
 
         push_resources = policy.push_set_for_resource(node.resource) if policy else []
+        self.log.debug("push resources for resource", resource=node.resource.url, push_results=[res.url for res in push_resources])
         for push_res in push_resources:
             push_node = self.url_to_node_map.get(push_res.url)
             if push_node and push_node not in self.completed_nodes and push_node not in self.request_queue:
@@ -337,6 +339,9 @@ class Simulator:
 
         :return: The predicted page load time in milliseconds
         """
+        self.log.debug("simulating page load with client environment", **client_env._asdict())
+        self.log.debug("simulating page load with push policy:")
+        self.log.debug(json.dumps(policy.as_dict, indent=4))
         self.reset_simulation(client_env)
 
         # start the initial item
