@@ -119,16 +119,16 @@ def _test_push(
             push_plt, *_ = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config, policy)
             push_plts.append(push_plt)
 
-            env_config = EnvironmentConfig(
-                replay_dir=record_dir, request_url=url, push_groups=push_groups, har_resources=res_list
-            )
+        env_config = EnvironmentConfig(
+            replay_dir=record_dir, request_url=url, push_groups=push_groups, har_resources=res_list
+        )
 
     log.debug("running simulator...")
     sim = Simulator(env_config)
     sim_plt = sim.simulate_load_time(client_env)
     push_sim_plts = []
 
-    for _ in range(iterations):
+    for policy in push_policies:
         sim = Simulator(env_config)
         push_sim_plts.append(sim.simulate_load_time(client_env, policy))
 
