@@ -25,6 +25,7 @@ from . import command
     type=float,
     default=0.25,
 )
+@command.argument("--iterations", help="Number of trials", type=int, default=1)
 @command.argument("--bandwidth", help="Link bandwidth to simulate (kbps)", type=int, default=None)
 @command.argument("--latency", help="Link RTT to simulate (ms)", type=int, default=None)
 @command.command
@@ -33,9 +34,9 @@ def test_push(args):
     Runs a pre-defined test on the given webpage
     """
     if args.policy_type == "simple":
-        _test_push(args.url, _simple_push_policy_generator(), args.bandwidth, args.latency)
+        _test_push(args.url, 1, _simple_push_policy_generator(), args.bandwidth, args.latency)
     if args.policy_type == "random":
-        _test_push(args.url, _random_push_policy_generator(args.random_chance), args.bandwidth, args.latency)
+        _test_push(args.url, args.iterations, _random_push_policy_generator(args.random_chance), args.bandwidth, args.latency)
 
 
 def _simple_push_policy_generator() -> Callable[[List[PushGroup]], Policy]:
@@ -74,7 +75,7 @@ def _random_push_policy_generator(chance: float) -> Callable[[List[PushGroup]], 
 
 
 def _test_push(
-    url: str, policy_generator: Callable[[List[PushGroup]], Policy], bandwidth: Optional[int], latency: Optional[int]
+    url: str, iterations: int, policy_generator: Callable[[List[PushGroup]], Policy], bandwidth: Optional[int], latency: Optional[int]
 ):
     default_client_env = get_default_client_environment()
     client_env = get_client_environment_from_parameters(
@@ -106,21 +107,32 @@ def _test_push(
             res_list = har_entries_to_resources(default_har)
             push_groups = resource_list_to_push_groups(res_list)
 
-        policy = policy_generator(push_groups)
-        log.debug("getting HAR in mahimahi with push policy:")
-        log.debug(json.dumps(policy.as_dict, indent=4))
-        push_plt, *_ = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config, policy)
+        push_plts = []
+        push_policies = []
 
-        env_config = EnvironmentConfig(
-            replay_dir=record_dir, request_url=url, push_groups=push_groups, har_resources=res_list
-        )
+        for _ in range(iterations):
+            policy = policy_generator(push_groups)
+            push_policies.append(policy)
+
+            log.debug("getting HAR in mahimahi with push policy:")
+            log.debug(json.dumps(policy.as_dict, indent=4))
+            push_plt, *_ = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config, policy)
+            push_plts.append(push_plt)
+
+            env_config = EnvironmentConfig(
+                replay_dir=record_dir, request_url=url, push_groups=push_groups, har_resources=res_list
+            )
 
     log.debug("running simulator...")
     sim = Simulator(env_config)
-    sim_plt = sim.simulate_load_time(default_client_env)
-    push_sim_plt = sim.simulate_load_time(default_client_env, policy)
+    sim_plt = sim.simulate_load_time(client_env)
+    push_sim_plts = []
+
+    for _ in range(iterations):
+        sim = Simulator(env_config)
+        push_sim_plts.append(sim.simulate_load_time(client_env, policy))
 
     log.info("real page load time", page_load_time=plt)
-    log.info("real push page load time", page_load_time=push_plt)
+    log.info("real push page load times", page_load_time=push_plts)
     log.info("simulated page load time", page_load_time=sim_plt)
-    log.info("simulated push page load time", page_load_time=push_sim_plt)
+    log.info("simulated push page load time", page_load_time=push_sim_plts)

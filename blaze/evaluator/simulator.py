@@ -317,8 +317,6 @@ class Simulator:
                 last_execution_delay = child.resource.execution_ms
 
             if child not in self.completed_nodes and child not in self.request_queue:
-                self.pq.put((child.priority, child))
-                self.request_queue.add_with_delay(child, child_delay)
                 self.log.debug(
                     "scheduled resource",
                     resource=child.resource.url,
@@ -328,6 +326,8 @@ class Simulator:
                     execution=child.resource.execution_ms,
                     total_time=self.total_time_ms,
                 )
+                self.pq.put((child.priority, child))
+                self.request_queue.add_with_delay(child, child_delay)
                 self.schedule_push_resources(child, child_delay, policy)
 
     def simulate_load_time(self, client_env: ClientEnvironment, policy: Optional[Policy] = None) -> float:
