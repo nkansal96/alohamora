@@ -340,8 +340,9 @@ class Simulator:
         :return: The predicted page load time in milliseconds
         """
         self.log.debug("simulating page load with client environment", **client_env._asdict())
-        self.log.debug("simulating page load with push policy:")
-        self.log.debug(json.dumps(policy.as_dict, indent=4))
+        if policy:
+            self.log.debug("simulating page load with push policy:")
+            self.log.debug(json.dumps(policy.as_dict, indent=4))
         self.reset_simulation(client_env)
 
         # start the initial item
