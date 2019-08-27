@@ -97,8 +97,9 @@ class Policy:
         """
         Returns the set of resources pushed for the given source resource
         """
-        push_resources = {**dict(self.default_source_to_push), **dict(self.source_to_push)}
-        return push_resources[source]
+        default_push_resources = self.default_source_to_push[source]
+        push_resources = self.source_to_push[source]
+        return push_resources | default_push_resources
 
     @staticmethod
     def from_dict(policy_dict: dict):
