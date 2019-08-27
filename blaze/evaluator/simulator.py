@@ -224,15 +224,24 @@ class Simulator:
         """
 
         push_resources = policy.push_set_for_resource(node.resource) if policy else []
-        self.log.debug("push resources for resource", resource=node.resource.url, push_results=[res.url for res in push_resources])
+        if push_resources:
+            self.log.debug(
+                "push resources for resource",
+                resource=node.resource.url,
+                push_results=[res.url for res in push_resources]
+            )
         for push_res in push_resources:
             push_node = self.url_to_node_map.get(push_res.url)
             if push_node and push_node not in self.completed_nodes and push_node not in self.request_queue:
                 self.pq.put((push_node.priority, push_node))
-                self.request_queue.add_with_delay(push_node, delay)
+                self.request_queue.add_with_delay(push_node, delay + push_node.resource.time_to_first_byte_ms)
                 self.pushed_nodes.add(push_node)
                 self.log.debug(
-                    "push resource", time=self.total_time_ms, delay=delay, source=node.resource.url, push=push_res.url
+                    "push resource",
+                    time=self.total_time_ms,
+                    delay=delay + push_node.resource.time_to_first_byte_ms,
+                    source=node.resource.url,
+                    push=push_res.url,
                 )
 
     def step_request_queue(self, client_env: ClientEnvironment, policy: Optional[Policy] = None):
@@ -330,7 +339,7 @@ class Simulator:
                 )
                 self.pq.put((child.priority, child))
                 self.request_queue.add_with_delay(child, child_delay)
-                self.schedule_push_resources(child, child_delay, policy)
+                self.schedule_push_resources(child, child_delay - child.resource.time_to_first_byte_ms, policy)
 
     def simulate_load_time(self, client_env: ClientEnvironment, policy: Optional[Policy] = None) -> float:
         """
