@@ -105,8 +105,12 @@ class RequestQueue:
 
         domain = Url.parse(node.resource.url).domain
         multiplier = 2 if domain not in self.connected_origins else 1
-        delay_ms += multiplier * self.rtt_latency_ms
-        self.delayed.append(QueueItem(node, node.resource.size, domain, delay_ms))
+        delay_ms = max(0, delay_ms + (multiplier * self.rtt_latency_ms))
+        queue_item = QueueItem(node, node.resource.size, domain, delay_ms)
+        if delay_ms <= 0:
+            self.queue.append(queue_item)
+        else:
+            self.delayed.append(queue_item)
 
     def estimated_completion_time(self, node: Node) -> float:
         """
@@ -298,9 +302,9 @@ class Simulator:
 
                 child_fetch_delay_correction = 0
                 # case 1: pushed resource was partially downloaded at the point when this resource would have downloaded
-                #         --> subtract the time already spent downloading
+                #         --> subtract the time saved by downloading it
                 if child_delay < push_completion_time < completion_time:
-                    child_fetch_delay_correction = push_completion_time - child_delay
+                    child_fetch_delay_correction = completion_time - push_completion_time
                 # case 2: pushed resource completed downloading before this resource would have started downloading
                 #         --> subtract the entire download time
                 if push_completion_time < child_delay:
