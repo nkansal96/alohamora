@@ -136,5 +136,5 @@ def _test_push(
 
     log.info("real page load time", page_load_time=plt)
     log.info("real push page load times", page_load_time=push_plts)
-    log.info("simulated page load time", page_load_time=f"{sim_plt:.3f}")
-    log.info("simulated push page load time", page_load_time=[f"{plt:.3f}" for plt in push_sim_plts])
+    log.info("simulated page load time", page_load_time=round(sim_plt, 3))
+    log.info("simulated push page load time", page_load_time=[round(plt, 3) for plt in push_sim_plts])
