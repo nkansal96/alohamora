@@ -33,7 +33,10 @@ class PolicyService(policy_service_pb2_grpc.PolicyServiceServicer):
         for (source, push_list) in model.push_policy:
             policy_entry = response.policy.add()  # pylint: disable=no-member
             policy_entry.source_url = source.url
-            policy_entry.push_urls.extend([push.url for push in push_list])
+            for push in push_list:
+                push_resource = policy_entry.push_resources.add()
+                push_resource.url = push.url
+                push_resource.type = push.type.name
         return response
 
     def create_model_instance(self, page: policy_service_pb2.Page) -> ModelInstance:

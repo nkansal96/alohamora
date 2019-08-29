@@ -94,9 +94,9 @@ class TestClient:
                     ]
                 )
 
-            policy = capsys.readouterr().out
+            policy = capsys.readouterr().out.strip()
             assert policy
             assert len(policy.split("\n")) > 0
-            assert len(policy.split("\n")[0].split("\t")) > 1
+            assert len(policy.split("\n")) % 3 == 0
         finally:
             server.stop()

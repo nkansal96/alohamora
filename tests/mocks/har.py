@@ -47,7 +47,7 @@ class HarReturner:
         self.hars = hars
         self.i = 0
 
-    def __call__(self, url, config):
+    def __call__(self, url, *args):
         if self.i >= len(self.hars):
             raise IndexError("capture_har called too many times!")
         har = self.hars[self.i]

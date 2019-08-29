@@ -25,7 +25,7 @@ class Client:
         device_speed: DeviceSpeed,
         resources: List[Resource],
         train_domain_globs: List[str],
-    ):
+    ) -> dict:
         """ Queries the policy service for a push policy for the given configuration """
         page = policy_service_pb2.Page(
             url=url,
@@ -41,5 +41,5 @@ class Client:
         policy_res = self.stub.GetPolicy(page)
         policy = {}
         for item in policy_res.policy:
-            policy[item.source_url] = list(item.push_urls)
+            policy[item.source_url] = [{"url": p.url, "type": p.type} for p in item.push_resources]
         return policy
