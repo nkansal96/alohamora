@@ -36,7 +36,9 @@ def test_push(args):
     if args.policy_type == "simple":
         _test_push(args.url, 1, _simple_push_policy_generator(), args.bandwidth, args.latency)
     if args.policy_type == "random":
-        _test_push(args.url, args.iterations, _random_push_policy_generator(args.random_chance), args.bandwidth, args.latency)
+        _test_push(
+            args.url, args.iterations, _random_push_policy_generator(args.random_chance), args.bandwidth, args.latency
+        )
 
 
 def _simple_push_policy_generator() -> Callable[[List[PushGroup]], Policy]:
@@ -77,7 +79,11 @@ def _random_push_policy_generator(chance: float) -> Callable[[List[PushGroup]], 
 
 
 def _test_push(
-    url: str, iterations: int, policy_generator: Callable[[List[PushGroup]], Policy], bandwidth: Optional[int], latency: Optional[int]
+    url: str,
+    iterations: int,
+    policy_generator: Callable[[List[PushGroup]], Policy],
+    bandwidth: Optional[int],
+    latency: Optional[int],
 ):
     default_client_env = get_default_client_environment()
     client_env = get_client_environment_from_parameters(
@@ -128,11 +134,7 @@ def _test_push(
     log.debug("running simulator...")
     sim = Simulator(env_config)
     sim_plt = sim.simulate_load_time(client_env)
-    push_sim_plts = []
-
-    for policy in push_policies:
-        sim = Simulator(env_config)
-        push_sim_plts.append(sim.simulate_load_time(client_env, policy))
+    push_sim_plts = [sim.simulate_load_time(client_env, policy) for policy in push_policies]
 
     log.info("real page load time", page_load_time=plt)
     log.info("real push page load times", page_load_time=push_plts)

@@ -29,7 +29,7 @@ class TestPreprocess:
         mock_capture_har_in_mahimahi.return_value = hars[0]
         with tempfile.NamedTemporaryFile() as output_file:
             with tempfile.TemporaryDirectory() as output_dir:
-                with mock.patch("blaze.preprocess.record.capture_har", new=HarReturner(hars)):
+                with mock.patch("blaze.preprocess.record.capture_har_in_mahimahi", new=HarReturner(hars)):
                     preprocess(["https://cs.ucla.edu", "--output", output_file.name, "--record_dir", output_dir])
 
                 config = EnvironmentConfig.load_file(output_file.name)
@@ -54,7 +54,7 @@ class TestPreprocess:
         mock_capture_har_in_mahimahi.return_value = hars[0]
         with tempfile.NamedTemporaryFile() as output_file:
             with tempfile.TemporaryDirectory() as output_dir:
-                with mock.patch("blaze.preprocess.record.capture_har", new=HarReturner(hars)):
+                with mock.patch("blaze.preprocess.record.capture_har_in_mahimahi", new=HarReturner(hars)):
                     preprocess(
                         [
                             "https://cs.ucla.edu",

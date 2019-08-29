@@ -50,8 +50,8 @@ class TestPolicyService:
         push_pairs = convert_push_groups_to_push_pairs(self.push_groups)
         push_pairs = [(s.url, p.url) for (s, p) in push_pairs]
         for policy_entry in policy.policy:
-            for push_url in policy_entry.push_urls:
-                assert (policy_entry.source_url, push_url) in push_pairs
+            for push_resource in policy_entry.push_resources:
+                assert (policy_entry.source_url, push_resource.url) in push_pairs
 
     def test_create_model_instance(self):
         ps = PolicyService(self.saved_model)

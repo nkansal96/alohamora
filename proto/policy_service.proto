@@ -38,9 +38,14 @@ message Page {
     repeated string train_domain_globs = 5;
 }
 
+message PolicyResource {
+    string url = 1;
+    string type = 2;
+}
+
 message PolicyEntry {
     string source_url = 1;
-    repeated string push_urls = 2;
+    repeated PolicyResource push_resources = 2;
 }
 
 message Policy {

@@ -45,6 +45,7 @@ class TestClient:
             assert len(policy) > 0
             for k, v in policy.items():
                 assert isinstance(v, list)
-                assert all(isinstance(i, str) for i in v)
+                assert all(isinstance(i, dict) for i in v)
+                assert all("url" in i and "type" in i for i in v)
         finally:
             server.stop()
