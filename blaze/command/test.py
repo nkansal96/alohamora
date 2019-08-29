@@ -134,11 +134,7 @@ def _test_push(
     log.debug("running simulator...")
     sim = Simulator(env_config)
     sim_plt = sim.simulate_load_time(client_env)
-    push_sim_plts = []
-
-    for policy in push_policies:
-        sim = Simulator(env_config)
-        push_sim_plts.append(sim.simulate_load_time(client_env, policy))
+    push_sim_plts = [sim.simulate_load_time(client_env, policy) for policy in push_policies]
 
     log.info("real page load time", page_load_time=plt)
     log.info("real push page load times", page_load_time=push_plts)

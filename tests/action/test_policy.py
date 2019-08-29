@@ -176,15 +176,8 @@ class TestPolicy:
 
     def test_from_dict(self):
         policy_dict = {
-            "A": [
-                {"url": "B", "type": "SCRIPT"},
-                {"url": "C", "type": "IMAGE"},
-            ],
-            "B": [
-                {"url": "D", "type": "IMAGE"},
-                {"url": "E", "type": "CSS"},
-                {"url": "F", "type": "FONT"},
-            ],
+            "A": [{"url": "B", "type": "SCRIPT"}, {"url": "C", "type": "IMAGE"}],
+            "B": [{"url": "D", "type": "IMAGE"}, {"url": "E", "type": "CSS"}, {"url": "F", "type": "FONT"}],
         }
         policy = Policy.from_dict(policy_dict)
         assert policy.total_actions == 0

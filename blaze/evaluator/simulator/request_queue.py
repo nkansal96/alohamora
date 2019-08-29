@@ -1,6 +1,6 @@
 """
-This module defines the classes and methods to implement a way to simulate
-loading a webpage and simulating its page load time from a dependency graph
+This module defines some helper classes as data structures for the Simulator and RequestQueue.
+It also defines the RequestQueue, which simulates the network link.
 """
 
 import copy
