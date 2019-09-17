@@ -27,7 +27,7 @@ class TCPState:
         :return: the current since of the window in number of packets
         """
         while self.time_since_last_byte >= RTO_MS:
-            self.cwnd = max(INITIAL_WINDOW_SIZE, self.cwnd / 2)
+            self.cwnd = max(INITIAL_WINDOW_SIZE, self.cwnd // 2)
             self.time_since_last_byte -= RTO_MS
         return self.cwnd
 
