@@ -39,6 +39,12 @@ def test_push(args):
     """
     Runs a pre-defined test on the given webpage
     """
+    if not args.url and not args.from_manifest:
+        log.error("must provide either a URL or a manifest")
+        return 1
+    if args.only_simulator and not args.from_manifest:
+        log.error("must specify a manifest if loading only simulator")
+
     simple_policy = args.policy_type == "simple"
     policy_generator = (
         _simple_push_policy_generator() if simple_policy else _random_push_policy_generator(args.random_chance)
@@ -46,7 +52,7 @@ def test_push(args):
     _test_push(
         **{
             "url": args.url,
-            "manifest": args.manifest,
+            "manifest": args.from_manifest,
             "iterations": 1 if simple_policy else args.iterations,
             "policy_generator": policy_generator,
             "bandwidth": args.bandwidth,
@@ -54,6 +60,7 @@ def test_push(args):
             "only_simulator": args.only_simulator,
         }
     )
+    return 0
 
 
 def _simple_push_policy_generator() -> Callable[[List[PushGroup]], Policy]:
