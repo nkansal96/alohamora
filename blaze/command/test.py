@@ -145,14 +145,16 @@ def _test_push(
 
     else:
         env_config = EnvironmentConfig.load_file(manifest)
+        push_policies = [policy_generator(env_config.push_groups) for _ in range(iterations)]
 
     log.debug("running simulator...")
     sim = Simulator(env_config)
     sim_plt = sim.simulate_load_time(client_env)
     push_sim_plts = [sim.simulate_load_time(client_env, policy) for policy in push_policies]
 
-    log.info("real page load time", page_load_time=plt)
-    log.info("real push page load times", page_load_time=push_plts)
+    if not only_simulator:
+        log.info("real page load time", page_load_time=plt)
+        log.info("real push page load times", page_load_time=push_plts)
     log.info("simulated page load time", page_load_time=round(sim_plt, 3))
     log.info("simulated push page load time", page_load_time=[round(plt, 3) for plt in push_sim_plts])
 
