@@ -42,8 +42,12 @@ def test_push(args):
     if not args.url and not args.from_manifest:
         log.error("must provide either a URL or a manifest")
         return 1
+    if args.chance <= 0 or args.chance > 1:
+        log.error("chance must be a float in the interval (0, 1]")
+        return 1
     if args.only_simulator and not args.from_manifest:
         log.error("must specify a manifest if loading only simulator")
+        return 1
 
     simple_policy = args.policy_type == "simple"
     policy_generator = (
@@ -89,7 +93,7 @@ def _random_push_policy_generator(chance: float) -> Callable[[List[PushGroup]], 
         policy = Policy(ActionSpace([]))
         for group in push_groups:
             for push in range(1, len(group.resources)):
-                if random.random() > chance:
+                if random.random() <= chance:
                     continue
                 source = random.randint(0, push - 1)
                 policy.add_default_action(group.resources[source], group.resources[push])
