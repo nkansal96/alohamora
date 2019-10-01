@@ -65,7 +65,7 @@ class Policy:
         policy = {}
         for source, push_list in self:
             if push_list:
-                policy[source.url] = [{"url": p.url, "type": p.type.name} for p in push_list]
+                policy[source.url] = [{"url": p.url, "type": ResourceType(p.type).name} for p in push_list]
         return policy
 
     def apply_action(self, action_id: int):
