@@ -64,7 +64,7 @@ def description(desc: str):
 
     def decorator(cmd: Command):
         if not isinstance(cmd, Command):
-            raise TypeError("command.argument() can only be applied after command.command()")
+            raise TypeError("command.description() can only be applied after command.command()")
         cmd.description(desc)
         return cmd
 
