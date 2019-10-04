@@ -114,7 +114,7 @@ def _random_push_policy_generator(chance: float) -> Callable[[List[PushGroup]], 
         policy = Policy(ActionSpace([]))
         for group in push_groups:
             for push in range(1, len(group.resources)):
-                if random.random() <= chance:
+                if random.random() > chance:
                     continue
                 source = random.randint(0, push - 1)
                 policy.add_default_action(group.resources[source], group.resources[push])
