@@ -17,6 +17,27 @@ from blaze.preprocess.resource import resource_list_to_push_groups
 from . import command
 
 
+@command.argument("--policy_type", help="The test type to run", choices=["simple", "random"])
+@command.argument(
+    "--random_chance",
+    help="Probability of pushing a particular resource (only used for --policy_type=random)",
+    type=float,
+    default=0.25,
+)
+@command.argument("--from_manifest", required=True, help="The training manifest file to use as input to the simulator")
+@command.command
+def random_push_policy(args):
+    """
+    Outputs a random push policy for the given recorded website
+    """
+    simple_policy = args.policy_type == "simple"
+    env_config = EnvironmentConfig.load_file(args.from_manifest)
+    policy_generator = (
+        _simple_push_policy_generator() if simple_policy else _random_push_policy_generator(args.random_chance)
+    )
+    print(json.dumps(policy_generator(env_config.push_groups).as_dict, indent=4))
+
+
 @command.argument("url", nargs="?", help="The URL to analyze the page load time for")
 @command.argument("--from_manifest", help="The training manifest file to use as input to the simulator")
 @command.argument(
