@@ -63,7 +63,7 @@ def test_push(args):
     if not args.url and not args.from_manifest:
         log.error("must provide either a URL or a manifest")
         return 1
-    if args.chance <= 0 or args.chance > 1:
+    if args.random_chance <= 0 or args.random_chance > 1:
         log.error("chance must be a float in the interval (0, 1]")
         return 1
     if args.only_simulator and not args.from_manifest:
