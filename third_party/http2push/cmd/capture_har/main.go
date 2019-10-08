@@ -7,11 +7,18 @@ import (
 	"os/exec"
 )
 
+const (
+	pathPrefix = "/blaze/third_party"
+	defaultPolicyPath = pathPrefix + "/http2push/empty_policy.json"
+	defaultServerPath = pathPrefix + "/http2push/server"
+	defaultCaptureHarPath = pathPrefix + "/node/capture_har.js"
+)
+
 var (
 	fileStorePath  = flag.String("file-store", "/mnt/filestore", "Location to load Mahimahi recorded protobufs from")
-	pushPolicyPath = flag.String("push-policy", "/blaze/third_party/http2push/empty_policy.json", "Location to load push policy from")
-	serverPath     = flag.String("server-path", "/blaze/third_party/http2push/server", "The location of the http2push server")
-	captureHARPath = flag.String("capture-har-path", "/blaze/third_path/node/capture_har.js", "The location of the capture HAR script")
+	pushPolicyPath = flag.String("push-policy", defaultPolicyPath, "Location to load push policy from")
+	serverPath     = flag.String("server-path", defaultServerPath, "The location of the http2push server")
+	captureHARPath = flag.String("capture-har-path", defaultCaptureHarPath, "The location of the capture HAR script")
 	captureURL     = flag.String("capture-url", "", "URL to capture the HAR for")
 	outputFile     = flag.String("output-file", "/mnt/har.json", "Output file where HAR is stored")
 )
