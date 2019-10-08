@@ -36,6 +36,7 @@ def random_push_policy(args):
         _simple_push_policy_generator() if simple_policy else _random_push_policy_generator(args.random_chance)
     )
     print(json.dumps(policy_generator(env_config.push_groups).as_dict, indent=4))
+    return 0
 
 
 @command.argument("url", nargs="?", help="The URL to analyze the page load time for")
