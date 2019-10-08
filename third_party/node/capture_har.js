@@ -206,6 +206,7 @@ class HarCapturer {
         entries: filtered_res
           .sort((a, b) => a.started_date_time < b.started_date_time ? -1 : 1),
       },
+      events: this.events,
       timings: this.timings,
       page_load_time_ms: pageLoadTimeMs,
     };
@@ -223,12 +224,16 @@ const main = async (options = commandLineArgs(argumentsDefinition)) => {
 
     const capturer = new HarCapturer(options);
     const res = await capturer.captureHar();
+    const resNoEvents = { log: res.log, timings: res.timings, page_load_time_ms: res.page_load_time_ms };
     const result = JSON.stringify(res);
+    const resultNoEvents = JSON.stringify(resNoEvents);
 
     if (options.output_file) {
-      fs.writeFileSync(options.output_file, result);
+      fs.writeFileSync(options.output_file, resultNoEvents);
+      //fs.writeFileSync(`/tmp/har_${new Date()}`, result);
     } else {
-      console.log(result);
+      console.log(resultNoEvents);
+      //fs.writeFileSync(`/tmp/har_${new Date()}`, result);
     }
   } catch (e) {
     console.error(e);

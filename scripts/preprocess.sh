@@ -1,10 +1,5 @@
 #! /bin/bash
 
-export MAHIMAHI_CERT_DIR=$(pwd)/../mahimahi/src/frontend/certs
-export CHROME_HAR_CAPTURER_BIN=$(pwd)/third_party/node/capture_har.js
-export PWMETRICS_BIN=$(pwd)/third_party/node/node_modules/.bin/pwmetrics
-export DEBUG=1
-
 train_dir="$HOME/push-policy/training"
 
 blaze preprocess \
