@@ -114,7 +114,7 @@ func NewFileStore(storeDir string) (FileStore, error) {
 		rr.Response.Header = headers
 		rr.Response.Body = body
 		fs.store[uri] = &rr
-		log.Printf("Read %s: %s\n", f.Name(), uri)
+		log.Printf("Read %s: %s", f.Name(), uri)
 	}
 
 	for host := range hostMap {

@@ -4,8 +4,8 @@ FROM golang:1.13-buster
 # Copy and compile go code
 WORKDIR /go/src/http2push
 COPY third_party/http2push .
-RUN go build -o /go/bin/server ./cmd/server/main.go && \
-    go build -o /go/bin/capture_har ./cmd/capture_har/main.go
+RUN go build -o /go/bin/server ./cmd/server/*.go && \
+    go build -o /go/bin/capture_har ./cmd/capture_har/*.go
 
 # Use ubuntu for runtime
 FROM ubuntu:18.04
@@ -49,7 +49,7 @@ RUN git clone https://github.com/ravinet/mahimahi && \
     cd mahimahi && \
     ./autogen.sh && \
     ./configure && \
-    make -j4 && \
+    make -j$(($(nproc) / 2)) && \
     make install
 
 RUN useradd -ms /bin/bash user
@@ -61,8 +61,8 @@ COPY third_party/node/*.js /blaze/third_party/node/
 
 WORKDIR /blaze/third_party/http2push
 RUN echo "{}" > empty_policy.json
-COPY --from=0 /go/bin/* /blaze_third_party/http2push/
 COPY third_party/http2push/certs certs
+COPY --from=0 /go/bin/* /blaze/third_party/http2push/
 
 USER user
 CMD ["/bin/bash"]

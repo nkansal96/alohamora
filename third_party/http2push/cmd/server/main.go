@@ -13,6 +13,13 @@ import (
 	"http2push"
 )
 
+var (
+	fileStorePath  = flag.String("file-store", "/mnt/filestore", "Location to load Mahimahi recorded protobufs from")
+	pushPolicyPath = flag.String("push-policy", "/blaze/third_party/http2push/empty_policy.json", "Location to load push policy from")
+	certFile       = flag.String("cert", "/blaze/third_party/http2push/certs/server.cert", "Location of server certificate")
+	keyFile        = flag.String("key", "/blaze/third_party/http2push/certs/server.key", "Location of server private key")
+)
+
 func handleRequest(fs http2push.FileStore, push http2push.PushPolicy) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Lookup file for given request
@@ -28,9 +35,9 @@ func handleRequest(fs http2push.FileStore, push http2push.PushPolicy) func(w htt
 			pushResList := push.GetPushResources(r.RequestURI)
 			for _, pushRes := range pushResList {
 				if err := pusher.Push(pushRes, nil); err != nil {
-					log.Printf("Failed to push: %v\n", err)
+					log.Printf("Failed to push: %v", err)
 				} else {
-					log.Printf("[PUSH] %s -> %s\n", r.RequestURI, pushRes)
+					log.Printf("[PUSH] %s -> %s", r.RequestURI, pushRes)
 				}
 			}
 		}
@@ -45,10 +52,6 @@ func handleRequest(fs http2push.FileStore, push http2push.PushPolicy) func(w htt
 }
 
 func main() {
-	fileStorePath := flag.String("file-store", "/mnt/filestore", "Location to load Mahimahi recorded protobufs from")
-	pushPolicyPath := flag.String("push-policy", "/blaze/third_party/http2push/empty_policy.json", "Location to load push policy from")
-	certFile := flag.String("cert", "/blaze/third_party/http2push/certs/server.cert", "Location of server certificate")
-	keyFile := flag.String("key", "/blaze/third_party/http2push/certs/server.key", "Location of server private key")
 	flag.Parse()
 
 	fs, err := http2push.NewFileStore(*fileStorePath)

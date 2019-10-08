@@ -31,7 +31,7 @@ func (d *dnsmasq) Start() error {
 	for _, intf := range d.interfaces {
 		flags = append(flags, "-A", fmt.Sprintf("/%s/%s", intf.Host, intf.IPAddress))
 	}
-	log.Printf("Starting dnsmasq with flags %v\n", flags)
+	log.Printf("Starting dnsmasq with flags %v", flags)
 	d.cmd = exec.Command("dnsmasq", flags...)
 	return d.cmd.Start()
 }
