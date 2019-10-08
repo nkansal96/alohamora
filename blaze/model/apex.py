@@ -25,10 +25,10 @@ def train(train_config: TrainConfig, config: Config):
                 "env": Environment,
                 "stop": {"timesteps_total": train_config.max_timesteps},
                 "checkpoint_at_end": True,
-                "checkpoint_freq": 1,
+                "checkpoint_freq": 10,
                 "max_failures": 1000,
                 "config": {
-                    "sample_batch_size": 50,
+                    "sample_batch_size": 128,
                     "train_batch_size": 512,
                     "timesteps_per_iteration": policy.total_steps,
                     "target_network_update_freq": policy.total_steps * 4,

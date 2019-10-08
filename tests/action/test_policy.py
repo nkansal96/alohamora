@@ -1,3 +1,4 @@
+import collections
 import itertools
 
 from blaze.action import Action, ActionSpace, Policy
@@ -69,7 +70,7 @@ class TestPolicy:
 
         policy_dict = policy.as_dict
         for (source, push) in policy:
-            assert all(p.url in policy_dict[source.url] for p in push)
+            assert all(p.url in [pp["url"] for pp in policy_dict[source.url]] for p in push)
 
     def test_apply_action_noop_as_first_action(self):
         action_space = ActionSpace(self.push_groups)
@@ -145,6 +146,23 @@ class TestPolicy:
                 action.source == source and action.push == push for source, push_res in policy for push in push_res
             )
 
+    def test_push_list_for_source(self):
+        action_space = ActionSpace(self.push_groups)
+        policy = Policy(action_space)
+
+        push_map = collections.defaultdict(set)
+        while not policy.completed:
+            action_id = action_space.sample()
+            policy.apply_action(action_id)
+
+            action = action_space.decode_action_id(action_id)
+            if not action.is_noop:
+                push_map[action.source].add(action.push)
+
+        assert push_map
+        for (source, push_set) in push_map.items():
+            assert policy.push_set_for_resource(source) == push_set
+
     def test_resource_push_from(self):
         action_space = ActionSpace(self.push_groups)
         policy = Policy(action_space)
@@ -157,15 +175,18 @@ class TestPolicy:
         assert policy.resource_pushed_from(action.push) is action.source
 
     def test_from_dict(self):
-        policy_dict = {"A": ["B", "C"], "B": ["D", "E", "F"]}
+        policy_dict = {
+            "A": [{"url": "B", "type": "SCRIPT"}, {"url": "C", "type": "IMAGE"}],
+            "B": [{"url": "D", "type": "IMAGE"}, {"url": "E", "type": "CSS"}, {"url": "F", "type": "FONT"}],
+        }
         policy = Policy.from_dict(policy_dict)
         assert policy.total_actions == 0
         assert policy.action_space is not None
         for (source, deps) in policy:
             assert isinstance(source, Resource)
             assert all(isinstance(push, Resource) for push in deps)
-            assert sorted(policy_dict[source.url]) == sorted([push.url for push in deps])
+            assert [p["url"] for p in policy_dict[source.url]] == sorted([push.url for push in deps])
             for push in deps:
                 assert policy.push_to_source[push] == source
-                assert push.url in policy_dict[source.url]
+                assert push.url in [p["url"] for p in policy_dict[source.url]]
         assert len(policy.source_to_push) == len(policy_dict)

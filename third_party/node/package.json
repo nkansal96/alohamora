@@ -9,6 +9,7 @@
   "author": "Nikhil Kansal",
   "license": "MIT",
   "dependencies": {
+    "chrome-launcher": "^0.10.7",
     "chrome-remote-interface": "^0.27.1",
     "command-line-args": "^5.1.1",
     "pwmetrics": "^4.2.1"

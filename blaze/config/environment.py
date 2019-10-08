@@ -23,9 +23,15 @@ class Resource(NamedTuple):
     url: str
     size: int
     type: ResourceType
+
     order: int = 0
     group_id: int = 0
     source_id: int = 0
+    initiator: int = 0
+
+    execution_ms: float = 0
+    fetch_delay_ms: float = 0
+    time_to_first_byte_ms: float = 0
 
     def __eq__(self, other):
         return self.url == other.url
@@ -51,7 +57,8 @@ class EnvironmentConfig(NamedTuple):
 
     replay_dir: str
     request_url: str
-    push_groups: List[PushGroup]
+    push_groups: List[PushGroup] = []
+    har_resources: List[Resource] = []
 
     @property
     def trainable_push_groups(self):

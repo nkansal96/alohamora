@@ -64,8 +64,8 @@ class TestClientEnvironment:
 
     def test_get_fast_mobile_env(self):
         env = client.get_fast_mobile_client_environment()
-        assert env.latency == 40
-        assert env.bandwidth == 48000
+        assert env.latency == 20
+        assert env.bandwidth == 24000
         assert env.cpu_slowdown == 1
 
     def test_get_random_fast_lte_env(self):

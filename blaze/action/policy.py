@@ -5,7 +5,7 @@ representation and the actual URL representation
 """
 
 import collections
-from typing import Optional
+from typing import Optional, Set
 
 from blaze.config.environment import Resource, ResourceType
 from .action_space import ActionSpace
@@ -64,7 +64,8 @@ class Policy:
         """
         policy = {}
         for source, push_list in self:
-            policy[source.url] = [p.url for p in push_list]
+            if push_list:
+                policy[source.url] = [{"url": p.url, "type": ResourceType(p.type).name} for p in push_list]
         return policy
 
     def apply_action(self, action_id: int):
@@ -92,6 +93,14 @@ class Policy:
             return None
         return self.push_to_source[push]
 
+    def push_set_for_resource(self, source: Resource) -> Set[Resource]:
+        """
+        Returns the set of resources pushed for the given source resource
+        """
+        default_push_resources = self.default_source_to_push[source]
+        push_resources = self.source_to_push[source]
+        return push_resources | default_push_resources
+
     @staticmethod
     def from_dict(policy_dict: dict):
         """
@@ -102,10 +111,11 @@ class Policy:
         policy = Policy(ActionSpace([]))
         for (source, deps) in policy_dict.items():
             policy.source_to_push[Resource(url=source, size=0, type=ResourceType.NONE)] = set(
-                Resource(url=push, size=0, type=ResourceType.NONE) for push in deps
+                Resource(url=push["url"], size=0, type=ResourceType[push["type"]]) for push in deps
             )
             for push in deps:
-                policy.push_to_source[Resource(url=push, size=0, type=ResourceType.NONE)] = Resource(
+                policy.push_to_source[Resource(url=push["url"], size=0, type=ResourceType[push["type"]])] = Resource(
                     url=source, size=0, type=ResourceType.NONE
                 )
+        policy.steps_taken = sum(map(len, policy.source_to_push.values()))
         return policy

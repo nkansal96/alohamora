@@ -16,7 +16,7 @@ def get_default_logger():
     def print_to_stderr(s: str):
         sys.stderr.write(s + "\n")
 
-    min_level = Level.DEBUG if "DEBUG" in os.environ else Level.INFO
+    min_level = Level.from_string(os.environ.get("LOG_LEVEL"))
     return Logger(namespace="blaze", min_level=min_level, print_fn=print_to_stderr)
 
 
