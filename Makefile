@@ -2,7 +2,7 @@ setup:
 	./scripts/setup.sh
 
 http2push:
-	docker build -t blaze-http2push -f third_party/http2push/Dockerfile .
+	docker build -t http2push -f third_party/http2push/Dockerfile .
 
 proto:
 	python -m grpc_tools.protoc \

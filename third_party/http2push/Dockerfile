@@ -40,7 +40,10 @@ RUN apt-get update -y && \
     curl -sL https://deb.nodesource.com/setup_10.x | bash - && \
     apt-get install -y ${MAHIMAHI_DEPS} ${DEPS} && \
     wget "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" && \
-    (dpkg -i google-chrome-stable_current_amd64.deb || apt-get -f install -y)
+    (dpkg -i google-chrome-stable_current_amd64.deb || apt-get -f install -y) && \
+    apt-get clean autoclean && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 RUN git clone https://github.com/ravinet/mahimahi && \
     cd mahimahi && \
@@ -49,13 +52,17 @@ RUN git clone https://github.com/ravinet/mahimahi && \
     make -j4 && \
     make install
 
+RUN useradd -ms /bin/bash user
+
 WORKDIR /blaze/third_party/node
 COPY third_party/node/*.json /blaze/third_party/node/
 RUN npm install
-COPY third_party/node/*.js /blaze/third_party/node
+COPY third_party/node/*.js /blaze/third_party/node/
 
 WORKDIR /blaze/third_party/http2push
 RUN echo "{}" > empty_policy.json
-COPY --from=0 /go/bin/* /http2push
+COPY --from=0 /go/bin/* /blaze_third_party/http2push/
 COPY third_party/http2push/certs certs
+
+USER user
 CMD ["/bin/bash"]
