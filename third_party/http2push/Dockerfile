@@ -32,7 +32,8 @@ ENV DEPS \
   dnsmasq \
   nodejs \
   iputils-ping \
-  dnsutils
+  dnsutils \
+  sudo
 
 WORKDIR /tmp
 RUN apt-get update -y && \

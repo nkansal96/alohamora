@@ -4,12 +4,12 @@ import (
 	"io"
 )
 
-type LineWriter struct {
+type lineWriter struct {
 	linePrefix   []byte
 	outputStream io.Writer
 }
 
-func NewLineWriter(linePrefix string, outputStream io.Writer) io.Writer {
+func newLineWriter(linePrefix string, outputStream io.Writer) io.Writer {
 	return &LineWriter{
 		linePrefix:   []byte(linePrefix),
 		outputStream: outputStream,

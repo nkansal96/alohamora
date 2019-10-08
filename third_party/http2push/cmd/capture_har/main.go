@@ -14,6 +14,13 @@ const (
 	defaultCaptureHarPath = pathPrefix + "/node/capture_har.js"
 )
 
+func stopProcess(proc *exec.Cmd) {
+	proc.Process.Signal(os.Interrupt)
+	if err := proc.Wait(); err != nil {
+		log.Fatal(err)
+	}
+}
+
 var (
 	fileStorePath  = flag.String("file-store", "/mnt/filestore", "Location to load Mahimahi recorded protobufs from")
 	pushPolicyPath = flag.String("push-policy", defaultPolicyPath, "Location to load push policy from")
@@ -31,23 +38,26 @@ func main() {
 
 	log.Printf("[runner] Starting server %s...", *serverPath)
 	server := exec.Command(*serverPath, "-file-store", *fileStorePath, "-push-policy", *pushPolicyPath)
-	server.Stdout = NewLineWriter("[server] ", os.Stdout)
-	server.Stderr = NewLineWriter("[server] ", os.Stderr)
+	server.Stdout = newLineWriter("[server] ", os.Stdout)
+	server.Stderr = newLineWriter("[server] ", os.Stderr)
 	if err := server.Start(); err != nil {
 		log.Fatalln(err)
 	}
 
-	defer func() {
-		server.Process.Signal(os.Interrupt)
-		if err := server.Wait(); err != nil {
-			log.Fatal(err)
-		}
+	defer stopProcess(server)
+
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+	go func() {
+		<-c
+		stopProcess(server)
+		os.Exit(1)
 	}()
 
 	log.Printf("[runner] Capturing har for URL %s...\n", *captureURL)
 	capture := exec.Command(*captureHARPath, "-f", *outputFile, *captureURL)
-	capture.Stdout = NewLineWriter("[capture] ", os.Stdout)
-	capture.Stderr = NewLineWriter("[capture] ", os.Stderr)
+	capture.Stdout = newLineWriter("[capture] ", os.Stdout)
+	capture.Stderr = newLineWriter("[capture] ", os.Stderr)
 	if err := capture.Start(); err != nil {
 		log.Fatal(err)
 	}
