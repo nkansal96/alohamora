@@ -13,6 +13,7 @@ DEFAULT_MAHIMAHI_CERT_DIR = ABSPATH("../../mahimahi/src/frontend/certs")
 DEFAULT_CHROME_HAR_CAPTURER_BIN = ABSPATH("../../tools/capture_har/capture_har.js")
 DEFAULT_PWMETRICS_BIN = ABSPATH("../../tools/capture_har/node_modules/.bin/pwmetrics")
 DEFAULT_NGHTTPX_BIN = run(["which", "nghttpx"])
+DEFAULT_HTTP2PUSH_IMAGE = "http2push"
 DEFAULT_CHROME_BIN = (
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
     if platform.system() == "Darwin"
@@ -27,6 +28,7 @@ class Config(NamedTuple):
     chrome_har_capturer_bin: str
     pwmetrics_bin: str
     nghttpx_bin: str
+    http2push_image: str
     chrome_bin: str
     env_config: Optional[EnvironmentConfig] = None
     eval_results_dir: Optional[str] = None
@@ -46,6 +48,7 @@ def get_config(env_config: Optional[EnvironmentConfig] = None, eval_results_dir:
         chrome_har_capturer_bin=os.environ.get("CHROME_HAR_CAPTURER_BIN", DEFAULT_CHROME_HAR_CAPTURER_BIN),
         pwmetrics_bin=os.environ.get("PWMETRICS_BIN", DEFAULT_PWMETRICS_BIN),
         nghttpx_bin=os.environ.get("NGHTTPX_BIN", DEFAULT_NGHTTPX_BIN),
+        http2push_image=os.environ.get("HTTP2PUSH_IMAGE", DEFAULT_HTTP2PUSH_IMAGE),
         chrome_bin=os.environ.get("CHROME_BIN", DEFAULT_CHROME_BIN),
         env_config=env_config,
         eval_results_dir=eval_results_dir,

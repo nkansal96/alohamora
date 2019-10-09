@@ -112,7 +112,8 @@ class TestCaptureHarInMahimahi:
         har = capture_har_in_mahimahi("https://www.cs.ucla.edu", config, self.client_env)
 
         run_args = mock_run.call_args_list[0][0][0]
-        assert run_args[0] == "mm-proxyreplay"
-        assert run_args[-5].endswith("capture_har.js")
-        assert run_args[-3] == "https://www.cs.ucla.edu"
+        assert run_args[0] == "docker"
+        assert run_args[-1] == "https://www.cs.ucla.edu"
         assert har == self.har
+
+    # TODO: add a real test for capture_har_in_mahimahi by committing a record dir

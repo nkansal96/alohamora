@@ -8,7 +8,12 @@ from tests.mocks.config import get_env_config
 class TestConfig:
     def test_create(self):
         conf = config.Config(
-            mahimahi_cert_dir="", chrome_har_capturer_bin="", pwmetrics_bin="", nghttpx_bin="", chrome_bin=""
+            mahimahi_cert_dir="",
+            chrome_har_capturer_bin="",
+            pwmetrics_bin="",
+            nghttpx_bin="",
+            http2push_image="",
+            chrome_bin="",
         )
         assert isinstance(conf, config.Config)
         assert conf.env_config is None
@@ -18,7 +23,7 @@ class TestConfig:
         conf = config.get_config()
         items = conf.items()
         assert all(len(v) == 2 for v in items)
-        assert len(items) == 7
+        assert len(items) == 8
 
 
 class TestGetConfig:
@@ -29,6 +34,7 @@ class TestGetConfig:
         assert conf.chrome_har_capturer_bin == config.DEFAULT_CHROME_HAR_CAPTURER_BIN
         assert conf.pwmetrics_bin == config.DEFAULT_PWMETRICS_BIN
         assert conf.nghttpx_bin == config.DEFAULT_NGHTTPX_BIN
+        assert conf.http2push_image == config.DEFAULT_HTTP2PUSH_IMAGE
         assert conf.chrome_bin == config.DEFAULT_CHROME_BIN
         assert conf.env_config is None
         assert conf.eval_results_dir is None
@@ -43,7 +49,9 @@ class TestGetConfig:
         assert conf.env_config == get_env_config()
         assert conf.eval_results_dir == "/tmp/results_dir"
 
-    @mock.patch.dict(os.environ, {"CHROME_BIN": "test_chrome", "MAHIMAHI_CERT_DIR": "test_mm_dir"})
+    @mock.patch.dict(
+        os.environ, {"CHROME_BIN": "test_chrome", "MAHIMAHI_CERT_DIR": "test_mm_dir", "HTTP2PUSH_IMAGE": "test_image"}
+    )
     def test_get_config_with_override(self):
         conf = config.get_config()
         assert isinstance(conf, config.Config)
@@ -51,5 +59,6 @@ class TestGetConfig:
         assert conf.chrome_har_capturer_bin == config.DEFAULT_CHROME_HAR_CAPTURER_BIN
         assert conf.pwmetrics_bin == config.DEFAULT_PWMETRICS_BIN
         assert conf.nghttpx_bin == config.DEFAULT_NGHTTPX_BIN
+        assert conf.http2push_image == "test_image"
         assert conf.chrome_bin == "test_chrome"
         assert conf.env_config is None

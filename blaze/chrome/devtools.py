@@ -1,4 +1,5 @@
 """ This module implements methods interacting with Chrome DevTools """
+import json
 import os
 import subprocess
 import tempfile
@@ -53,20 +54,25 @@ def capture_har_in_mahimahi(
     mahimahi_config = MahiMahiConfig(config, push_policy, client_env)
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        push_policy_file = os.path.join(temp_dir, "push_policy")
-        output_file = os.path.join(temp_dir, "output_file")
+        push_policy_file = os.path.join(temp_dir, "policy.json")
+        output_file = os.path.join(temp_dir, "har.json")
         trace_file = os.path.join(temp_dir, "trace_file")
 
         with open(push_policy_file, "w") as f:
             log.debug("writing push policy file", push_policy_file=push_policy_file)
-            f.write(mahimahi_config.formatted_push_policy)
+            f.write(json.dumps(push_policy.as_dict))
         with open(trace_file, "w") as f:
             log.debug("writing trace file", trace_file=trace_file)
             f.write(mahimahi_config.formatted_trace_file)
 
         # configure the HAR capturer
-        har_capture_cmd = [config.chrome_har_capturer_bin, "--url", url, "--output_file", output_file]
-        cmd = mahimahi_config.proxy_replay_shell_with_cmd(push_policy_file, trace_file, har_capture_cmd)
+        cmd = mahimahi_config.har_capture_cmd(
+            share_dir=temp_dir,
+            har_output_file_name="har.json",
+            push_policy_file_name="policy.json",
+            link_trace_file_name="trace_file",
+            capture_url=url,
+        )
 
         # spawn the HAR capturer process
         log.debug("spawning har capturer", url=url, cmd=cmd)
