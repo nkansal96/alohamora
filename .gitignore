@@ -11,4 +11,4 @@ __pycache__
 .blaze_env
 .DS_Store
 
-third_party/node/node_modules
+node_modules
