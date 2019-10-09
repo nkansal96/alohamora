@@ -3,11 +3,13 @@ package main
 import (
 	"flag"
 	"log"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 )
 
 const (
@@ -26,17 +28,26 @@ var (
 
 	captureHARPath = flag.String("capture-har-path", defaultCaptureHarPath, "The location of the capture HAR script")
 	outputFile     = flag.String("output-file", defaultOutputFilePath, "Output file where HAR is stored")
-	captureURL     = flag.String("capture-url", "", "URL to capture the HAR for")
+	captureURL     = flag.String("url", "", "URL to capture the HAR for")
 
 	linkTracePath = flag.String("link-trace-path", "", "Path to Mahimahi trace file for mm-link")
-	linkLatencyMs = flag.Uint64("link-latency-ms", 0, "Round trip latency to simulate using mm-delay")
+	linkLatencyMs = flag.Uint64("link-latency-ms", 0, "One-way latency to simulate using mm-delay")
+
+	userID = flag.Uint("user-id", 0, "UID of the unprivileged user to run mahimahi with")
+	groupID = flag.Uint("group-id", 0, "GID of the unprivileged user to run mahimahi with")
 )
 
-func startProcess(name string, args []string) *exec.Cmd {
+func startProcess(name string, uid uint32, gid uint32, args []string) *exec.Cmd {
 	log.Printf("[runner] Starting %s: %v...", name, args)
 	proc := exec.Command(args[0], args[1:]...)
 	proc.Stdout = os.Stdout
 	proc.Stderr = os.Stderr
+	proc.SysProcAttr = &syscall.SysProcAttr{
+		Credential: &syscall.Credential{
+			Uid: uid,
+			Gid: gid,
+		},
+	}
 	if err := proc.Start(); err != nil {
 		log.Fatalf("Error starting %s: %v", name, err)
 	}
@@ -46,10 +57,18 @@ func startProcess(name string, args []string) *exec.Cmd {
 	go func() {
 		<-stop
 		proc.Process.Signal(os.Interrupt)
-		proc.Wait()
 	}()
 
 	return proc
+}
+
+func waitForPort(port string) {
+	for {
+    if conn, _ := net.DialTimeout("tcp", port, 1 * time.Second); conn != nil {
+			conn.Close()
+			break
+		}
+	}
 }
 
 func main() {
@@ -63,9 +82,13 @@ func main() {
 	}
 
 	// Create the server command and start the server
-	serverCmd := []string{"sudo", *serverPath, "-file-store", *fileStorePath, "-push-policy", *pushPolicyPath}
-	startProcess("server", serverCmd)
+	serverCmd := []string{*serverPath, "-file-store", *fileStorePath, "-push-policy", *pushPolicyPath}
+	serverProc := startProcess("server", 0, 0, serverCmd)
 
+	log.Print("[runner] Waiting for server to start on :443...")
+	waitForPort(":443")
+
+	// Construct the capture HAR command
 	captureHARCmd := []string{}
 	if linkTracePath != nil && len(*linkTracePath) > 0 {
 		captureHARCmd = append(captureHARCmd, "mm-link", *linkTracePath, *linkTracePath, "--")
@@ -73,7 +96,13 @@ func main() {
 	if linkLatencyMs != nil && *linkLatencyMs > 0 {
 		captureHARCmd = append(captureHARCmd, "mm-delay", strconv.FormatUint(*linkLatencyMs, 10))
 	}
-	captureHARCmd = append(captureHARCmd, *captureHARPath, "-f", *outputFile, *captureURL)
-	captureProc := startProcess("capture HAR", captureHARCmd)
+	captureHARCmd = append(captureHARCmd, "sudo", *captureHARPath, "-f", *outputFile, *captureURL)
+	// Run the HAR capturer as a normal user (mahimahi cannot run as non-root)
+	captureProc := startProcess("capture", uint32(*userID), uint32(*groupID), captureHARCmd)
 	captureProc.Wait()
+
+	// Send interrupt signal to clean up subprocesses
+	log.Print("Finished capturing HAR. Shutting down server")
+	syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+	serverProc.Wait()
 }

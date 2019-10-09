@@ -12,5 +12,6 @@ if [[ $# -eq 0 ]]; then
 
 # Otherwise start the har capturer
 else
-  ./capture_har $@
+  # Specify the non-root docker user's id and group by default
+  ./capture_har -user-id $(id -u user) -group-id $(id -g user) $@
 fi

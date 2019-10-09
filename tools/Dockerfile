@@ -9,6 +9,7 @@ RUN go build -o /go/bin/server ./cmd/server/*.go && \
 
 # Use ubuntu for runtime
 FROM ubuntu:18.04
+COPY sources.list /etc/apt/sources.list
 
 ENV MAHIMAHI_DEPS \
   protobuf-compiler \
