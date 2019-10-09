@@ -62,13 +62,15 @@ func startProcess(name string, uid uint32, gid uint32, args []string) *exec.Cmd 
 	return proc
 }
 
-func waitForPort(port string) {
-	for {
+func waitForPort(port string) bool {
+	for i := 0; i < 10; i++ {
 		if conn, _ := net.DialTimeout("tcp", port, 1*time.Second); conn != nil {
 			conn.Close()
-			break
+			return true
 		}
+		time.Sleep(1 * time.Second)
 	}
+	return false
 }
 
 func main() {
@@ -85,12 +87,25 @@ func main() {
 	serverCmd := []string{*serverPath, "-file-store", *fileStorePath, "-push-policy", *pushPolicyPath}
 	serverProc := startProcess("server", 0, 0, serverCmd)
 
+	defer func() {
+		log.Print("[runner] Shutting down server...")
+		syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+		serverProc.Wait()
+	}()
+
 	log.Print("[runner] Waiting for server to start on :443...")
-	waitForPort(":443")
+	if !waitForPort(":443") {
+		log.Print("[runner] Server did not start in a reasonable time")
+		return
+	}
 
 	// Construct the capture HAR command
 	captureHARCmd := []string{}
 	if linkTracePath != nil && len(*linkTracePath) > 0 {
+		if err := os.Chmod(*linkTracePath, 0755); err != nil {
+			log.Printf("[runner] Error setting mode on %s: %v", *linkTracePath, err)
+			return
+		}
 		captureHARCmd = append(captureHARCmd, "mm-link", *linkTracePath, *linkTracePath, "--")
 	}
 	if linkLatencyMs != nil && *linkLatencyMs > 0 {
@@ -102,7 +117,5 @@ func main() {
 	captureProc.Wait()
 
 	// Send interrupt signal to clean up subprocesses
-	log.Print("Finished capturing HAR. Shutting down server")
-	syscall.Kill(syscall.Getpid(), syscall.SIGINT)
-	serverProc.Wait()
+	log.Print("[runner] Finished capturing HAR.")
 }
