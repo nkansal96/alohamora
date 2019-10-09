@@ -6,63 +6,74 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strconv"
 	"syscall"
 )
 
 const (
-	pathPrefix = "/opt"
-	defaultPolicyPath = pathPrefix + "/http2push/empty_policy.json"
-	defaultServerPath = pathPrefix + "/http2push/server"
+	pathPrefix            = "/opt"
+	defaultPolicyPath     = pathPrefix + "/http2push/empty_policy.json"
+	defaultServerPath     = pathPrefix + "/http2push/server"
 	defaultCaptureHarPath = pathPrefix + "/capture_har/capture_har.js"
+	defaultFileStorePath  = "/mnt/filestore"
+	defaultOutputFilePath = "/mnt/har.json"
 )
-
-func stopProcess(proc *exec.Cmd) {
-	proc.Process.Signal(os.Interrupt)
-	proc.Wait()
-}
 
 var (
-	fileStorePath  = flag.String("file-store", "/mnt/filestore", "Location to load Mahimahi recorded protobufs from")
+	fileStorePath  = flag.String("file-store", defaultFileStorePath, "Location to load Mahimahi recorded protobufs from")
 	pushPolicyPath = flag.String("push-policy", defaultPolicyPath, "Location to load push policy from")
 	serverPath     = flag.String("server-path", defaultServerPath, "The location of the http2push server")
+
 	captureHARPath = flag.String("capture-har-path", defaultCaptureHarPath, "The location of the capture HAR script")
+	outputFile     = flag.String("output-file", defaultOutputFilePath, "Output file where HAR is stored")
 	captureURL     = flag.String("capture-url", "", "URL to capture the HAR for")
-	outputFile     = flag.String("output-file", "/mnt/har.json", "Output file where HAR is stored")
+
+	linkTracePath = flag.String("link-trace-path", "", "Path to Mahimahi trace file for mm-link")
+	linkLatencyMs = flag.Uint64("link-latency-ms", 0, "Round trip latency to simulate using mm-delay")
 )
 
+func startProcess(name string, args []string) *exec.Cmd {
+	log.Printf("[runner] Starting %s: %v...", name, args)
+	proc := exec.Command(args[0], args[1:]...)
+	proc.Stdout = os.Stdout
+	proc.Stderr = os.Stderr
+	if err := proc.Start(); err != nil {
+		log.Fatalf("Error starting %s: %v", name, err)
+	}
+
+	stop := make(chan os.Signal)
+	signal.Notify(stop, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+	go func() {
+		<-stop
+		proc.Process.Signal(os.Interrupt)
+		proc.Wait()
+	}()
+
+	return proc
+}
+
 func main() {
+	// Parse and validate flags
 	flag.Parse()
 	if captureURL == nil || len(*captureURL) == 0 {
 		log.Fatal("[runner] The capture URL must be specified")
 	}
-
-	log.Printf("[runner] Starting server %s...", *serverPath)
-	server := exec.Command(*serverPath, "-file-store", *fileStorePath, "-push-policy", *pushPolicyPath)
-	server.Stdout = os.Stdout
-	server.Stderr = os.Stderr
-	if err := server.Start(); err != nil {
-		log.Fatalf("Error starting server: %v", err)
+	if linkLatencyMs != nil && *linkLatencyMs > 1000 {
+		log.Fatal("[runner] latency-ms must be less than 1000ms")
 	}
 
-	defer stopProcess(server)
+	// Create the server command and start the server
+	serverCmd := []string{"sudo", *serverPath, "-file-store", *fileStorePath, "-push-policy", *pushPolicyPath}
+	startProcess("server", serverCmd)
 
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
-	go func() {
-		<-c
-		stopProcess(server)
-		os.Exit(1)
-	}()
-
-	log.Printf("[runner] Capturing har for URL %s...\n", *captureURL)
-	capture := exec.Command(*captureHARPath, "-f", *outputFile, *captureURL)
-	capture.Stdout = os.Stdout
-	capture.Stderr = os.Stderr
-	if err := capture.Start(); err != nil {
-		log.Fatalf("Error starting HAR capturer: %v", err)
+	captureHARCmd := []string{}
+	if linkTracePath != nil && len(*linkTracePath) > 0 {
+		captureHARCmd = append(captureHARCmd, "mm-link", *linkTracePath, *linkTracePath, "--")
 	}
-
-	if err := capture.Wait(); err != nil {
-		log.Panic("Error running HAR capturer: %v", err)
+	if linkLatencyMs != nil && *linkLatencyMs > 0 {
+		captureHARCmd = append(captureHARCmd, "mm-delay", strconv.FormatUint(*linkLatencyMs, 10))
 	}
+	captureHARCmd = append(captureHARCmd, *captureHARPath, "-f", *outputFile, *captureURL)
+	captureProc := startProcess("capture HAR", captureHARCmd)
+	captureProc.Wait()
 }
