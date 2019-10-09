@@ -102,10 +102,6 @@ func main() {
 	// Construct the capture HAR command
 	captureHARCmd := []string{}
 	if linkTracePath != nil && len(*linkTracePath) > 0 {
-		if err := os.Chmod(*linkTracePath, 0755); err != nil {
-			log.Printf("[runner] Error setting mode on %s: %v", *linkTracePath, err)
-			return
-		}
 		captureHARCmd = append(captureHARCmd, "mm-link", *linkTracePath, *linkTracePath, "--")
 	}
 	if linkLatencyMs != nil && *linkLatencyMs > 0 {

@@ -6,6 +6,10 @@ cat /etc/resolv.conf >> /tmp/resolv.conf
 sudo cp /tmp/resolv.conf /etc/resolv.conf
 rm /tmp/resolv.conf
 
+# Mounted files are on /mnt/share and we want them to be fully accessible
+# to the normal user inside the container
+sudo chmod -R 755 /mnt/share
+
 # If no arguments are provided, start a shell
 if [[ $# -eq 0 ]]; then
   /bin/bash
