@@ -10,8 +10,8 @@ from .environment import EnvironmentConfig
 ABSPATH = lambda path: os.path.abspath(os.path.join(os.path.dirname(__file__), path))
 
 DEFAULT_MAHIMAHI_CERT_DIR = ABSPATH("../../mahimahi/src/frontend/certs")
-DEFAULT_CHROME_HAR_CAPTURER_BIN = ABSPATH("../../third_party/node/capture_har.js")
-DEFAULT_PWMETRICS_BIN = ABSPATH("../../third_party/node/node_modules/.bin/pwmetrics")
+DEFAULT_CHROME_HAR_CAPTURER_BIN = ABSPATH("../../tools/capture_har/capture_har.js")
+DEFAULT_PWMETRICS_BIN = ABSPATH("../../tools/capture_har/node_modules/.bin/pwmetrics")
 DEFAULT_NGHTTPX_BIN = run(["which", "nghttpx"])
 DEFAULT_CHROME_BIN = (
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"

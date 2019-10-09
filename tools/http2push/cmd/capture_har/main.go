@@ -5,20 +5,20 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"os/signal"
+	"syscall"
 )
 
 const (
-	pathPrefix = "/blaze/third_party"
+	pathPrefix = "/opt"
 	defaultPolicyPath = pathPrefix + "/http2push/empty_policy.json"
 	defaultServerPath = pathPrefix + "/http2push/server"
-	defaultCaptureHarPath = pathPrefix + "/node/capture_har.js"
+	defaultCaptureHarPath = pathPrefix + "/capture_har/capture_har.js"
 )
 
 func stopProcess(proc *exec.Cmd) {
 	proc.Process.Signal(os.Interrupt)
-	if err := proc.Wait(); err != nil {
-		log.Fatal(err)
-	}
+	proc.Wait()
 }
 
 var (
@@ -38,10 +38,10 @@ func main() {
 
 	log.Printf("[runner] Starting server %s...", *serverPath)
 	server := exec.Command(*serverPath, "-file-store", *fileStorePath, "-push-policy", *pushPolicyPath)
-	server.Stdout = newLineWriter("[server] ", os.Stdout)
-	server.Stderr = newLineWriter("[server] ", os.Stderr)
+	server.Stdout = os.Stdout
+	server.Stderr = os.Stderr
 	if err := server.Start(); err != nil {
-		log.Fatalln(err)
+		log.Fatalf("Error starting server: %v", err)
 	}
 
 	defer stopProcess(server)
@@ -56,13 +56,13 @@ func main() {
 
 	log.Printf("[runner] Capturing har for URL %s...\n", *captureURL)
 	capture := exec.Command(*captureHARPath, "-f", *outputFile, *captureURL)
-	capture.Stdout = newLineWriter("[capture] ", os.Stdout)
-	capture.Stderr = newLineWriter("[capture] ", os.Stderr)
+	capture.Stdout = os.Stdout
+	capture.Stderr = os.Stderr
 	if err := capture.Start(); err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error starting HAR capturer: %v", err)
 	}
 
 	if err := capture.Wait(); err != nil {
-		log.Panic(err)
+		log.Panic("Error running HAR capturer: %v", err)
 	}
 }

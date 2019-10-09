@@ -13,11 +13,18 @@ import (
 	"http2push"
 )
 
+const (
+	pathPrefix = "/opt/http2push"
+	defaultPolicyPath = pathPrefix + "/empty_policy.json"
+	defaultServerPath = pathPrefix + "/server"
+	defaultCertsPath = pathPrefix + "/certs"
+)
+
 var (
 	fileStorePath  = flag.String("file-store", "/mnt/filestore", "Location to load Mahimahi recorded protobufs from")
-	pushPolicyPath = flag.String("push-policy", "/blaze/third_party/http2push/empty_policy.json", "Location to load push policy from")
-	certFile       = flag.String("cert", "/blaze/third_party/http2push/certs/server.cert", "Location of server certificate")
-	keyFile        = flag.String("key", "/blaze/third_party/http2push/certs/server.key", "Location of server private key")
+	pushPolicyPath = flag.String("push-policy", defaultPolicyPath, "Location to load push policy from")
+	certFile       = flag.String("cert", defaultCertsPath + "/server.cert", "Location of server certificate")
+	keyFile        = flag.String("key", defaultCertsPath + "/server.key", "Location of server private key")
 )
 
 func handleRequest(fs http2push.FileStore, push http2push.PushPolicy) func(w http.ResponseWriter, r *http.Request) {

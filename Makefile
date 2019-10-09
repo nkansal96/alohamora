@@ -2,7 +2,7 @@ setup:
 	./scripts/setup.sh
 
 http2push:
-	docker build -t http2push -f third_party/http2push/Dockerfile .
+	docker build -t http2push -f tools/Dockerfile .
 
 proto:
 	python -m grpc_tools.protoc \

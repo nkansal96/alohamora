@@ -18,5 +18,5 @@ proto
 scripts
 tests
 
-third_party/node/node_modules
-Dockerfile
+tools/capture_har/node_modules
+tools/Dockerfile
