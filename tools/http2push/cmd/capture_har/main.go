@@ -33,7 +33,7 @@ var (
 	linkTracePath = flag.String("link-trace-path", "", "Path to Mahimahi trace file for mm-link")
 	linkLatencyMs = flag.Uint64("link-latency-ms", 0, "One-way latency to simulate using mm-delay")
 
-	userID = flag.Uint("user-id", 0, "UID of the unprivileged user to run mahimahi with")
+	userID  = flag.Uint("user-id", 0, "UID of the unprivileged user to run mahimahi with")
 	groupID = flag.Uint("group-id", 0, "GID of the unprivileged user to run mahimahi with")
 )
 
@@ -64,7 +64,7 @@ func startProcess(name string, uid uint32, gid uint32, args []string) *exec.Cmd 
 
 func waitForPort(port string) {
 	for {
-    if conn, _ := net.DialTimeout("tcp", port, 1 * time.Second); conn != nil {
+		if conn, _ := net.DialTimeout("tcp", port, 1*time.Second); conn != nil {
 			conn.Close()
 			break
 		}
