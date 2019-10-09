@@ -9,8 +9,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
-	"http2push"
 )
 
 const (
@@ -27,10 +25,10 @@ var (
 	keyFile        = flag.String("key", defaultCertsPath+"/server.key", "Location of server private key")
 )
 
-func handleRequest(fs http2push.FileStore, push http2push.PushPolicy) func(w http.ResponseWriter, r *http.Request) {
+func handleRequest(fs FileStore, push PushPolicy) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Lookup file for given request
-		f := fs.LookupRequest(r.Method, r.RequestURI)
+		f := fs.LookupRequest(r)
 		if f == nil {
 			w.WriteHeader(404)
 			log.Printf("[%s] %s   404 0", r.Method, r.RequestURI)
@@ -61,12 +59,12 @@ func handleRequest(fs http2push.FileStore, push http2push.PushPolicy) func(w htt
 func main() {
 	flag.Parse()
 
-	fs, err := http2push.NewFileStore(*fileStorePath)
+	fs, err := NewFileStore(*fileStorePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	push, err := http2push.NewPushPolicy(*pushPolicyPath)
+	push, err := NewPushPolicy(*pushPolicyPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -75,13 +73,13 @@ func main() {
 	source := rand.NewSource(now)
 	random := rand.New(source)
 
-	interfaceManager, err := http2push.NewInterfaceManagerWithHosts(fs.GetHosts(), random)
+	interfaceManager, err := NewInterfaceManagerWithHosts(fs.GetHosts(), random)
 	defer interfaceManager.DeleteInterfaces()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	dnsmasq := http2push.NewDNSMasq(interfaceManager.GetInterfaces())
+	dnsmasq := NewDNSMasq(interfaceManager.GetInterfaces())
 	dnsmasq.Start()
 	defer dnsmasq.Stop()
 

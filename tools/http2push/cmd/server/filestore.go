@@ -1,11 +1,11 @@
-package http2push
+package main
 
 import (
 	pb "http2push/proto"
 
-	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"path"
 	"strings"
 
@@ -27,14 +27,23 @@ var (
 	}
 )
 
+// FileStoreResponse wraps a pb.RequestResponse and some metadata for easy access
+type FileStoreResponse struct {
+	record *pb.RequestResponse
+
+	Host       string
+	Method     string
+	RequestURI string
+}
+
 // FileStore stores a map for a given request to the response that should be sent back
 type FileStore interface {
-	LookupRequest(method string, requestURI string) *pb.RequestResponse
+	LookupRequest(request *http.Request) *pb.RequestResponse
 	GetHosts() []string
 }
 
 type fileStore struct {
-	store map[string]*pb.RequestResponse
+	store map[string]map[string]*FileStoreResponse
 	hosts []string
 }
 
@@ -46,9 +55,8 @@ func NewFileStore(storeDir string) (FileStore, error) {
 		return nil, err
 	}
 
-	hostMap := map[string]bool{}
 	fs := &fileStore{
-		store: make(map[string]*pb.RequestResponse),
+		store: make(map[string]map[string]*FileStoreResponse),
 		hosts: make([]string, 0),
 	}
 
@@ -62,20 +70,17 @@ func NewFileStore(storeDir string) (FileStore, error) {
 			return nil, err
 		}
 
-		rr := pb.RequestResponse{}
-		if err := proto.Unmarshal(data, &rr); err != nil {
+		fsr := &FileStoreResponse{
+			record: new(pb.RequestResponse),
+		}
+		if err := proto.Unmarshal(data, fsr.record); err != nil {
 			return nil, err
 		}
 
-		// remove the proto part of the first line
-		uriParts := strings.Split(string(rr.Request.FirstLine), " ")
-		uri := strings.Join(uriParts[0:len(uriParts)-1], " ")
-
 		// remove cache related headers
 		headers := make([]*pb.HTTPHeader, 0)
-		body := rr.Response.Body
-		host := ""
-		for _, header := range rr.Response.Header {
+		body := fsr.record.Response.Body
+		for _, header := range fsr.record.Response.Header {
 			key := strings.ToLower(string(header.Key))
 			value := strings.ToLower(string(header.Value))
 
@@ -88,12 +93,12 @@ func NewFileStore(storeDir string) (FileStore, error) {
 			}
 		}
 
-		for _, header := range rr.Request.Header {
+		for _, header := range fsr.record.Request.Header {
 			key := strings.ToLower(string(header.Key))
 			value := strings.ToLower(string(header.Value))
 
 			if key == hostHeader {
-				host = value
+				fsr.Host = value
 			}
 		}
 
@@ -107,17 +112,22 @@ func NewFileStore(storeDir string) (FileStore, error) {
 		})
 
 		// add host if does not exist already
-		if len(host) > 0 {
-			hostMap[host] = true
+		if _, ok := fs.store[fsr.Host]; !ok {
+			fs.store[fsr.Host] = make(map[string]*FileStoreResponse)
 		}
 
-		rr.Response.Header = headers
-		rr.Response.Body = body
-		fs.store[uri] = &rr
-		log.Printf("Read %s: %s", f.Name(), uri)
+		// remove the proto part of the first line
+		uriParts := strings.Split(string(fsr.record.Request.FirstLine), " ")
+
+		fsr.Method = uriParts[0]
+		fsr.RequestURI = uriParts[1]
+		fsr.record.Response.Header = headers
+		fsr.record.Response.Body = body
+		fs.store[fsr.Host][uriParts[1]] = fsr
+		log.Printf("Read %s: %s", f.Name(), uriParts[1])
 	}
 
-	for host := range hostMap {
+	for host := range fs.store {
 		fs.hosts = append(fs.hosts, host)
 	}
 
@@ -126,12 +136,49 @@ func NewFileStore(storeDir string) (FileStore, error) {
 
 // LookupRequest checks the file store for a request matching the given method and URI and
 // returns the matching response if any exists, or nil otherwise
-func (fs *fileStore) LookupRequest(method string, requestURI string) *pb.RequestResponse {
-	firstLinePrefix := fmt.Sprintf("%s %s", method, requestURI)
-	if proto, ok := fs.store[firstLinePrefix]; ok {
-		return proto
+func (fs *fileStore) LookupRequest(req *http.Request) *pb.RequestResponse {
+	// First check if there are any resources for this host
+	if _, ok := fs.store[req.Host]; !ok {
+		return nil
 	}
-	return nil
+
+	// Then check if there is an exact match for the first line
+	if res, ok := fs.store[req.Host][req.RequestURI]; ok && res.Method == req.Method {
+		return res.record
+	}
+
+	// Otherwise iterate through the protos to find the best match
+	reqURIParts := strings.SplitN(req.RequestURI, "?", 2)
+	var bestMatch *pb.RequestResponse
+	var bestScore int
+
+	for _, res := range fs.store[req.Host] {
+		if res.Method != req.Method {
+			continue
+		}
+
+		uriParts := strings.SplitN(res.RequestURI, "?", 2)
+		if uriParts[0] != reqURIParts[0] {
+			continue
+		}
+
+		maxIndex := len(uriParts[1])
+		if len(reqURIParts[1]) < maxIndex {
+			maxIndex = len(reqURIParts[1])
+		}
+
+		i := 0
+		for i < maxIndex && uriParts[1][i] == reqURIParts[1][i] {
+			i++
+		}
+
+		if i > bestScore {
+			bestScore = i
+			bestMatch = res.record
+		}
+	}
+
+	return bestMatch
 }
 
 func (fs *fileStore) GetHosts() []string {

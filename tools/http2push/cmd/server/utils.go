@@ -1,4 +1,4 @@
-package http2push
+package main
 
 import (
 	"bytes"
