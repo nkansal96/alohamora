@@ -1,5 +1,6 @@
 .vscode
 .idea
+.git
 
 *.pyc
 *.pyo
