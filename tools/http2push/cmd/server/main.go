@@ -35,14 +35,25 @@ func handleRequest(fs FileStore, push PushPolicy) func(w http.ResponseWriter, r 
 			return
 		}
 
-		// Lookup push resources for given file
-		if pusher, ok := w.(http.Pusher); ok {
-			pushResList := push.GetPushResources(r.RequestURI)
-			for _, pushRes := range pushResList {
-				if err := pusher.Push(pushRes, nil); err != nil {
-					log.Printf("Failed to push: %v", err)
-				} else {
-					log.Printf("[PUSH] %s -> %s", r.RequestURI, pushRes)
+		// Prevent recursive pushing
+		if r.Header.Get("X-Pushed") != "1" {
+			// Check if push is supported
+			if pusher, ok := w.(http.Pusher); ok {
+				// Lookup push resources for given file
+				pushResList := push.GetPushResources(r.RequestURI)
+				for _, pushRes := range pushResList {
+					err := pusher.Push(pushRes, &http.PushOptions{
+						// Add a header indicating this object is being pushed and the server
+						// should not attempt to push more objects for this object
+						Header: http.Header{
+							"X-Pushed": []string{"1"},
+						},
+					})
+					if err != nil {
+						log.Printf("Failed to push: %v", err)
+					} else {
+						log.Printf("[PUSH] %s -> %s", r.RequestURI, pushRes)
+					}
 				}
 			}
 		}
