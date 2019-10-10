@@ -43,6 +43,11 @@ func handleRequest(fs FileStore, push PushPolicy) func(w http.ResponseWriter, r 
 				// Lookup push resources for given file
 				pushResList := push.GetPushResources(r.RequestURI)
 				for _, pushRes := range pushResList {
+					// First check if a response would actually be generated for this request
+					if fs.LookupRequest(&http.Request{Host: r.Host, Method: "GET", RequestURI: pushRes}) == nil {
+						http2push.ServerLogger.Printf("[PUSH IGN] Ignoring push (no match found) %s -> %s", r.RequestURI, pushRes)
+						continue
+					}
 					err := pusher.Push(pushRes, &http.PushOptions{
 						// Add a header indicating this object is being pushed and the server
 						// should not attempt to push more objects for this object
