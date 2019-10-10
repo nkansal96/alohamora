@@ -69,7 +69,11 @@ func handleRequest(fs FileStore, push PushPolicy) func(w http.ResponseWriter, r 
 			w.Header().Set(string(header.Key), string(header.Value))
 		}
 		w.Write(f.Response.Body)
-		http2push.ServerLogger.Printf("[%s] %s   200 %d", r.Method, r.RequestURI, len(f.Response.Body))
+		if r.Header.Get("X-Pushed") == "1" {
+			http2push.ServerLogger.Printf("[PUSH %s] %s   200 %d", r.Method, r.RequestURI, len(f.Response.Body))
+		} else {
+			http2push.ServerLogger.Printf("[%s] %s   200 %d", r.Method, r.RequestURI, len(f.Response.Body))
+		}
 	}
 }
 
