@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/bash -x
 
 # Add 127.0.0.1 as the first DNS resolver
 echo "nameserver 127.0.0.1" > /tmp/resolv.conf
@@ -17,5 +17,5 @@ if [[ $# -eq 0 ]]; then
 # Otherwise start the har capturer
 else
   # Specify the non-root docker user's id and group by default
-  sudo ./capture_har -user-id $(id -u user) -group-id $(id -g user) $@
+  sudo ./capture_har -user-id $(id -u user) -group-id $(id -g user) $@ 2>/dev/null
 fi
