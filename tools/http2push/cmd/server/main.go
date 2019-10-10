@@ -1,8 +1,9 @@
 package main
 
 import (
+	"http2push"
+
 	"flag"
-	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -31,7 +32,7 @@ func handleRequest(fs FileStore, push PushPolicy) func(w http.ResponseWriter, r 
 		f := fs.LookupRequest(r)
 		if f == nil {
 			w.WriteHeader(404)
-			log.Printf("[%s] %s   404 0", r.Method, r.RequestURI)
+			http2push.ServerLogger.Printf("[%s] %s   404 0", r.Method, r.RequestURI)
 			return
 		}
 
@@ -50,9 +51,9 @@ func handleRequest(fs FileStore, push PushPolicy) func(w http.ResponseWriter, r 
 						},
 					})
 					if err != nil {
-						log.Printf("Failed to push: %v", err)
+						http2push.ServerLogger.Printf("Failed to push: %v", err)
 					} else {
-						log.Printf("[PUSH] %s -> %s", r.RequestURI, pushRes)
+						http2push.ServerLogger.Printf("[PUSH] %s -> %s", r.RequestURI, pushRes)
 					}
 				}
 			}
@@ -63,22 +64,21 @@ func handleRequest(fs FileStore, push PushPolicy) func(w http.ResponseWriter, r 
 			w.Header().Set(string(header.Key), string(header.Value))
 		}
 		w.Write(f.Response.Body)
-		log.Printf("[%s] %s   200 %d", r.Method, r.RequestURI, len(f.Response.Body))
+		http2push.ServerLogger.Printf("[%s] %s   200 %d", r.Method, r.RequestURI, len(f.Response.Body))
 	}
 }
 
 func main() {
 	flag.Parse()
-	log.SetOutput(os.Stdout)
 
 	fs, err := NewFileStore(*fileStorePath)
 	if err != nil {
-		log.Fatal(err)
+		http2push.ServerLogger.Fatal(err)
 	}
 
 	push, err := NewPushPolicy(*pushPolicyPath)
 	if err != nil {
-		log.Fatal(err)
+		http2push.ServerLogger.Fatal(err)
 	}
 
 	now := time.Now().UnixNano()
@@ -88,7 +88,7 @@ func main() {
 	interfaceManager, err := NewInterfaceManagerWithHosts(fs.GetHosts(), random)
 	defer interfaceManager.DeleteInterfaces()
 	if err != nil {
-		log.Fatal(err)
+		http2push.ServerLogger.Fatal(err)
 	}
 
 	dnsmasq := NewDNSMasq(interfaceManager.GetInterfaces())
@@ -109,6 +109,6 @@ func main() {
 		Handler: http.HandlerFunc(handleRequest(fs, push)),
 	}
 
-	log.Printf("Serving on https://0.0.0.0:443")
-	log.Fatal(srv.ListenAndServeTLS(*certFile, *keyFile))
+	http2push.ServerLogger.Printf("Serving on https://0.0.0.0:443")
+	http2push.ServerLogger.Fatal(srv.ListenAndServeTLS(*certFile, *keyFile))
 }

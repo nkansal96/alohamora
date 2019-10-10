@@ -1,8 +1,9 @@
 package main
 
 import (
+	"http2push"
+
 	"fmt"
-	"log"
 	"os/exec"
 )
 
@@ -31,7 +32,7 @@ func (d *dnsmasq) Start() error {
 	for _, intf := range d.interfaces {
 		flags = append(flags, "-A", fmt.Sprintf("/%s/%s", intf.Host, intf.IPAddress))
 	}
-	log.Printf("Starting dnsmasq with flags %v", flags)
+	http2push.ServerLogger.Printf("Starting dnsmasq with flags %v", flags)
 	d.cmd = exec.Command("dnsmasq", flags...)
 	return d.cmd.Start()
 }

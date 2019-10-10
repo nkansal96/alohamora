@@ -3,7 +3,7 @@ FROM golang:1.13-buster
 
 # Copy and compile go code
 WORKDIR /go/src/http2push
-COPY tools/http2push/go* /go/src/http2push/
+COPY tools/http2push/go.* tools/http2push/*.go /go/src/http2push/
 RUN go mod download
 
 COPY tools/http2push/proto proto

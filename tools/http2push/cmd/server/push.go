@@ -1,8 +1,9 @@
 package main
 
 import (
+	"http2push"
+
 	"encoding/json"
-	"log"
 	"os"
 )
 
@@ -43,7 +44,7 @@ func NewPushPolicy(file string) (PushPolicy, error) {
 		for _, push := range entries {
 			pushURL := stripHost(push.URL)
 			pushURLs = append(pushURLs, pushURL)
-			log.Printf("Loaded push: %s --> %s", sourceURL, pushURL)
+			http2push.ServerLogger.Printf("Loaded push: %s --> %s", sourceURL, pushURL)
 		}
 		policyMap[sourceURL] = pushURLs
 	}

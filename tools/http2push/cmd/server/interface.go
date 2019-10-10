@@ -1,8 +1,9 @@
 package main
 
 import (
+	"http2push"
+
 	"fmt"
-	"log"
 	"math/rand"
 )
 
@@ -68,7 +69,7 @@ func (im *interfaceManager) CreateInterface(host string) (*Interface, error) {
 		IPAddress: fmt.Sprintf("%d.%d.%d.%d", 10, a, b, c),
 	}
 
-	log.Printf("Creating interface for %s on %s", intf.Host, intf.IPAddress)
+	http2push.ServerLogger.Printf("Creating interface for %s on %s", intf.Host, intf.IPAddress)
 	if err := run("ifconfig", intf.Interface, intf.IPAddress); err != nil {
 		return nil, err
 	}
@@ -79,7 +80,7 @@ func (im *interfaceManager) CreateInterface(host string) (*Interface, error) {
 
 func (im *interfaceManager) DeleteInterface(host string) error {
 	if intf, ok := im.interfaces[host]; ok {
-		log.Printf("Deleting interface for %s on %s", intf.Host, intf.IPAddress)
+		http2push.ServerLogger.Printf("Deleting interface for %s on %s", intf.Host, intf.IPAddress)
 		if err := run("ifconfig", intf.Interface, "down"); err != nil {
 			return err
 		}

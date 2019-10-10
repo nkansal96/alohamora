@@ -1,10 +1,10 @@
 package main
 
 import (
+	"http2push"
 	pb "http2push/proto"
 
 	"io/ioutil"
-	"log"
 	"net/http"
 	"path"
 	"strings"
@@ -86,7 +86,7 @@ func NewFileStore(storeDir string) (FileStore, error) {
 
 			// unchunk the file if it's chunked since HTTP/2 does not support chunked encoding
 			if key == transferEncodingHeader && strings.Contains(value, "chunked") {
-				log.Printf("Unchunking file %s...\n", f.Name())
+				http2push.ServerLogger.Printf("Unchunking file %s...\n", f.Name())
 				body = unchunk(body)
 			} else if _, shouldRemove := removeHeaders[key]; !shouldRemove {
 				headers = append(headers, header)
@@ -124,7 +124,7 @@ func NewFileStore(storeDir string) (FileStore, error) {
 		fsr.record.Response.Header = headers
 		fsr.record.Response.Body = body
 		fs.store[fsr.Host][uriParts[1]] = fsr
-		log.Printf("Read %s: %s", f.Name(), uriParts[1])
+		http2push.ServerLogger.Printf("Read %s: %s", f.Name(), uriParts[1])
 	}
 
 	for host := range fs.store {

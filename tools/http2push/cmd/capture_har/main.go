@@ -1,8 +1,9 @@
 package main
 
 import (
+	"http2push"
+
 	"flag"
-	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -38,7 +39,7 @@ var (
 )
 
 func startProcess(name string, uid uint32, gid uint32, args []string, extraEnv []string) *exec.Cmd {
-	log.Printf("[runner] Starting %s: %v...", name, args)
+	http2push.RunnerLogger.Printf("Starting %s: %v...", name, args)
 	proc := exec.Command(args[0], args[1:]...)
 	proc.Stdout = os.Stdout
 	proc.Stderr = os.Stderr
@@ -52,7 +53,7 @@ func startProcess(name string, uid uint32, gid uint32, args []string, extraEnv [
 		proc.Env = append(os.Environ(), extraEnv...)
 	}
 	if err := proc.Start(); err != nil {
-		log.Fatalf("Error starting %s: %v", name, err)
+		http2push.RunnerLogger.Fatalf("Error starting %s: %v", name, err)
 	}
 
 	stop := make(chan os.Signal)
@@ -79,12 +80,12 @@ func waitForPort(port string) bool {
 func main() {
 	// Parse and validate flags
 	flag.Parse()
-	log.SetOutput(os.Stdout)
+
 	if captureURL == nil || len(*captureURL) == 0 {
-		log.Fatal("[runner] The capture URL must be specified")
+		http2push.RunnerLogger.Fatal("The capture URL must be specified")
 	}
 	if linkLatencyMs != nil && *linkLatencyMs > 1000 {
-		log.Fatal("[runner] latency-ms must be less than 1000ms")
+		http2push.RunnerLogger.Fatal("latency-ms must be less than 1000ms")
 	}
 
 	// Create the server command and start the server
@@ -93,14 +94,14 @@ func main() {
 	serverProc := startProcess("server", 0, 0, serverCmd, serverExtraEnv)
 
 	defer func() {
-		log.Print("[runner] Shutting down server...")
+		http2push.RunnerLogger.Print("Shutting down server...")
 		syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 		serverProc.Wait()
 	}()
 
-	log.Print("[runner] Waiting for server to start on :443...")
+	http2push.RunnerLogger.Print("Waiting for server to start on :443...")
 	if !waitForPort(":443") {
-		log.Print("[runner] Server did not start in a reasonable time")
+		http2push.RunnerLogger.Print("Server did not start in a reasonable time")
 		return
 	}
 
@@ -118,5 +119,5 @@ func main() {
 	captureProc.Wait()
 
 	// Send interrupt signal to clean up subprocesses
-	log.Print("[runner] Finished capturing HAR.")
+	http2push.RunnerLogger.Print("Finished capturing HAR.")
 }
