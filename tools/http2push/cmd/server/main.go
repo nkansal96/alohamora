@@ -69,6 +69,7 @@ func handleRequest(fs FileStore, push PushPolicy) func(w http.ResponseWriter, r 
 
 func main() {
 	flag.Parse()
+	log.SetOutput(os.Stdout)
 
 	fs, err := NewFileStore(*fileStorePath)
 	if err != nil {

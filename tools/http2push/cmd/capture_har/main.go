@@ -37,7 +37,7 @@ var (
 	groupID = flag.Uint("group-id", 0, "GID of the unprivileged user to run mahimahi with")
 )
 
-func startProcess(name string, uid uint32, gid uint32, args []string) *exec.Cmd {
+func startProcess(name string, uid uint32, gid uint32, args []string, extraEnv []string) *exec.Cmd {
 	log.Printf("[runner] Starting %s: %v...", name, args)
 	proc := exec.Command(args[0], args[1:]...)
 	proc.Stdout = os.Stdout
@@ -47,6 +47,9 @@ func startProcess(name string, uid uint32, gid uint32, args []string) *exec.Cmd 
 			Uid: uid,
 			Gid: gid,
 		},
+	}
+	if extraEnv != nil {
+		proc.Env = append(os.Environ(), extraEnv...)
 	}
 	if err := proc.Start(); err != nil {
 		log.Fatalf("Error starting %s: %v", name, err)
@@ -76,6 +79,7 @@ func waitForPort(port string) bool {
 func main() {
 	// Parse and validate flags
 	flag.Parse()
+	log.SetOutput(os.Stdout)
 	if captureURL == nil || len(*captureURL) == 0 {
 		log.Fatal("[runner] The capture URL must be specified")
 	}
@@ -84,8 +88,9 @@ func main() {
 	}
 
 	// Create the server command and start the server
+	serverExtraEnv := []string{"GODEBUG=http2debug=2"}
 	serverCmd := []string{*serverPath, "-file-store", *fileStorePath, "-push-policy", *pushPolicyPath}
-	serverProc := startProcess("server", 0, 0, serverCmd)
+	serverProc := startProcess("server", 0, 0, serverCmd, serverExtraEnv)
 
 	defer func() {
 		log.Print("[runner] Shutting down server...")
@@ -109,7 +114,7 @@ func main() {
 	}
 	captureHARCmd = append(captureHARCmd, "sudo", *captureHARPath, "-f", *outputFile, *captureURL)
 	// Run the HAR capturer as a normal user (mahimahi cannot run as non-root)
-	captureProc := startProcess("capture", uint32(*userID), uint32(*groupID), captureHARCmd)
+	captureProc := startProcess("capture", uint32(*userID), uint32(*groupID), captureHARCmd, nil)
 	captureProc.Wait()
 
 	// Send interrupt signal to clean up subprocesses
