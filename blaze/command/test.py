@@ -22,7 +22,7 @@ from . import command
     "--random_chance",
     help="Probability of pushing a particular resource (only used for --policy_type=random)",
     type=float,
-    default=0.25,
+    default=None,
 )
 @command.argument("--from_manifest", required=True, help="The training manifest file to use as input to the simulator")
 @command.command
@@ -31,9 +31,12 @@ def random_push_policy(args):
     Outputs a random push policy for the given recorded website
     """
     simple_policy = args.policy_type == "simple"
+    random_chance = 0 if simple_policy else (random.random() if not args.random_chance else args.random_chance)
+
+    log.info("generating a random policy", policy_type=args.policy_type, random_chance=random_chance)
     env_config = EnvironmentConfig.load_file(args.from_manifest)
     policy_generator = (
-        _simple_push_policy_generator() if simple_policy else _random_push_policy_generator(args.random_chance)
+        _simple_push_policy_generator() if simple_policy else _random_push_policy_generator(random_chance)
     )
     print(json.dumps(policy_generator(env_config.push_groups).as_dict, indent=4))
     return 0
@@ -49,9 +52,10 @@ def random_push_policy(args):
 @command.argument("--policy_type", help="The test type to run", choices=["simple", "random"])
 @command.argument(
     "--random_chance",
-    help="Probability of pushing a particular resource (only used for --policy_type=random)",
+    help="Probability of pushing a particular resource (only used for --policy_type=random). If not specified, the "
+    "chance is generated randomly each time a random policy is generated.",
     type=float,
-    default=0.25,
+    default=None,
 )
 @command.argument("--iterations", help="Number of trials", type=int, default=1)
 @command.argument("--bandwidth", help="Link bandwidth to simulate (kbps)", type=int, default=None)
@@ -64,7 +68,7 @@ def test_push(args):
     if not args.url and not args.from_manifest:
         log.error("must provide either a URL or a manifest")
         return 1
-    if args.random_chance <= 0 or args.random_chance > 1:
+    if args.random_chance and (args.random_chance <= 0 or args.random_chance > 1):
         log.error("chance must be a float in the interval (0, 1]")
         return 1
     if args.only_simulator and not args.from_manifest:
@@ -110,12 +114,16 @@ def _simple_push_policy_generator() -> Callable[[List[PushGroup]], Policy]:
     return _simple_push_policy
 
 
-def _random_push_policy_generator(chance: float) -> Callable[[List[PushGroup]], Policy]:
+def _random_push_policy_generator(chance: Optional[float] = None) -> Callable[[List[PushGroup]], Policy]:
     def _random_push_policy(push_groups: List[PushGroup]) -> Policy:
+        _chance = chance
+        if not _chance:
+            _chance = random.random()
+
         policy = Policy(ActionSpace([]))
         for group in push_groups:
             for push in range(1, len(group.resources)):
-                if random.random() > chance:
+                if random.random() > _chance:
                     continue
                 source = random.randint(0, push - 1)
                 policy.add_default_action(group.resources[source], group.resources[push])
