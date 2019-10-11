@@ -119,7 +119,7 @@ exports.FileStore = class {
       }
 
       const uriParts = uri.split("?", 2);
-      if (uriParts[0] !== reqURIParts[0]) {
+      if (uriParts[0] !== reqURIParts[0] || !uriParts[1] || !reqURIParts[1]) {
         return;
       }
 
