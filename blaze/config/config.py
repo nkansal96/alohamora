@@ -10,7 +10,7 @@ from .environment import EnvironmentConfig
 ABSPATH = lambda path: os.path.abspath(os.path.join(os.path.dirname(__file__), path))
 
 DEFAULT_MAHIMAHI_CERT_DIR = ABSPATH("../../mahimahi/src/frontend/certs")
-DEFAULT_CHROME_HAR_CAPTURER_BIN = ABSPATH("../../tools/capture_har/capture_har.js")
+DEFAULT_CHROME_HAR_CAPTURER_BIN = ABSPATH("../../tools/capture_har/capturer/run.js")
 DEFAULT_PWMETRICS_BIN = ABSPATH("../../tools/capture_har/node_modules/.bin/pwmetrics")
 DEFAULT_NGHTTPX_BIN = run(["which", "nghttpx"])
 DEFAULT_HTTP2PUSH_IMAGE = "http2push"
