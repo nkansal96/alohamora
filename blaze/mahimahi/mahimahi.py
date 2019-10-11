@@ -60,7 +60,7 @@ class MahiMahiConfig:
             f"/mnt/share/{har_output_file_name}",
             *(["--link-trace-path", f"/mnt/share/{link_trace_file_name}"] if link_trace_file_name else []),
             *(["--link-latency-ms", str(self.client_environment.latency // 2)] if self.client_environment else []),
-            "-url",
+            "--url",
             capture_url,
         ]
 
