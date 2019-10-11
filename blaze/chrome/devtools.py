@@ -24,7 +24,7 @@ def capture_har(url: str, config: Config, output_filepath: Optional[str] = None)
     # configure the HAR capturer
     har_capture_cmd = [config.chrome_har_capturer_bin, "--url", url]
     if output_filepath:
-        har_capture_cmd.extend(["--output_file", output_filepath])
+        har_capture_cmd.extend(["--output-file", output_filepath])
 
     # spawn the HAR capturer process
     log.debug("spawning har capturer", url=url)
