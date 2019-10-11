@@ -1,18 +1,9 @@
-#! /usr/bin/env node
-
 const fs = require("fs");
 
 const chromeLauncher = require('chrome-launcher');
-const commandLineArgs = require('command-line-args');
 const chromeRemoteDebugger = require('chrome-remote-interface');
 
-const { arrayMin, arraySum, asyncWait } = require('./utils');
-
-const argumentsDefinition = [
-  { name: 'verbose', alias: 'v', defaultValue: false, type: Boolean },
-  { name: 'output_file', alias: 'f', defaultValue: '', type: String },
-  { name: 'url', defaultOption: true },
-];
+const { arrayMin, arraySum, asyncWait } = require('../utils');
 
 const chromeFlags = [
   "--allow-insecure-localhost",
@@ -206,37 +197,27 @@ class HarCapturer {
         entries: filtered_res
           .sort((a, b) => a.started_date_time < b.started_date_time ? -1 : 1),
       },
-      events: this.events,
+      // events: this.events,
       timings: this.timings,
       page_load_time_ms: pageLoadTimeMs,
     };
   }
 }
 
-const main = async (options = commandLineArgs(argumentsDefinition)) => {
+const captureHar = async url => {
   let chrome;
   try {
     chrome = await chromeLauncher.launch({ chromeFlags });
     await asyncWait(2000);
 
-    options.host = "localhost";
-    options.port = chrome.port;
-
-    const capturer = new HarCapturer(options);
+    const capturer = new HarCapturer({
+      host: "localhost",
+      port: chrome.port,
+      url: url,
+    });
+  
     const res = await capturer.captureHar();
-    const resNoEvents = { log: res.log, timings: res.timings, page_load_time_ms: res.page_load_time_ms };
-    const result = JSON.stringify(res);
-    const resultNoEvents = JSON.stringify(resNoEvents);
-
-    if (options.output_file) {
-      fs.writeFileSync(options.output_file, resultNoEvents);
-      //fs.writeFileSync(`/tmp/har_${new Date()}`, result);
-    } else {
-      console.log(resultNoEvents);
-      //fs.writeFileSync(`/tmp/har_${new Date()}`, result);
-    }
-  } catch (e) {
-    console.error(e);
+    return res;
   } finally {
     if (chrome) {
       await chrome.kill();
@@ -244,4 +225,12 @@ const main = async (options = commandLineArgs(argumentsDefinition)) => {
   }
 };
 
-main();
+module.exports = async (url, outputFile) => {
+  const res = await captureHar(url);
+  const json = JSON.stringify(res);
+  if (outputFile) {
+    fs.writeFileSync(outputFile, json);
+  } else {
+    process.stdout.write(json)
+  }
+}

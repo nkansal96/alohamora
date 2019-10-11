@@ -4,7 +4,11 @@
   "description": "Node dependencies for blaze",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "protoc": "protocol-buffers proto/*.proto -o proto/index.js",
+    "start": "node index.js",
+    "capturer": "node capturer/run.js",
+    "server": "node server/run.js"
   },
   "author": "Nikhil Kansal",
   "license": "MIT",
@@ -12,6 +16,10 @@
     "chrome-launcher": "^0.10.7",
     "chrome-remote-interface": "^0.27.1",
     "command-line-args": "^5.1.1",
+    "protocol-buffers-encodings": "^1.1.0",
     "pwmetrics": "^4.2.1"
+  },
+  "devDependencies": {
+    "protocol-buffers": "^4.1.0"
   }
 }

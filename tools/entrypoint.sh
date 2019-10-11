@@ -17,5 +17,5 @@ if [[ $# -eq 0 ]]; then
 # Otherwise start the har capturer
 else
   # Specify the non-root docker user's id and group by default
-  sudo ./capture_har -user-id $(id -u user) -group-id $(id -g user) $@ 2>/dev/null
+  sudo npm start -- --user-id $(id -u user) --group-id $(id -g user) $@
 fi
