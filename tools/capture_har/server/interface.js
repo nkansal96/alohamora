@@ -2,9 +2,8 @@ const childProcess = require("child_process");
 const { randInt } = require("../utils");
 
 class Interface {
-  constructor(host, ifname, ip) {
+  constructor(host, ip) {
     this.host = host;
-    this.ifname = ifname;
     this.ip = ip;
   }
 }
@@ -21,12 +20,14 @@ exports.InterfaceManager = class {
       return;
     }
 
-    const a = 0, b = 1, c = Object.entries(this.interfaces).length + 1;
-    const intf = new Interface(host, `lo:10.${a}.${b}.${c}`, `10.${a}.${b}.${c}`);
+    const ifNum = Object.entries(this.interfaces).length;
+    const a = 1 + Math.floor(ifNum/255);
+    const b = 1 + ifNum % 255;
+    const intf = new Interface(host, `10.0.${a}.${b}`);
 
     // Create the interface, and if successful (it doesn't throw), add it to the map
     console.log("Creating interface...", intf);
-    childProcess.execSync(`ifconfig ${intf.ifname} ${intf.ip}`);
+    childProcess.execSync(`ip addr add ${intf.ip} dev lo`);
     this.interfaces[host] = intf;
   }
 
@@ -37,7 +38,7 @@ exports.InterfaceManager = class {
     }
 
     console.log("Deleting interface...", intf);
-    childProcess.execSync(`ifconfig ${intf.ifname} down`);
+    childProcess.execSync(`ip addr del ${intf.ip}/32 dev lo`);
     delete this.interfaces[host];
   }
 

@@ -17,14 +17,12 @@ exports.arrayMin = arr => {
 exports.arraySum = arr =>
   arr.reduce((acc, v) => acc + v, 0);
 
-exports.run = (command, args, uid = 0, gid = 0) => 
+exports.run = (command, uid = 0, gid = 0) =>
   new Promise((resolve, reject) => {
-    console.log("running", command, args);
-    const proc = childProcess.spawn(command, args, {
-      uid,
-      gid,
-      stdio: 'inherit',
-    });
+    console.log("running", command);
+    const name = command[0];
+    const args = command.slice(1);
+    const proc = childProcess.spawn(name, args, { uid, gid, stdio: 'inherit' });
 
     proc.on('error', err => reject(err));
     proc.on('exit', (code, signal) => resolve(code));

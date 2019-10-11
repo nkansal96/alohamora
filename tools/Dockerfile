@@ -74,7 +74,10 @@ RUN apt-get update -y && \
 WORKDIR /opt/capture_har
 COPY tools/capture_har/*.json /opt/capture_har/
 RUN npm install --production
-COPY tools/capture_har/* /opt/capture_har/
+COPY tools/capture_har/capturer /opt/capture_har/capturer
+COPY tools/capture_har/proto /opt/capture_har/proto
+COPY tools/capture_har/server /opt/capture_har/server
+COPY tools/capture_har/*.js /opt/capture_har/
 
 RUN echo "{}" > empty_policy.json
 COPY tools/capture_har/certs certs

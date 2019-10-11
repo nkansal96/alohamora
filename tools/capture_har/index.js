@@ -28,9 +28,9 @@ const run = async args => {
     captureCmd.push("mm-link", args.linkTracePath, args.linkTracePath, "--");
   if (args.linkLatencyMs > 0)
     captureCmd.push("mm-delay", args.linkLatencyMs.toString());
-  captureCmd.push("npm", "run", "capturer", "--", "-o", args.outputFile, args.url);
+  captureCmd.push("sudo", "npm", "run", "capturer", "--", "-o", args.outputFile, args.url);
 
-  await utils.run("sudo", captureCmd, args.userId, args.groupId);
+  await utils.run(captureCmd, args.userId, args.groupId);
   server.stop();
   await serverPromise;
 };
