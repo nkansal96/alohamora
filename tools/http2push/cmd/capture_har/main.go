@@ -67,12 +67,12 @@ func startProcess(name string, uid uint32, gid uint32, args []string, extraEnv [
 }
 
 func waitForPort(port string) bool {
-	for i := 0; i < 10; i++ {
-		if conn, _ := net.DialTimeout("tcp", port, 1*time.Second); conn != nil {
+	for i := 0; i < 100; i++ {
+		if conn, _ := net.DialTimeout("tcp", port, 200*time.Millisecond); conn != nil {
 			conn.Close()
 			return true
 		}
-		time.Sleep(1 * time.Second)
+		time.Sleep(10 * time.Millisecond)
 	}
 	return false
 }

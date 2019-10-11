@@ -13,11 +13,10 @@ import (
 )
 
 var (
+	accessControlAllowOriginHeader = "access-control-allow-origin"
 	hostHeader             = "host"
 	transferEncodingHeader = "transfer-encoding"
 	removeHeaders          = map[string]bool{
-		"access-control-allow-origin": true,
-		"strict-transport-security":   true,
 		"cache-control":               true,
 		"expires":                     true,
 		"last-modified":               true,
@@ -80,9 +79,15 @@ func NewFileStore(storeDir string) (FileStore, error) {
 		// remove cache related headers
 		headers := make([]*pb.HTTPHeader, 0)
 		body := fsr.record.Response.Body
+		hasAccessControlAllowOriginHeader := false
+
 		for _, header := range fsr.record.Response.Header {
 			key := strings.ToLower(string(header.Key))
 			value := strings.ToLower(string(header.Value))
+
+			if key == accessControlAllowOriginHeader {
+				hasAccessControlAllowOriginHeader = true
+			}
 
 			// unchunk the file if it's chunked since HTTP/2 does not support chunked encoding
 			if key == transferEncodingHeader && strings.Contains(value, "chunked") {
@@ -106,10 +111,13 @@ func NewFileStore(storeDir string) (FileStore, error) {
 		headers = append(headers, &pb.HTTPHeader{
 			Key:   []byte("Cache-Control"),
 			Value: []byte("3600"),
-		}, &pb.HTTPHeader{
-			Key:   []byte("Access-Control-Allow-Origin"),
-			Value: []byte("*"),
 		})
+		if !hasAccessControlAllowOriginHeader {
+			headers = append(headers, &pb.HTTPHeader{
+				Key:   []byte("Access-Control-Allow-Origin"),
+				Value: []byte("*"),
+			})
+		}
 
 		// add host if does not exist already
 		if _, ok := fs.store[fsr.Host]; !ok {

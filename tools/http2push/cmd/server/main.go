@@ -28,16 +28,23 @@ var (
 
 func handleRequest(fs FileStore, push PushPolicy) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		pushed := r.Header.Get("X-Pushed") == "1"
+		verb := r.Method
+		if pushed {
+			verb = "PUSH " + verb
+		}
+		http2push.ServerLogger.Printf("[START REQ  %s] %s", verb, r.RequestURI)
+
 		// Lookup file for given request
 		f := fs.LookupRequest(r)
 		if f == nil {
 			w.WriteHeader(404)
-			http2push.ServerLogger.Printf("[%s] %s   404 0", r.Method, r.RequestURI)
+			http2push.ServerLogger.Printf("[END %s] %s   404 0", verb, r.RequestURI)
 			return
 		}
 
 		// Prevent recursive pushing
-		if r.Header.Get("X-Pushed") != "1" {
+		if !pushed {
 			// Check if push is supported
 			if pusher, ok := w.(http.Pusher); ok {
 				// Lookup push resources for given file
@@ -69,11 +76,7 @@ func handleRequest(fs FileStore, push PushPolicy) func(w http.ResponseWriter, r 
 			w.Header().Set(string(header.Key), string(header.Value))
 		}
 		w.Write(f.Response.Body)
-		if r.Header.Get("X-Pushed") == "1" {
-			http2push.ServerLogger.Printf("[PUSH %s] %s   200 %d", r.Method, r.RequestURI, len(f.Response.Body))
-		} else {
-			http2push.ServerLogger.Printf("[%s] %s   200 %d", r.Method, r.RequestURI, len(f.Response.Body))
-		}
+		http2push.ServerLogger.Printf("[END %s] %s   200 %d", verb, r.RequestURI, len(f.Response.Body))
 	}
 }
 
@@ -116,6 +119,8 @@ func main() {
 	srv := &http.Server{
 		Addr:    ":443",
 		Handler: http.HandlerFunc(handleRequest(fs, push)),
+		ReadTimeout: 5 * time.Second,
+		WriteTimeout: 5 * time.Second,
 	}
 
 	http2push.ServerLogger.Printf("Serving on https://0.0.0.0:443")
