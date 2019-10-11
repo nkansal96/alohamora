@@ -11,6 +11,7 @@ const REMOVE_HEADERS = [
   "cache-control",
   "connection",
   "expires",
+  "keep-alive",
   "last-modified",
   "date",
   "age",
