@@ -63,6 +63,8 @@ class ServerInstance {
     const method = headers[':method'];
     const host = headers[':authority'] || headers['host'];
     const uri = headers[':path'];
+
+    stream.on("error", err => console.error(err));
     
     const res = this.fileStore.lookupRequest(method, host, uri);
     if (!res) {
@@ -78,6 +80,7 @@ class ServerInstance {
         }
         stream.pushStream({ ':path': pushUrl }, (err, pushStream) => {
           console.log("PUSH", host, uri, "  ", pushUrl);
+          pushStream.on("error", err => console.error(err));
           pushStream.respond({ ':status': 200, ...pushRes.headers });
           pushStream.end(pushRes.body);
         });
