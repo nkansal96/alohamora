@@ -87,7 +87,8 @@ class ServerInstance {
       });
     }
 
-    stream.respond({ ':status': 200, ...res.headers });
+    const status = res.headers.location ? 302 : 200;
+    stream.respond({ ':status': status, ...res.headers });
     stream.end(res.body);
     console.log(method.padEnd(4), host, uri);
   }
