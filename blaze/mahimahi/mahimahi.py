@@ -58,7 +58,6 @@ class MahiMahiConfig:
             f"{self.config.env_config.replay_dir}:/mnt/filestore",
             "-v",
             f"{share_dir}:/mnt/share",
-            "-it",
             self.config.http2push_image,
             "--file-store-path",
             "/mnt/filestore",
