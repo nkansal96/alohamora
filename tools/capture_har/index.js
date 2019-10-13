@@ -18,7 +18,7 @@ const argumentsDefinition = [
 
 const run = async args => {
   // create and start the server
-  const server = await createServer(443, args.certFile, args.keyFile, args.fileStorePath, args.pushPolicyPath);
+  const server = await createServer(443, args.certFile, args.keyFile, args.fileStorePath, args.pushPolicyPath, args.preloadPolicyPath);
   const serverPromise = server.start();
   process.on('SIGINT', () => server.stop());
   process.on('SIGTERM', () => server.stop());

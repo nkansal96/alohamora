@@ -229,7 +229,6 @@ def _test_push(
                 config = get_config(EnvironmentConfig.load_file(manifest))
                 log.debug("using recorded webpage", record_dir=config.env_config.replay_dir)
 
-            log.debug("capturing median PLT in mahimahi with given environment")
             plt, res_list, push_groups, push_plts, push_policies = _get_results_in_mahimahi(
                 config, client_env, iterations, policy_generator, capture_default=bool(bandwidth or latency)
             )
