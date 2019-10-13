@@ -172,7 +172,9 @@ def _random_push_preload_policy_generator() -> Callable[[List[PushGroup]], Tuple
         n = random.randint(1, len(all_resources))
         # choose the weight factor between push and preload
         weight = random.random()
+
         # Choose n resources based on the resource type distribution without replacement
+        log.debug("generating push-preload policy", num_resources=len(all_resources), total_size=n, push_weight=weight)
         res = []
         for _ in range(n):
             g, r, s = _choose_with_dist(res_by_type, dist)
