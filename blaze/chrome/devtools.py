@@ -37,7 +37,11 @@ def capture_har(url: str, config: Config, output_filepath: Optional[str] = None)
 
 
 def capture_har_in_mahimahi(
-    url: str, config: Config, client_env: ClientEnvironment, push_policy: Optional[Policy] = None
+    url: str,
+    config: Config,
+    client_env: ClientEnvironment,
+    push_policy: Optional[Policy] = None,
+    preload_policy: Optional[Policy] = None,
 ) -> Har:
     """
     capture_har spawns a headless chrome instance and connects to its remote debugger
@@ -51,16 +55,23 @@ def capture_har_in_mahimahi(
         raise ValueError("replay_dir must be specified")
 
     push_policy = push_policy or Policy.from_dict({})
-    mahimahi_config = MahiMahiConfig(config, push_policy, client_env)
+    preload_policy = preload_policy or Policy.from_dict({})
+    mahimahi_config = MahiMahiConfig(
+        config=config, push_policy=push_policy, preload_policy=preload_policy, client_environment=client_env
+    )
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        push_policy_file = os.path.join(temp_dir, "policy.json")
+        push_policy_file = os.path.join(temp_dir, "push_policy.json")
+        preload_policy_file = os.path.join(temp_dir, "preload_policy.json")
         output_file = os.path.join(temp_dir, "har.json")
         trace_file = os.path.join(temp_dir, "trace_file")
 
         with open(push_policy_file, "w") as f:
             log.debug("writing push policy file", push_policy_file=push_policy_file)
             f.write(json.dumps(push_policy.as_dict))
+        with open(preload_policy_file, "w") as f:
+            log.debug("writing preload policy file", preload_policy_file=preload_policy_file)
+            f.write(json.dumps(preload_policy.as_dict))
         with open(trace_file, "w") as f:
             log.debug("writing trace file", trace_file=trace_file)
             f.write(mahimahi_config.formatted_trace_file)
@@ -69,7 +80,8 @@ def capture_har_in_mahimahi(
         cmd = mahimahi_config.har_capture_cmd(
             share_dir=temp_dir,
             har_output_file_name="har.json",
-            push_policy_file_name="policy.json",
+            push_policy_file_name="push_policy.json",
+            preload_policy_file_name="preload_policy.json",
             link_trace_file_name="trace_file",
             capture_url=url,
         )

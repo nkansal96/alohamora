@@ -31,6 +31,8 @@ const run = async args => {
   captureCmd.push("sudo", "npm", "run", "capturer", "--", "-o", args.outputFile, args.url);
 
   await utils.run(captureCmd, args.userId, args.groupId);
+  console.log("Finished capturing HAR...");
+
   server.stop();
   await serverPromise;
 };

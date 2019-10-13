@@ -46,7 +46,7 @@ const convertHeadersToObject = (arr) =>
 const createFileStoreObject = (record) => {
   const requestHeaders = convertHeadersToObject(record.request.header);
   const responseHeaders = convertHeadersToObject(record.response.header);
-  const [method, uri, proto] = record.request.first_line.toString().split(" ");
+  const [method, uri] = record.request.first_line.toString().split(" ");
   let body = record.response.body;
 
   const transferEncoding = responseHeaders[TRANSFER_ENCODING_HEADER];
@@ -74,9 +74,9 @@ const createFileStoreObject = (record) => {
     response: {
       headers: responseHeaders,
       body: body,
-    }
-  }
-}
+    },
+  };
+};
 
 exports.FileStore = class {
   constructor(fileStoreDir) {
