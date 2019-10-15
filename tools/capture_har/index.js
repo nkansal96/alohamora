@@ -14,6 +14,7 @@ const argumentsDefinition = [
   { name: 'link-latency-ms', alias: 'l', defaultValue: 0, type: Number },
   { name: 'user-id', alias: 'u', defaultValue: 0, type: Number },
   { name: 'group-id', alias: 'g', defaultValue: 0, type: Number },
+  { name: 'force-stop', defaultValue: false, type: Boolean },
 ];
 
 const run = async args => {
@@ -28,10 +29,14 @@ const run = async args => {
     captureCmd.push("mm-link", args.linkTracePath, args.linkTracePath, "--");
   if (args.linkLatencyMs > 0)
     captureCmd.push("mm-delay", args.linkLatencyMs.toString());
-  captureCmd.push("sudo", "npm", "run", "capturer", "--", "-o", args.outputFile, args.url);
+  captureCmd.push("sudo", "npm", "run", "capturer", "--", "-o", args.outputFile, "-s", args.cpuSlowdown, args.url);
 
   await utils.run(captureCmd, args.userId, args.groupId);
   console.log("Finished capturing HAR...");
+
+  if (args.forceStop) {
+    process.exit(0);
+  }
 
   server.stop();
   await serverPromise;

@@ -39,6 +39,17 @@ class HarCapturer {
         port: this.port
       });
 
+      if (this.options.slowdown && this.options.slowdown > 1) {
+        if (client.Emulation.canEmulate()) {
+          await client.Emulation.setCPUThrottlingRate({
+            rate: this.options.slowdown,
+          });
+          process.stderr.write(`info: set CPU slowdown: ${this.options.slowdown}\n`);
+        } else {
+          process.stderr.write("warning: tried to set CPU slowdown, but is not supported\n");
+        }
+      }
+
       client.Network.requestWillBeSent(this.logRequest.bind(this));
       client.Network.responseReceived(this.logResponse.bind(this));
       client.Network.dataReceived(this.logData.bind(this));
@@ -204,7 +215,7 @@ class HarCapturer {
   }
 }
 
-const captureHar = async url => {
+const captureHar = async (url, slowdown) => {
   let chrome;
   try {
     chrome = await chromeLauncher.launch({ chromeFlags });
@@ -213,7 +224,8 @@ const captureHar = async url => {
     const capturer = new HarCapturer({
       host: "localhost",
       port: chrome.port,
-      url: url,
+      url,
+      slowdown,
     });
   
     const res = await capturer.captureHar();
@@ -225,8 +237,8 @@ const captureHar = async url => {
   }
 };
 
-module.exports = async (url, outputFile) => {
-  const res = await captureHar(url);
+module.exports = async (url, slowdown, outputFile) => {
+  const res = await captureHar(url, slowdown);
   const json = JSON.stringify(res);
   if (outputFile) {
     fs.writeFileSync(outputFile, json);

@@ -6,6 +6,6 @@ const captureHar = require(".");
 const argumentsDefinition = require("./args");
 
 const main = args =>
-  captureHar(args.url, args.outputFile);
+  captureHar(args.url, args.cpuSlowdown, args.outputFile);
 
 main(commandLineArgs(argumentsDefinition, { camelCase: true }));

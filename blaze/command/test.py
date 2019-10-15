@@ -71,6 +71,9 @@ def random_push_policy(args):
 @command.argument("--iterations", help="Number of trials", type=int, default=1)
 @command.argument("--bandwidth", help="Link bandwidth to simulate (kbps)", type=int, default=None)
 @command.argument("--latency", help="Link RTT to simulate (ms)", type=int, default=None)
+@command.argument(
+    "--cpu_slowdown", help="CPU Slowdown factor (1 means no slowdown)", choices=[1, 2, 4], type=int, default=1
+)
 @command.command
 def test_push(args):
     """
@@ -102,6 +105,7 @@ def test_push(args):
             "policy_generator": policy_generator,
             "bandwidth": args.bandwidth,
             "latency": args.latency,
+            "cpu_slowdown": args.cpu_slowdown,
             "only_simulator": args.only_simulator,
         }
     )
@@ -207,11 +211,14 @@ def _test_push(
     policy_generator: Callable[[List[PushGroup]], Tuple[Policy, Policy]],
     bandwidth: Optional[int],
     latency: Optional[int],
+    cpu_slowdown: Optional[int],
     only_simulator: Optional[bool],
 ):
     default_client_env = get_default_client_environment()
     client_env = get_client_environment_from_parameters(
-        bandwidth or default_client_env.bandwidth, latency or default_client_env.latency, 1
+        bandwidth or default_client_env.bandwidth,
+        latency or default_client_env.latency,
+        cpu_slowdown or default_client_env.cpu_slowdown,
     )
 
     if not only_simulator:

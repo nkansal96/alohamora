@@ -67,6 +67,7 @@ class MahiMahiConfig:
             *(["--preload-policy-path", f"/mnt/share/{preload_policy_file_name}"] if preload_policy_file_name else []),
             *(["--link-trace-path", f"/mnt/share/{link_trace_file_name}"] if link_trace_file_name else []),
             *(["--link-latency-ms", str(self.client_environment.latency // 2)] if self.client_environment else []),
+            *(["--cpu-slowdown", str(self.client_environment.cpu_slowdown)] if self.client_environment else []),
             "--url",
             capture_url,
         ]
