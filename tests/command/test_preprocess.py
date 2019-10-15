@@ -4,7 +4,7 @@ import pytest
 from unittest import mock
 
 from blaze.chrome.har import har_from_json
-from blaze.command.preprocess import preprocess, view_manifest
+from blaze.command.preprocess import preprocess, record, view_manifest
 from blaze.config.client import get_default_client_environment
 from blaze.config.config import get_config
 from blaze.config.environment import EnvironmentConfig
@@ -16,14 +16,24 @@ from blaze.preprocess.url import Url
 from tests.mocks.har import generate_har, get_har_json, HarReturner
 
 
+class TestRecord:
+    def test_exits_with_missing_arguments(self):
+        with pytest.raises(SystemExit):
+            record([])
+
+    @mock.patch("blaze.command.preprocess.record_webpage")
+    def test_runs_successfully(self, record_webpage):
+        with tempfile.TemporaryDirectory() as record_dir:
+            record(["https://cs.ucla.edu", "--record_dir", record_dir])
+
+
 class TestPreprocess:
     def test_exits_with_missing_arguments(self):
         with pytest.raises(SystemExit):
             preprocess([])
 
     @mock.patch("blaze.command.preprocess.capture_har_in_mahimahi")
-    @mock.patch("blaze.command.preprocess.record_webpage")
-    def test_runs_successfully(self, mock_record_webpage, mock_capture_har_in_mahimahi):
+    def test_runs_successfully(self, mock_capture_har_in_mahimahi):
         hars = [generate_har() for _ in range(STABLE_SET_NUM_RUNS + 1)]
         har_resources = har_entries_to_resources(hars[0])
         mock_capture_har_in_mahimahi.return_value = hars[0]
@@ -47,8 +57,7 @@ class TestPreprocess:
         mock_capture_har_in_mahimahi.assert_called_with("https://cs.ucla.edu", config, client_env)
 
     @mock.patch("blaze.command.preprocess.capture_har_in_mahimahi")
-    @mock.patch("blaze.command.preprocess.record_webpage")
-    def test_runs_successfully_with_train_domain_suffix(self, mock_record_webpage, mock_capture_har_in_mahimahi):
+    def test_runs_successfully_with_train_domain_suffix(self, mock_capture_har_in_mahimahi):
         hars = [generate_har() for _ in range(STABLE_SET_NUM_RUNS + 1)]
         har_resources = har_entries_to_resources(hars[0])
         mock_capture_har_in_mahimahi.return_value = hars[0]

@@ -15,9 +15,24 @@ from . import command
 
 
 @command.argument("website", help="The URL of the website to prepare for training")
-@command.argument("--depth", help="The recursive depth of URLs to process for the given page", default=0, type=int)
+@command.argument("--record_dir", help="The directory to store the recorded webpage", required=True)
+@command.command
+def record(args):
+    """
+    Record a website using Mahimahi. Stores the recorded files in the specified directory. In order
+    to use it with blaze, you must preprocess it using `blaze preprocess` to generate a training
+    manifest.
+    """
+    log.info("recording website", website=args.website, record_dir=args.record_dir)
+
+    config = get_config()
+    log.debug("using configuration", **config._asdict())
+    record_webpage(args.website, args.record_dir, config)
+
+
+@command.argument("website", help="The URL of the website to prepare for training")
 @command.argument("--output", help="The location to save the prepared manifest", required=True)
-@command.argument("--record_dir", help="The directory to save the recorded webpage", required=True)
+@command.argument("--record_dir", help="The directory of the recorded webpage", required=True)
 @command.argument(
     "--train_domain_globs",
     nargs="*",
@@ -32,18 +47,16 @@ def preprocess(args):
     training manifest is outputted.
     """
     domain = Url.parse(args.website).domain
-    train_domain_globs = args.train_domain_globs or ["*{}".format(domain)]
-    log.info("preprocessing website", website=args.website, depth=args.depth, train_domain_globs=train_domain_globs)
+    train_domain_globs = args.train_domain_globs or ["*{}*".format(domain)]
+    log.info(
+        "preprocessing website", website=args.website, record_dir=args.record_dir, train_domain_globs=train_domain_globs
+    )
 
-    config = get_config()
+    config = get_config(env_config=EnvironmentConfig(replay_dir=args.record_dir, request_url=args.website))
     log.debug("using configuration", **config._asdict())
-
-    log.info("saving recorded webpage...")
-    record_webpage(args.website, args.record_dir, config)
 
     log.info("capturing execution")
     client_env = get_default_client_environment()
-    config = get_config(env_config=EnvironmentConfig(replay_dir=args.record_dir, request_url=args.website))
     har = capture_har_in_mahimahi(args.website, config, client_env)
     har_resources = har_entries_to_resources(har)
 
