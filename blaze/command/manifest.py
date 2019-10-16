@@ -43,7 +43,7 @@ def view_manifest(args):
     sim.print_execution_map()
 
 
-@command.argument("manifest_file", help="The manifest file to update", required=True)
+@command.argument("manifest_file", help="The manifest file to update")
 @command.argument("--replay_dir_path_prefix", help="Update the path prefix of the replay directory")
 @command.argument("--replay_dir_folder_name", help="Update the folder name of replay directory")
 @command.argument(
