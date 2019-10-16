@@ -44,7 +44,6 @@ class HarCapturer {
           await client.Emulation.setCPUThrottlingRate({
             rate: this.options.slowdown,
           });
-          process.stderr.write(`info: set CPU slowdown: ${this.options.slowdown}\n`);
         } else {
           process.stderr.write("warning: tried to set CPU slowdown, but is not supported\n");
         }

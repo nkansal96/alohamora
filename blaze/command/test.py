@@ -60,7 +60,9 @@ def random_push_policy(args):
     action="store_true",
     help="Only evaluate the page load time on the simulator (must be loaded from manifest to use this)",
 )
-@command.argument("--policy_type", help="The test type to run", choices=["simple", "random", "push_preload"])
+@command.argument(
+    "--policy_type", help="The test type to run", choices=["simple", "random", "push_preload"], default="random"
+)
 @command.argument(
     "--random_chance",
     help="Probability of pushing a particular resource (only used for --policy_type=random). If not specified, the "
