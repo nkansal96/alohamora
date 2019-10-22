@@ -69,26 +69,27 @@ exports.ServerInstance = class {
     const res = this.fileStore.lookupRequest(method, host, uri);
     if (!res) {
       stream.respond({ ':status': 404 }, { endStream: true });
+      this.log(stream.id, method, host, 404, uri);
       return;
     }
 
     if (stream.pushAllowed) {
-      this.pushPolicy.getUris(uri).forEach(pushUrl => {
+      this.pushPolicy.getUris(uri).map(pushUrl => new Promise(resolve => {
         const pushRes = this.fileStore.lookupRequest("GET", host, pushUrl);
         if (!pushRes) {
-          return;
+          return resolve();
         }
         stream.pushStream({ ':path': pushUrl }, (err, pushStream) => {
           if (err) {
             console.error(err);
-            return;
+            return resolve();
           }
-          console.log("PUSH", host, uri, "  ", pushUrl);
+          this.log(pushStream.id, "PUSH", host, 200, uri + "  " + pushUrl);
           pushStream.on("error", err => console.error(err));
           pushStream.respond({ ':status': 200, ...pushRes.headers });
-          pushStream.end(pushRes.body);
+          pushStream.end(pushRes.body, () => resolve());
         });
-      });
+      }));
     }
 
     const status = res.headers.location ? 302 : 200;
@@ -98,8 +99,10 @@ exports.ServerInstance = class {
       ...res.headers,
       ...preload,
     });
-    stream.end(res.body);
-    console.log(method.padEnd(4), host, uri);
+    this.logStart(stream.id, method, host, status, uri);
+    stream.end(res.body, () => {
+      this.logEnd(stream.id, method, host, status, uri);
+    });
   }
 
   getPreloadHeaders(uri) {
@@ -107,5 +110,15 @@ exports.ServerInstance = class {
     if (preload.length === 0)
       return {}
     return { "Link": preload.join(",") };
+  }
+
+  logStart(id, method, host, status, uri) {
+    console.log(`[${process.pid}]`, "START", id, (new Date()).toISOString(), method.padEnd(4), host, status, uri);
+  }
+  logEnd(id, method, host, status, uri) {
+    console.log(`[${process.pid}]`, "END  ", id, (new Date()).toISOString(), method.padEnd(4), host, status, uri);
+  }
+  log(id, method, host, status, uri) {
+    console.log(`[${process.pid}]`, "     ", id, (new Date()).toISOString(), method.padEnd(4), host, status, uri);
   }
 }

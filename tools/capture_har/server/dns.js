@@ -19,7 +19,7 @@ exports.DNSMasq = class {
       this.proc = childProcess.spawn("dnsmasq", flags);
       this.proc.on('exit', (code, signal) => {
         const err = new Error(`dnsmasq exited with code ${code}: signal ${signal}`);
-        if (exited) {
+        if (!exited) {
           if (code !== 0) {
             console.error(err);
           }
@@ -50,7 +50,7 @@ exports.DNSMasq = class {
 
   stop() {
     if (this.proc) {
-      this.proc.kill('SIGTERM');
+      this.proc.kill('SIGKILL');
     }
   }
 }
