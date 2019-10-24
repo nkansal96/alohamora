@@ -1,6 +1,9 @@
 setup:
 	./scripts/setup.sh
 
+http2push:
+	docker build -t http2push -f tools/Dockerfile .
+
 proto:
 	python -m grpc_tools.protoc \
 		--grpc_python_out=$(shell pwd)/blaze/proto \

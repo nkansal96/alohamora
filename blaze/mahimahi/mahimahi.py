@@ -15,11 +15,62 @@ class MahiMahiConfig:
     """ MahiMahiConfig represents a configuration for some Mahimahi shells """
 
     def __init__(
-        self, config: Config, policy: Optional[Policy] = None, client_environment: Optional[ClientEnvironment] = None
+        self,
+        config: Config,
+        *,
+        push_policy: Optional[Policy] = None,
+        preload_policy: Optional[Policy] = None,
+        client_environment: Optional[ClientEnvironment] = None,
     ):
         self.config = config
-        self.policy = policy
+        self.push_policy = push_policy
+        self.preload_policy = preload_policy
         self.client_environment = client_environment
+
+    def har_capture_cmd(
+        self,
+        *,
+        share_dir: str,
+        har_output_file_name: str,
+        push_policy_file_name: Optional[str] = None,
+        preload_policy_file_name: Optional[str] = None,
+        link_trace_file_name: str = "",
+        capture_url: str,
+    ) -> List[str]:
+        """
+        Returns the full command to run that replays the configured folder with the given
+        push policy and link trace name and stores output in the given output locations.
+
+        :param share_dir: the directory to share to the container
+        :param har_output_file_name: the file inside share_dir to write the HAR output to
+        :param push_policy_file_name: the file inside share_dir to read the push policy from (JSON formatted)
+        :param preload_policy_file_name: the file inside share_dir to read the preload policy from (JSON formatted)
+        :param link_trace_file_name: the file inside share_dir to read the link trace from (Mahimahi formatted). If not
+                                     specified, no mm-link shell will be spawned.
+        :param capture_url: The url to capture HAR for
+        """
+        return [
+            "docker",
+            "run",
+            "--rm",
+            "--privileged",
+            "-v",
+            f"{self.config.env_config.replay_dir}:/mnt/filestore",
+            "-v",
+            f"{share_dir}:/mnt/share",
+            self.config.http2push_image,
+            "--file-store-path",
+            "/mnt/filestore",
+            "--output-file",
+            f"/mnt/share/{har_output_file_name}",
+            *(["--push-policy-path", f"/mnt/share/{push_policy_file_name}"] if push_policy_file_name else []),
+            *(["--preload-policy-path", f"/mnt/share/{preload_policy_file_name}"] if preload_policy_file_name else []),
+            *(["--link-trace-path", f"/mnt/share/{link_trace_file_name}"] if link_trace_file_name else []),
+            *(["--link-latency-ms", str(self.client_environment.latency // 2)] if self.client_environment else []),
+            *(["--cpu-slowdown", str(self.client_environment.cpu_slowdown)] if self.client_environment else []),
+            "--url",
+            capture_url,
+        ]
 
     def proxy_replay_shell_with_cmd(
         self, push_config_file_name: str, trace_file_name: str, cmd: List[str]
@@ -84,10 +135,10 @@ class MahiMahiConfig:
     @property
     def formatted_push_policy(self):
         """ Returns the push policy in a format that Mahimahi understands """
-        if self.policy is None:
+        if self.push_policy is None:
             raise AttributeError("Push policy must be specified in the constructor")
         return "\n".join(
-            [f"{parent.url}\n{push.url}\n{push.type.name}" for (parent, deps) in self.policy for push in deps]
+            [f"{parent.url}\n{push.url}\n{push.type.name}" for (parent, deps) in self.push_policy for push in deps]
         )
 
     @property

@@ -2,6 +2,7 @@
 from . import analyze
 from . import client
 from . import command
+from . import manifest
 from . import preprocess
 from . import serve
 from . import test

@@ -203,6 +203,6 @@ def get_config(eval_results_dir=None) -> Config:
 def get_mahimahi_config() -> MahiMahiConfig:
     return MahiMahiConfig(
         config=get_config(),
-        policy=Policy(ActionSpace(get_push_groups())),
+        push_policy=Policy(ActionSpace(get_push_groups())),
         client_environment=get_random_client_environment(),
     )

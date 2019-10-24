@@ -41,7 +41,9 @@ def record_webpage(url: str, save_dir: str, config: Config):
         mm_config = MahiMahiConfig(config)
         cmd = mm_config.record_shell_with_cmd(save_dir, chrome_cmd)
 
-        proc = subprocess.run(" ".join(cmd), shell=True, stdout=subprocess.DEVNULL)
+        logger.with_namespace("record_webpage").debug("spawning web recorder", url=url, cmd=cmd)
+
+        proc = subprocess.run(cmd)
         proc.check_returncode()
 
 
@@ -130,7 +132,11 @@ def get_page_links(url: str, max_depth: int = 1) -> List[str]:
 
 
 def get_page_load_time_in_mahimahi(
-    request_url: str, client_env: ClientEnvironment, config: Config, push_policy: Optional[Policy] = None
+    request_url: str,
+    client_env: ClientEnvironment,
+    config: Config,
+    push_policy: Optional[Policy] = None,
+    preload_policy: Optional[Policy] = None,
 ):
     """
     Return the page load time, the HAR resources captured, and the push groups detected
@@ -141,7 +147,7 @@ def get_page_load_time_in_mahimahi(
     hars = []
     for i in range(EXECUTION_CAPTURE_RUNS):
         log.debug("recording page execution in Mahimahi", run=(i + 1), total_runs=EXECUTION_CAPTURE_RUNS)
-        har = capture_har_in_mahimahi(request_url, config, client_env, push_policy)
+        har = capture_har_in_mahimahi(request_url, config, client_env, push_policy, preload_policy)
         hars.append(har)
         log.debug("captured page execution", page_load_time=har.page_load_time_ms)
 

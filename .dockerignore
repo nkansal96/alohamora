@@ -1,5 +1,6 @@
 .vscode
 .idea
+.git
 
 *.pyc
 *.pyo
@@ -11,4 +12,12 @@ __pycache__
 .blaze_env
 .DS_Store
 
-node_modules
+bin
+blaze
+htmlcov
+proto
+scripts
+tests
+
+tools/capture_har/node_modules
+tools/Dockerfile

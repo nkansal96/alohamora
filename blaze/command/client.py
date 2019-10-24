@@ -61,7 +61,7 @@ def query(args):
 
     if args.mahimahi_format:
         policy = Policy.from_dict(policy_dict)
-        mm_config = MahiMahiConfig(get_config(), policy)
+        mm_config = MahiMahiConfig(get_config(), push_policy=policy)
         print(mm_config.formatted_push_policy)
     else:
         print(json.dumps(policy_dict, indent=4))

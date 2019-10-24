@@ -37,10 +37,9 @@ class TestRecordWebpage:
         call_args = mock_run.call_args[0][0]
         assert mock_run.called and mock_run.call_count == 1 and call_args
 
-        assert call_args.startswith("mm-webrecord")
+        assert call_args[0] == "mm-webrecord"
         assert save_dir in call_args
         assert self.config.chrome_bin in call_args
-        assert "user-data-dir" in call_args
         assert url in call_args
 
 
