@@ -15,7 +15,6 @@
 
 # Use ubuntu for runtime
 FROM ubuntu:18.04
-COPY sources.list /etc/apt/sources.list
 
 ENV MAHIMAHI_DEPS \
   protobuf-compiler \
