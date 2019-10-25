@@ -62,9 +62,12 @@ def start_server(
                     f.write(file.body)
 
                 # Create entry for this resource
-                loc = server.add_location_block(
-                    uri=file.uri, file_name=file.file_name, content_type=file.headers.get("content-type", None)
-                )
+                if file.status == 200:
+                    loc = server.add_location_block(
+                        uri=file.uri, file_name=file.file_name, content_type=file.headers.get("content-type", None)
+                    )
+                elif "location" in file.headers:
+                    loc = server.add_location_block(uri=file.uri, redirect_uri=file.headers["location"])
 
                 # Add headers
                 for key, value in file.headers.items():

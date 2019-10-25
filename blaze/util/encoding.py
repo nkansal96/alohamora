@@ -26,7 +26,3 @@ def unchunk(body: bytes):
         body = body[crlf_loc + 2 :]
 
     return new_body
-
-
-def quote(s: str) -> str:
-    return "'" + s.replace("'", "\\'") + "'"

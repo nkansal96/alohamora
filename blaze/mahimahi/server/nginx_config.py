@@ -3,6 +3,10 @@ from typing import Dict, List, Tuple, Optional
 from blaze.util import encoding
 
 
+def quote(s: str) -> str:
+    return "'" + s.replace("'", "\\'").replace("$", "\\$").replace("\\", "\\\\") + "'"
+
+
 class Block:
     def __init__(
         self,
@@ -49,21 +53,27 @@ class LocationBlock(Block):
         indent_level: int,
         uri: str,
         file_name: Optional[str] = None,
+        redirect_uri: Optional[str] = None,
         content_type: Optional[str] = None,
         exact_match: bool = True,
     ):
         matcher = " = " if exact_match else " "
         file_name = "/" + file_name if file_name else "$uri"
-        content_type = encoding.quote(content_type) if content_type else None
+        content_type = quote(content_type) if content_type else None
+        redirect_uri = quote(redirect_uri) if redirect_uri else None
 
         super().__init__(
             indent_level=indent_level,
-            block_name=f"location{matcher}{encoding.quote(uri)}",
-            block_args=[("default_type", content_type), ("try_files", f"{file_name} =404")],
+            block_name=f"location{matcher}{quote(uri)}",
+            block_args=[
+                ("default_type", content_type),
+                ("try_files", f"{file_name} =404" if not redirect_uri else None),
+                ("return", f"301 {redirect_uri}" if redirect_uri else None),
+            ],
         )
 
     def add_header(self, key: str, value: str):
-        self.block_args.append(("add_header", encoding.quote(key), encoding.quote(value)))
+        self.block_args.append(("add_header", quote(key), quote(value)))
 
     def add_push(self, uri: str):
         self.block_args.append(("http2_push", uri))
@@ -72,7 +82,7 @@ class LocationBlock(Block):
         type_map = {"CSS": "style", "SCRIPT": "script", "FONT": "font", "IMAGE": "image", "HTML": "document"}
         as_type = type_map.get(as_type, "other")
         self.block_args.append(
-            ("add_header", encoding.quote("Link"), encoding.quote(f"<{uri}>; rel=preload; as={as_type}; nopush"))
+            ("add_header", quote("Link"), quote(f"<{uri}>; rel=preload; as={as_type}; nopush"))
         )
 
 
@@ -109,8 +119,8 @@ class ServerBlock(Block):
         # Create a catch-all block that will try to match URIs based on longest-prefix if no exact match exists
         self.sub_blocks.append(LocationBlock(indent_level=self.indent_level + 1, uri="/", exact_match=False))
 
-    def add_location_block(self, *, uri: str, **kwargs):
-        block = LocationBlock(indent_level=self.indent_level + 1, uri=uri, **kwargs)
+    def add_location_block(self, **kwargs):
+        block = LocationBlock(indent_level=self.indent_level + 1, **kwargs)
         self.sub_blocks.append(block)
         return block
 

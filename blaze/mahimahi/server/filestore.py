@@ -31,6 +31,7 @@ class File(RecordClass):
     host: str
 
     headers: dict
+    status: int
     body: bytes
 
     @property
@@ -65,8 +66,11 @@ class File(RecordClass):
             res_headers[ACCESS_CONTROL_ALLOW_ORIGIN_HEADER] = "*"
 
         method, uri, *_ = record.request.first_line.decode().split(" ")
+        _, status, *_ = record.response.first_line.decode().split(" ")
         host = req_headers["host"]
-        return File(file_path=path, method=method, uri=uri, host=host, headers=res_headers, body=body)
+        return File(
+            file_path=path, method=method, uri=uri, host=host, headers=res_headers, status=int(status), body=body,
+        )
 
 
 class FileStore:
