@@ -23,6 +23,7 @@ from . import command
     help="Only evaluate the page load time on the simulator (must be loaded from manifest to use this)",
 )
 @command.argument("--push_policy", help="The file path to a JSON-formatted push policy to simulate the PLT for")
+@command.argument("--preload_policy", help="The file path to a JSON-formatted preload policy to simulate the PLT for")
 @command.argument("--latency", help="The round trip latency to use (ms)", type=int, default=None)
 @command.argument("--bandwidth", help="The link bandwidth to use (kbps)", type=int, default=None)
 @command.argument("--cpu_slowdown", help="The CPU slowdown factor to use (1, 2, or 4)", type=int, default=None)
@@ -59,12 +60,19 @@ def page_load_time(args):
         args.cpu_slowdown or default_client_env.cpu_slowdown,
     )
 
-    policy = None
+    push_policy = None
     if args.push_policy:
         log.debug("reading push policy", push_policy=args.push_policy)
         with open(args.push_policy, "r") as policy_file:
             policy_dict = json.load(policy_file)
-        policy = Policy.from_dict(policy_dict)
+        push_policy = Policy.from_dict(policy_dict)
+
+    preload_policy = None
+    if args.preload_policy:
+        log.debug("reading push policy", preload_policy=args.preload_policy)
+        with open(args.preload_policy, "r") as policy_file:
+            policy_dict = json.load(policy_file)
+        preload_policy = Policy.from_dict(policy_dict)
 
     if args.from_manifest:
         env_config = EnvironmentConfig.load_file(args.from_manifest)
@@ -72,7 +80,9 @@ def page_load_time(args):
         log.info("calculating page load time", manifest=args.from_manifest, url=env_config.request_url)
         if not args.only_simulator:
             log.debug("using pre-recorded webpage", record_dir=config.env_config.replay_dir)
-            plt, *_ = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config, policy)
+            plt, *_ = get_page_load_time_in_mahimahi(
+                config.env_config.request_url, client_env, config, push_policy, preload_policy
+            )
 
     else:
         log.info("calculating page load time", url=args.url)
@@ -87,7 +97,7 @@ def page_load_time(args):
             record_webpage(args.url, record_dir, config)
             log.debug("capturing median PLT in mahimahi with given environment")
             plt, res_list, push_groups = get_page_load_time_in_mahimahi(
-                config.env_config.request_url, client_env, config, policy
+                config.env_config.request_url, client_env, config, push_policy, preload_policy
             )
 
             # If the user passed in a custom environment, we want to use the PLT from that environment
@@ -106,7 +116,7 @@ def page_load_time(args):
     log.debug("running simulator...")
     sim = Simulator(env_config)
     sim.print_execution_map()
-    sim_plt = sim.simulate_load_time(client_env, policy)
+    sim_plt = sim.simulate_load_time(client_env, push_policy)
 
     if not args.only_simulator:
         log.info("real page load time", page_load_time=plt)

@@ -53,16 +53,13 @@ class LocationBlock(Block):
         exact_match: bool = True,
     ):
         matcher = " = " if exact_match else " "
-        file_name = "/"+file_name if file_name else "$uri"
+        file_name = "/" + file_name if file_name else "$uri"
         content_type = encoding.quote(content_type) if content_type else None
 
         super().__init__(
             indent_level=indent_level,
             block_name=f"location{matcher}{uri}",
-            block_args=[
-                ("default_type", content_type),
-                ("try_files", f"{file_name} =404"),
-            ],
+            block_args=[("default_type", content_type), ("try_files", f"{file_name} =404")],
         )
 
     def add_header(self, key: str, value: str):
@@ -74,7 +71,9 @@ class LocationBlock(Block):
     def add_preload(self, uri: str, as_type: str):
         type_map = {"CSS": "style", "SCRIPT": "script", "FONT": "font", "IMAGE": "image", "HTML": "document"}
         as_type = type_map.get(as_type, "other")
-        self.block_args.append(("add_header", encoding.quote("Link"), encoding.quote(f"<{uri}>; rel=preload; as={as_type}; nopush")))
+        self.block_args.append(
+            ("add_header", encoding.quote("Link"), encoding.quote(f"<{uri}>; rel=preload; as={as_type}; nopush"))
+        )
 
 
 class TypesBlock(Block):
