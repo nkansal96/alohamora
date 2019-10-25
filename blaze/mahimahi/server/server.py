@@ -51,8 +51,14 @@ def start_server(
             )
 
             for file in files:
+                # Handles the case where we may have duplicate URIs for a single host
                 if file.uri in uris_served:
                     continue
+
+                # Handles a case where URIs in nginx cannot be too long
+                if len(file.uri) > 3600 or len(file.headers.get("location", "")) > 3600:
+                    continue
+
                 uris_served.add(file.uri)
                 log.debug("serve", file_name=file.file_name, method=file.method, uri=file.uri, host=file.host)
 

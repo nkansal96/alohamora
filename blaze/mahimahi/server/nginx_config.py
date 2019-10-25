@@ -4,7 +4,7 @@ from blaze.util import encoding
 
 
 def quote(s: str) -> str:
-    return "'" + s.replace("\\", "\\\\").replace("'", "\\'").replace("$", "\\$") + "'"
+    return "'" + s.replace("\\", "\\\\").replace("'", "\\'").replace("$", "") + "'"
 
 
 class Block:
@@ -76,7 +76,7 @@ class LocationBlock(Block):
         self.block_args.append(("add_header", quote(key), quote(value)))
 
     def add_push(self, uri: str):
-        self.block_args.append(("http2_push", uri))
+        self.block_args.append(("http2_push", quote(uri)))
 
     def add_preload(self, uri: str, as_type: str):
         type_map = {"CSS": "style", "SCRIPT": "script", "FONT": "font", "IMAGE": "image", "HTML": "document"}
