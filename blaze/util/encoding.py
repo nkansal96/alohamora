@@ -1,7 +1,3 @@
-import os
-import sys
-
-
 def unchunk(body: bytes):
     """
     Unchunks a Transfer-encoding: chunked HTTP response
@@ -32,5 +28,5 @@ def unchunk(body: bytes):
     return new_body
 
 
-def quote(s: str, quote_str="'") -> str:
-    return quote_str + s.replace('"', '\\"').replace("'", "\\'") + quote_str
+def quote(s: str) -> str:
+    return "'" + s.replace("'", "\\'") + "'"

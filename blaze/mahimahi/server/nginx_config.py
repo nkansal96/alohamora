@@ -58,7 +58,7 @@ class LocationBlock(Block):
 
         super().__init__(
             indent_level=indent_level,
-            block_name=f"location{matcher}{uri}",
+            block_name=f"location{matcher}{encoding.quote(uri)}",
             block_args=[("default_type", content_type), ("try_files", f"{file_name} =404")],
         )
 

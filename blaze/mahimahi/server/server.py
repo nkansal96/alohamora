@@ -93,7 +93,7 @@ def start_server(
                 # we should raise an exception
                 try:
                     proc = subprocess.Popen(["nginx", "-c", conf_file])
-                    proc.wait(3)
+                    proc.wait(1)
                     raise RuntimeError("nginx exited unsuccessfully")
                 except subprocess.TimeoutExpired:
                     yield
