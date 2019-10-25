@@ -43,6 +43,7 @@ def start_server(
 
         for host, files in filestore.files_by_host.items():
             log.info("creating host", host=host, address=host_ip_map[host])
+            uris_served = set()
 
             # Create a server block for this host
             server = config.http_block.add_server(
@@ -50,6 +51,9 @@ def start_server(
             )
 
             for file in files:
+                if file.uri in uris_served:
+                    continue
+                uris_served.add(file.uri)
                 log.debug("serve", file_name=file.file_name, method=file.method, uri=file.uri, host=file.host)
 
                 # Save the file's body to file
