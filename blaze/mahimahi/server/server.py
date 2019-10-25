@@ -82,7 +82,6 @@ def start_server(
         # Save the nginx configuration
         conf_file = os.path.join(file_dir, "nginx.conf")
         log.debug("writing nginx config", conf_file=conf_file)
-        log.debug("config contents", config="\n" + str(config))
         with open(conf_file, "w") as f:
             f.write(str(config))
 

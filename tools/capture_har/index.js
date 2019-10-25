@@ -35,9 +35,7 @@ const run = async args => {
     "--preload_policy", args.preloadPolicyPath,
     args.fileStorePath,
   ];
-  const server = child_process.spawn("blaze", replayArgs);
-  server.stdout.on("data", data => console.log(data.toString().trim()));
-  server.stderr.on("data", data => console.log(data.toString().trim()));
+  const server = child_process.spawn("blaze", replayArgs, { stdio: 'inherit' });
   server.on('exit', code => { exitCode = code });
   console.log("starting replay server with args", replayArgs);
 
