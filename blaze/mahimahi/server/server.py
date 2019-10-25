@@ -88,8 +88,14 @@ def start_server(
         # Create the interfaces, start the DNS server, and start the NGINX server
         with interfaces:
             with DNSServer(host_ip_map):
+                # If wait lasts for more than 3 seconds, a TimeoutError will be raised, which is okay since it
+                # means that dnsmasq is running successfully. If it finishes sooner, it means it crashed and
+                # we should raise an exception
                 try:
-                    proc = subprocess.Popen(["nginx", "-g", "daemon off;", "-c", conf_file])
+                    proc = subprocess.Popen(["nginx", "-c", conf_file])
+                    proc.wait(3)
+                    raise RuntimeError("nginx exited unsuccessfully")
+                except subprocess.TimeoutExpired:
                     yield
                 finally:
                     proc.terminate()

@@ -136,7 +136,11 @@ class EventsBlock(Block):
 
 class Config(Block):
     def __init__(self):
-        super().__init__(indent_level=0, block_name="", block_args=[("worker_processes", "auto"), ("user", "root")])
+        super().__init__(
+            indent_level=0,
+            block_name="",
+            block_args=[("daemon", "off"), ("worker_processes", "auto"), ("user", "root")],
+        )
         self.http_block = HttpBlock(indent_level=0)
         self.sub_blocks.append(EventsBlock(indent_level=0))
         self.sub_blocks.append(self.http_block)
