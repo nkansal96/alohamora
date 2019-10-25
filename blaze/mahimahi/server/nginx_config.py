@@ -4,7 +4,7 @@ from blaze.util import encoding
 
 
 def quote(s: str) -> str:
-    return "'" + s.replace("'", "\\'").replace("$", "\\$").replace("\\", "\\\\") + "'"
+    return "'" + s.replace("\\", "\\\\").replace("'", "\\'").replace("$", "\\$") + "'"
 
 
 class Block:
