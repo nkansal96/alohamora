@@ -20,7 +20,7 @@ class DNSServer:
         try:
             self.proc.wait(2)
             raise RuntimeError("dnsmasq exited unsuccessfully")
-        except TimeoutError:
+        except subprocess.TimeoutExpired:
             pass
 
     def __exit__(self, exception_type, exception_value, traceback):

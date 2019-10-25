@@ -40,6 +40,9 @@ ENV DEPS \
   iputils-ping \
   net-tools \
   dnsutils \
+  python3 \
+  python3-pip \
+  nginx \
   sudo
 
 WORKDIR /tmp
@@ -66,22 +69,32 @@ RUN apt-get update -y && \
     apt-get autoremove -y && \
     rm -rf /var/lib/{apt,dpkg,cache,log}/ && \
     rm -rf /tmp/mahimahi && \
+    # Disable systemd-resolved and nginx from starting automatically
+    # systemctl disable systemd-resolved && \
+    # systemctl disable nginx && \
     # Add non-root user to use mahimahi tools
     adduser --system --disabled-password --no-create-home --shell /bin/bash --ingroup sudo  user && \
     passwd -d user
 
+WORKDIR /opt/blaze
+COPY requirements.txt .
+RUN pip3 install -r requirements.txt
+
 WORKDIR /opt/capture_har
 COPY tools/capture_har/*.json /opt/capture_har/
 RUN npm install --production
-COPY tools/capture_har/capturer /opt/capture_har/capturer
-COPY tools/capture_har/proto /opt/capture_har/proto
-COPY tools/capture_har/server /opt/capture_har/server
+
+WORKDIR /opt/blaze
+COPY . /opt/blaze
+RUN pip3 install .
+
+WORKDIR /opt/capture_har
+COPY tools/capture_har/server server
+COPY tools/capture_har/capturer capturer
 COPY tools/capture_har/*.js /opt/capture_har/
 
-RUN echo "{}" > empty_policy.json
-COPY tools/capture_har/certs certs
+RUN echo "{}" > /opt/empty_policy.json
 COPY tools/entrypoint.sh /opt/entrypoint.sh
-# COPY --from=0 /go/bin/* /opt/http2push/
 
 USER user
 ENTRYPOINT ["/opt/entrypoint.sh"]

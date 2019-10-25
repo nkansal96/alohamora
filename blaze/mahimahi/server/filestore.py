@@ -10,7 +10,17 @@ from blaze.util import encoding
 CACHE_CONTROL_HEADER = "cache-control"
 TRANSFER_ENCODING_HEADER = "transfer-encoding"
 ACCESS_CONTROL_ALLOW_ORIGIN_HEADER = "access-control-allow-origin"
-REMOVE_HEADERS = ["cache-control", "connection", "expires", "keep-alive", "last-modified", "date", "age", "etag"]
+REMOVE_HEADERS = [
+    "cache-control",
+    "connection",
+    "content-length",
+    "expires",
+    "keep-alive",
+    "last-modified",
+    "date",
+    "age",
+    "etag",
+]
 
 
 class File(RecordClass):
@@ -43,7 +53,7 @@ class File(RecordClass):
         res_headers = {
             h.key.decode().lower(): h.value.decode()
             for h in record.response.header
-            if h.key.lower() not in REMOVE_HEADERS
+            if h.key.decode().lower() not in REMOVE_HEADERS
         }
 
         if TRANSFER_ENCODING_HEADER in res_headers and "chunked" in res_headers[TRANSFER_ENCODING_HEADER].lower():

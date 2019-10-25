@@ -1,6 +1,7 @@
 """ Implements the commands for viewing and manipulating the training manifest """
 import json
 import time
+import os
 
 from blaze.action import Policy
 from blaze.logger import logger as log
@@ -22,17 +23,21 @@ def replay(args):
     """
     push_policy = None
     preload_policy = None
+    cert_path = os.path.abspath(args.cert_path) if args.cert_path else None
+    key_path = os.path.abspath(args.key_path) if args.key_path else None
+
     if args.push_policy:
         log.debug("reading push policy", push_policy=args.push_policy)
         with open(args.push_policy, "r") as policy_file:
             policy_dict = json.load(policy_file)
         push_policy = Policy.from_dict(policy_dict)
+
     if args.preload_policy:
         log.debug("reading preload policy", preload_policy=args.preload_policy)
         with open(args.preload_policy, "r") as policy_file:
             policy_dict = json.load(policy_file)
         preload_policy = Policy.from_dict(policy_dict)
 
-    with start_server(args.replay_dir, args.cert_path, args.key_path, push_policy, preload_policy):
+    with start_server(args.replay_dir, cert_path, key_path, push_policy, preload_policy):
         while True:
             time.sleep(86400)

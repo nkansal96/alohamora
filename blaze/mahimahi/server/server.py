@@ -1,7 +1,9 @@
+import contextlib
 import os
 import subprocess
 import tempfile
 from typing import Optional
+from urllib.parse import urlparse
 
 from blaze.action import Policy
 from blaze.logger import logger
@@ -12,6 +14,7 @@ from blaze.mahimahi.server.interfaces import Interfaces
 from blaze.mahimahi.server.nginx_config import Config
 
 
+@contextlib.contextmanager
 def start_server(
     replay_dir: str,
     cert_path: Optional[str] = None,
@@ -39,7 +42,7 @@ def start_server(
         log.debug("storing temporary files in", file_dir=file_dir)
 
         for host, files in filestore.files_by_host.items():
-            log.debug("creating host", host=host, address=host_ip_map[host])
+            log.info("creating host", host=host, address=host_ip_map[host])
 
             # Create a server block for this host
             server = config.http_block.add_server(
@@ -47,41 +50,47 @@ def start_server(
             )
 
             for file in files:
-                log.debug("serve", file_name=file.file_name, method=file.method, uri=file.uri)
+                log.debug("serve", file_name=file.file_name, method=file.method, uri=file.uri, host=file.host)
 
                 # Save the file's body to file
-                with open(os.path.join(file_dir, file.file_name), "wb") as f:
+                file_path = os.path.join(file_dir, file.file_name)
+                with open(os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o644), "wb") as f:
                     f.write(file.body)
 
                 # Create entry for this resource
-                loc = server.add_location_block(uri=file.uri, file_name=file.file_name)
+                loc = server.add_location_block(
+                    uri=file.uri, file_name=file.file_name, content_type=file.headers.get("content-type", None)
+                )
 
                 # Add headers
                 for key, value in file.headers.items():
                     loc.add_header(key, value)
 
                 # Look up push and preload policy
-                full_source = f"https://{os.path.join(file.host, file.uri)}"
+                full_source = f"https://{file.host}{file.uri}"
                 push_res_list = push_policy.get(full_source, push_policy.get(full_source + "/", []))
                 preload_res_list = preload_policy.get(full_source, preload_policy.get(full_source + "/", []))
 
-                for push_res in push_res_list:
-                    loc.add_push(push_res["url"])
-                for preload_res in preload_res_list:
-                    loc.add_preload(preload_res["url"], preload_res["type"])
+                for res in push_res_list:
+                    path = urlparse(res["url"]).path
+                    log.debug("create push rule", source=file.uri, push=path)
+                    loc.add_push(path)
+                for res in preload_res_list:
+                    log.debug("create preload rule", source=file.uri, preload=res["url"], type=res["type"])
+                    loc.add_preload(res["url"], res["type"])
 
         # Save the nginx configuration
         conf_file = os.path.join(file_dir, "nginx.conf")
         log.debug("writing nginx config", conf_file=conf_file)
+        log.debug("config contents", config="\n"+str(config))
         with open(conf_file, "w") as f:
             f.write(str(config))
 
         # Create the interfaces, start the DNS server, and start the NGINX server
-        with interfaces, DNSServer(host_ip_map):
-            try:
-                proc = subprocess.Popen(["nginx", "-g", "daemon off;", "-c", conf_file])
-            finally:
-                proc.terminate()
-
-
-# print(create_server("/Users/nkansal/Documents/School/CS/239_Web/push-policy/testing/site_1"))
+        with interfaces:
+            with DNSServer(host_ip_map):
+                try:
+                    proc = subprocess.Popen(["nginx", "-g", "daemon off;", "-c", conf_file])
+                    yield
+                finally:
+                    proc.terminate()
