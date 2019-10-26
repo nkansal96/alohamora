@@ -69,7 +69,7 @@ class File(RecordClass):
         _, status, *_ = record.response.first_line.decode().split(" ")
         host = req_headers["host"]
         return File(
-            file_path=path, method=method, uri=uri, host=host, headers=res_headers, status=int(status), body=body,
+            file_path=path, method=method, uri=uri, host=host, headers=res_headers, status=int(status), body=body
         )
 
 

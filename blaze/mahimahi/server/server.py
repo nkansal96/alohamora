@@ -60,12 +60,14 @@ def start_server(
                     continue
 
                 uris_served.add(file.uri)
-                log.debug("serve", file_name=file.file_name, method=file.method, uri=file.uri, host=file.host)
-
-                # Save the file's body to file
-                file_path = os.path.join(file_dir, file.file_name)
-                with open(os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o644), "wb") as f:
-                    f.write(file.body)
+                log.debug(
+                    "serve",
+                    file_name=file.file_name,
+                    status=file.status,
+                    method=file.method,
+                    uri=file.uri,
+                    host=file.host,
+                )
 
                 # Create entry for this resource
                 if file.status == 200:
@@ -74,6 +76,14 @@ def start_server(
                     )
                 elif "location" in file.headers:
                     loc = server.add_location_block(uri=file.uri, redirect_uri=file.headers["location"])
+                else:
+                    log.warn("skipping", file_name=file.file_name, method=file.method, uri=file.uri, host=file.host)
+                    continue
+
+                # Save the file's body to file
+                file_path = os.path.join(file_dir, file.file_name)
+                with open(os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o644), "wb") as f:
+                    f.write(file.body)
 
                 # Add headers
                 for key, value in file.headers.items():

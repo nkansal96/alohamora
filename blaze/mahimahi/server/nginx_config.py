@@ -81,9 +81,7 @@ class LocationBlock(Block):
     def add_preload(self, uri: str, as_type: str):
         type_map = {"CSS": "style", "SCRIPT": "script", "FONT": "font", "IMAGE": "image", "HTML": "document"}
         as_type = type_map.get(as_type, "other")
-        self.block_args.append(
-            ("add_header", quote("Link"), quote(f"<{uri}>; rel=preload; as={as_type}; nopush"))
-        )
+        self.block_args.append(("add_header", quote("Link"), quote(f"<{uri}>; rel=preload; as={as_type}; nopush")))
 
 
 class TypesBlock(Block):
