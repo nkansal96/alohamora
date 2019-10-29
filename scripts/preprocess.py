@@ -106,7 +106,7 @@ def worker(train_dir_location, website_dir):
         raise
     except:
         traceback.print_exc()
-    
+
 
 def main(args):
     train_dir_location = os.path.abspath(args.train_dir)

@@ -19,7 +19,7 @@ def generate_ips(num_ips: int, offset: int = 0) -> List[str]:
 
 class Interfaces:
     """
-    Interfaces implements a content manager that creates and deletes IP addresses corresponding
+    Interfaces implements a context manager that creates and deletes IP addresses corresponding
     to the given hosts.
     """
 

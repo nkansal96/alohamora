@@ -69,7 +69,7 @@ class Simulator:
             push_node = self.url_to_node_map.get(push_res.url)
             if push_node and push_node not in self.completed_nodes and push_node not in self.request_queue:
                 self.pq.put((push_node.priority, push_node))
-                self.request_queue.add_with_delay(push_node, delay)
+                self.request_queue.add_with_delay(push_node, delay + push_node.resource.time_to_first_byte_ms)
                 self.pushed_nodes.add(push_node)
                 self.log.debug(
                     "push resource",
