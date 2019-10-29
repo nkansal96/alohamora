@@ -1,9 +1,11 @@
 #! /usr/bin/env node
 
-const commandLineArgs = require('command-line-args');
+const child_process = require("child_process")
+
+const commandLineArgs = require("command-line-args");
 
 const utils = require("./utils");
-const createServer = require("./server");
+// const createServer = require("./server");
 const serverArguments = require("./server/args");
 const captureHarArguments = require("./capturer/args");
 
@@ -19,10 +21,30 @@ const argumentsDefinition = [
 
 const run = async args => {
   // create and start the server
-  const server = await createServer(443, args.certFile, args.keyFile, args.fileStorePath, args.pushPolicyPath, args.preloadPolicyPath);
-  const serverPromise = server.start();
-  process.on('SIGINT', () => server.stop());
-  process.on('SIGTERM', () => server.stop());
+  // const server = await createServer(443, args.certFile, args.keyFile, args.fileStorePath, args.pushPolicyPath, args.preloadPolicyPath);
+  // const serverPromise = server.start();
+  // process.on('SIGINT', () => server.stop());
+  // process.on('SIGTERM', () => server.stop());
+
+  let exitCode = -1;
+  const replayArgs = [
+    "replay",
+    "--cert_path", args.certFile,
+    "--key_path", args.keyFile,
+    "--push_policy", args.pushPolicyPath,
+    "--preload_policy", args.preloadPolicyPath,
+    args.fileStorePath,
+  ];
+  const server = child_process.spawn("blaze", replayArgs, { stdio: 'inherit' });
+  server.on('exit', code => { exitCode = code });
+  console.log("starting replay server with args", replayArgs);
+
+  // wait a few seconds and make sure the server is up
+  await utils.asyncWait(5000);
+  if (exitCode !== -1) {
+    console.error("replay server failed to start");
+    process.exit(1);
+  }
 
   const captureCmd = []
   if (args.linkTracePath)
@@ -34,12 +56,13 @@ const run = async args => {
   await utils.run(captureCmd, args.userId, args.groupId);
   console.log("Finished capturing HAR...");
 
+  server.kill('SIGKILL');
   if (args.forceStop) {
     process.exit(0);
   }
 
-  server.stop();
-  await serverPromise;
+  // server.stop();
+  // await serverPromise;
 };
 
 const main = async args => {
