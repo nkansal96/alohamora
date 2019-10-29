@@ -95,12 +95,3 @@ class FileStore:
     @property
     def hosts(self) -> List[str]:
         return list(set(file.host for file in self.files))
-
-
-f = FileStore("/Users/nkansal/Documents/School/CS/239_Web/push-policy/testing/site_1")
-# fs = f.files
-for fs in f.files_by_host.values():
-    for fi in fs:
-        print(fi.method, fi.uri, fi.headers)
-
-print(f.hosts)

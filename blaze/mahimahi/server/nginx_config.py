@@ -1,6 +1,6 @@
-from typing import Dict, List, Tuple, Optional
+from typing import List, Tuple, Optional
 
-from blaze.util import encoding
+QUERY_REPLACE = "__._._.__"
 
 
 def quote(s: str) -> str:
@@ -57,6 +57,7 @@ class LocationBlock(Block):
         content_type: Optional[str] = None,
         exact_match: bool = True,
     ):
+        uri = quote(uri.replace("?", QUERY_REPLACE))
         matcher = " = " if exact_match else " "
         file_name = "/" + file_name if file_name else "$uri"
         content_type = quote(content_type) if content_type else None
@@ -64,7 +65,7 @@ class LocationBlock(Block):
 
         super().__init__(
             indent_level=indent_level,
-            block_name=f"location{matcher}{quote(uri)}",
+            block_name=f"location{matcher}{uri}",
             block_args=[
                 ("default_type", content_type),
                 ("try_files", f"{file_name} =404" if not redirect_uri else None),
@@ -87,6 +88,15 @@ class LocationBlock(Block):
 class TypesBlock(Block):
     def __init__(self, *, indent_level: int):
         super().__init__(indent_level=indent_level, block_name="types")
+
+
+class RedirectByLuaBlock(Block):
+    def __init__(self, *, indent_level: int, lua_script: str):
+        self.lua_script = lua_script
+        super().__init__(indent_level=indent_level, block_name="redirect_by_lua_block")
+
+    def _body_lines(self):
+        return self.lua_script.strip().split("\n")
 
 
 class ServerBlock(Block):
@@ -114,6 +124,16 @@ class ServerBlock(Block):
 
         # Create an empty types block so that we can manually set the content type using the proto headers
         self.sub_blocks.append(TypesBlock(indent_level=self.indent_level + 1))
+        # Rewrite all incoming URLs to not contain a `?`
+        self.sub_blocks.append(
+            RedirectByLuaBlock(
+                indent_level=self.indent_level + 1,
+                lua_script=f"""
+local uri, n, err = ngx.re.gsub(ngx.unescape_uri(ngx.var.request_uri), "\\?", "{QUERY_REPLACE}")
+ngx.log(ngx.NOTICE, "rewrote uri: ", ngx.var.request_uri, " --> ", uri)
+ngx.req.set_uri(uri, true)""",
+            )
+        )
         # Create a catch-all block that will try to match URIs based on longest-prefix if no exact match exists
         self.sub_blocks.append(LocationBlock(indent_level=self.indent_level + 1, uri="/", exact_match=False))
 
