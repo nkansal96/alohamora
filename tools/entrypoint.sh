@@ -10,6 +10,9 @@ rm /tmp/resolv.conf
 # to the normal user inside the container
 sudo chmod -R 755 /mnt/share
 
+# nginx is installed in a non-standard location
+export PATH=/usr/local/openresty/nginx/sbin:"$PATH"
+
 # If no arguments are provided, start a shell
 if [[ $# -eq 0 ]]; then
   /bin/bash
@@ -17,5 +20,5 @@ if [[ $# -eq 0 ]]; then
 # Otherwise start the har capturer
 else
   # Specify the non-root docker user's id and group by default
-  sudo npm start -- --user-id $(id -u user) --group-id $(id -g user) --force-stop $@
+  sudo LOG_LEVEL=debug npm start -- --user-id $(id -u user) --group-id $(id -g user) --force-stop $@
 fi

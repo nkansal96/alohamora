@@ -171,7 +171,7 @@ class RequestQueue:
             item.bytes_left -= bytes_to_download
 
         # Update the idle time for each TCP state
-        domains_downloaded_from = set(Url.parse(item.node.resource.url).domain for item in self.queue)
+        domains_downloaded_from = set(item.origin for item in self.queue)
         for domain, tcp_state in self.tcp_state.items():
             if domain in domains_downloaded_from:
                 tcp_state.add_bytes_sent(bytes_to_download)
@@ -188,7 +188,7 @@ class RequestQueue:
             self.connected_origins.add(item.origin)
 
         # update the delayed queue, removing items ready to be queued
-        self.delayed = [qi for qi in self.delayed if qi.delay_ms_left > 0.01]
+        self.delayed = [qi for qi in self.delayed if qi.delay_ms_left >= 0.01]
         # update the queue, removing items that are done and adding delayed items ready to be queued
         self.queue = [qi for qi in self.queue if qi.bytes_left > 0] + delayed_items_to_queue
 

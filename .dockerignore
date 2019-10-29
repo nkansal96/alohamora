@@ -12,12 +12,7 @@ __pycache__
 .blaze_env
 .DS_Store
 
-bin
-blaze
 htmlcov
-proto
-scripts
-tests
 
 tools/capture_har/node_modules
 tools/Dockerfile
