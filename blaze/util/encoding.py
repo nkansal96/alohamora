@@ -1,3 +1,6 @@
+""" This module defines simple utilities to change data encoding """
+
+
 def unchunk(body: bytes):
     """
     Unchunks a Transfer-encoding: chunked HTTP response

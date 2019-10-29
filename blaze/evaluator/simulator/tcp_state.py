@@ -68,11 +68,11 @@ class TCPState:
         """
         Records that a certain number of bytes were sent. This increases the window size
         by the number of packets that were used to send the bytes (corresponding to ACKs)
-        and reserts the time_since_last_byte
+        and resets the time_since_last_byte
 
         :param bytes_sent: the number of bytes sent
         """
-        # NB: if this is inaccurate, then save these bytes and aggregate them accross
+        # NB: if this is inaccurate, then save these bytes and aggregate them across
         #     multiple calls, then add them to cwnd when the next window_size is computed.
         self.time_since_last_byte = 0
         self.cwnd += math.ceil(bytes_sent / MTU_BYTES)

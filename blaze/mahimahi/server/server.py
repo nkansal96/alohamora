@@ -1,3 +1,5 @@
+""" Implements the logic to read the file store, generate the server config, and start the servers """
+
 import contextlib
 import os
 import subprocess
@@ -22,6 +24,16 @@ def start_server(
     push_policy: Optional[Policy] = None,
     preload_policy: Optional[Policy] = None,
 ):
+    """
+    Reads the given replay directory and sets up the NGINX server to replay it. This function also
+    creates the DNS servers, Interfaces, and writes all necessary temporary files.
+
+    :param replay_dir: The directory to replay (should be mahimahi-recorded)
+    :param cert_path: The path to the SSL certificate for the HTTP/2 NGINX server
+    :param key_path: The path to the SSL key for the HTTP/2 NGINX server
+    :param push_policy: The path to the push policy to use for the server
+    :param preload_policy: The path to the preload policy to use for the server
+    """
     log = logger.with_namespace("replay_server")
     push_policy = push_policy.as_dict if push_policy else {}
     preload_policy = preload_policy.as_dict if preload_policy else {}
@@ -52,11 +64,8 @@ def start_server(
 
             for file in files:
                 # Handles the case where we may have duplicate URIs for a single host
-                if file.uri in uris_served:
-                    continue
-
-                # Handles a case where URIs in nginx cannot be too long
-                if len(file.uri) > 3600 or len(file.headers.get("location", "")) > 3600:
+                # or where URIs in nginx cannot be too long
+                if file.uri in uris_served or len(file.uri) > 3600 or len(file.headers.get("location", "")) > 3600:
                     continue
 
                 uris_served.add(file.uri)
@@ -70,7 +79,7 @@ def start_server(
                 )
 
                 # Create entry for this resource
-                if file.status == 200:
+                if file.status < 300:
                     loc = server.add_location_block(
                         uri=file.uri, file_name=file.file_name, content_type=file.headers.get("content-type", None)
                     )
@@ -103,7 +112,7 @@ def start_server(
                     loc.add_preload(res["url"], res["type"])
 
         # Save the nginx configuration
-        conf_file = "/tmp/m_nginx.conf"  # os.path.join(file_dir, "nginx.conf")
+        conf_file = os.path.join(file_dir, "nginx.conf")
         log.debug("writing nginx config", conf_file=conf_file)
         with open(conf_file, "w") as f:
             f.write(str(config))
@@ -111,12 +120,12 @@ def start_server(
         # Create the interfaces, start the DNS server, and start the NGINX server
         with interfaces:
             with DNSServer(host_ip_map):
-                # If wait lasts for more than 3 seconds, a TimeoutError will be raised, which is okay since it
-                # means that dnsmasq is running successfully. If it finishes sooner, it means it crashed and
+                # If wait lasts for more than 2 seconds, a TimeoutError will be raised, which is okay since it
+                # means that nginx is running successfully. If it finishes sooner, it means it crashed and
                 # we should raise an exception
                 try:
                     proc = subprocess.Popen(["/usr/local/openresty/nginx/sbin/nginx", "-c", conf_file])
-                    proc.wait(1)
+                    proc.wait(2)
                     raise RuntimeError("nginx exited unsuccessfully")
                 except subprocess.TimeoutExpired:
                     yield

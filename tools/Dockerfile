@@ -15,6 +15,7 @@
 
 # Use ubuntu for runtime
 FROM ubuntu:18.04
+#COPY sources.list /etc/apt/sources.list
 
 ENV MAHIMAHI_DEPS \
   protobuf-compiler \
@@ -42,16 +43,21 @@ ENV DEPS \
   dnsutils \
   python3 \
   python3-pip \
-  nginx \
+  openresty \
   sudo
 
 WORKDIR /tmp
 RUN apt-get update -y && \
     # Install basic tools needed to install the rest of the dependencies
-    apt-get install -y wget curl git && \
+    apt-get install -y wget curl git gnupg ca-certificates && \
     # Add node.js 10.x PPA
-    curl -sL https://deb.nodesource.com/setup_10.x | bash - && \
-    # Install dependencies for mahimahi, har capturer, and the go server
+    curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
+    # Add openresty PPA
+    wget -O - https://openresty.org/package/pubkey.gpg | apt-key add - && \
+    apt-get -y install software-properties-common && \
+    add-apt-repository -y "deb http://openresty.org/package/ubuntu $(lsb_release -sc) main" && \
+    apt-get update && \
+    # Install dependencies for mahimahi, har capturer, and the nginx server
     apt-get install -y ${MAHIMAHI_DEPS} ${DEPS} && \
     # Install google chrome
     wget "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" && \
@@ -94,6 +100,7 @@ COPY tools/capture_har/capturer capturer
 COPY tools/capture_har/*.js /opt/capture_har/
 
 RUN echo "{}" > /opt/empty_policy.json
+RUN mkdir -p /var/log/nginx
 COPY tools/entrypoint.sh /opt/entrypoint.sh
 
 USER user
