@@ -103,7 +103,7 @@ def start_server(
                     loc.add_preload(res["url"], res["type"])
 
         # Save the nginx configuration
-        conf_file = os.path.join(file_dir, "nginx.conf")
+        conf_file = "/tmp/m_nginx.conf"  # os.path.join(file_dir, "nginx.conf")
         log.debug("writing nginx config", conf_file=conf_file)
         with open(conf_file, "w") as f:
             f.write(str(config))
@@ -115,7 +115,7 @@ def start_server(
                 # means that dnsmasq is running successfully. If it finishes sooner, it means it crashed and
                 # we should raise an exception
                 try:
-                    proc = subprocess.Popen(["nginx", "-c", conf_file])
+                    proc = subprocess.Popen(["/usr/local/openresty/nginx/sbin/nginx", "-c", conf_file])
                     proc.wait(1)
                     raise RuntimeError("nginx exited unsuccessfully")
                 except subprocess.TimeoutExpired:

@@ -1,6 +1,7 @@
 from typing import List, Tuple, Optional
+import urllib.parse
 
-QUERY_REPLACE = "__._._.__"
+QUERY_REPLACE = "______"
 
 
 def quote(s: str) -> str:
@@ -56,6 +57,7 @@ class LocationBlock(Block):
         redirect_uri: Optional[str] = None,
         content_type: Optional[str] = None,
         exact_match: bool = True,
+        sub_blocks: Optional[List[Block]] = None,
     ):
         uri = quote(uri.replace("?", QUERY_REPLACE))
         matcher = " = " if exact_match else " "
@@ -71,6 +73,7 @@ class LocationBlock(Block):
                 ("try_files", f"{file_name} =404" if not redirect_uri else None),
                 ("return", f"301 {redirect_uri}" if redirect_uri else None),
             ],
+            sub_blocks=sub_blocks,
         )
 
     def add_header(self, key: str, value: str):
@@ -91,12 +94,71 @@ class TypesBlock(Block):
 
 
 class RedirectByLuaBlock(Block):
-    def __init__(self, *, indent_level: int, lua_script: str):
-        self.lua_script = lua_script
-        super().__init__(indent_level=indent_level, block_name="redirect_by_lua_block")
+    def __init__(self, *, indent_level: int):
+        super().__init__(indent_level=indent_level, block_name="rewrite_by_lua_block")
+        self.rewrite_rules = {}
+        self.script_template = [
+            "function common_prefix_len(a, b)",
+            [
+                "local m = math.min(string.len(a), string.len(b))",
+                "for i=0,m do",
+                ["if a[i] != b[i] then", ["return i"]],
+                "end",
+                "return m",
+            ],
+            "end",
+            "",
+            "local uri_map = {}",
+            self._generate_lua_rewrite_rules,
+            "local uri = ngx.unescape_uri(ngx.var.request_uri)",
+            "for k, v in pairs(uri_map) do",
+            ["if k == uri then", ["ngx.exec(v)", "return"], "end"],
+            "end",
+            "",
+            "local best_match = nil",
+            "local match_len = 0",
+            "for k, v in pairs(uri_map) do",
+            [
+                "if string.match(k, '^.*%?') == string.match(uri, '^.*%?') then",
+                ["local l = common_prefix_len(k, uri)", "if l > match_len then", ["match_len = l", "best_match = v"]],
+                "end",
+            ],
+            "end",
+            "",
+            "if best_match then",
+            ["ngx.exec(best_match)"],
+            "end",
+        ]
+
+    def add_rewrite_rule(self, from_uri: str, to_uri: str):
+        self.rewrite_rules[from_uri] = to_uri
 
     def _body_lines(self):
-        return self.lua_script.strip().split("\n")
+        def expand(rules: List, level: int):
+            expanded = []
+            for rule in rules:
+                if callable(rule):
+                    expanded.extend([(level, r) for r in rule()])
+                else:
+                    expanded.append((level, rule))
+            return expanded
+
+        st = list(reversed(expand(self.script_template, self.indent_level + 1)))
+        script_lines = []
+
+        while st:
+            (lev, curr) = st.pop()
+            if isinstance(curr, str):
+                script_lines.append(("\t" * lev) + curr)
+            elif isinstance(curr, list):
+                st.extend(reversed(expand(curr, lev + 1)))
+            else:
+                st.extend(reversed(expand([curr], lev + 1)))
+
+        return script_lines
+
+    def _generate_lua_rewrite_rules(self):
+        return [f"uri_map[ngx.unescape_uri('{k}')] = '{v}')" for k, v in self.rewrite_rules.items()]
 
 
 class ServerBlock(Block):
@@ -125,19 +187,29 @@ class ServerBlock(Block):
         # Create an empty types block so that we can manually set the content type using the proto headers
         self.sub_blocks.append(TypesBlock(indent_level=self.indent_level + 1))
         # Rewrite all incoming URLs to not contain a `?`
-        self.sub_blocks.append(
-            RedirectByLuaBlock(
-                indent_level=self.indent_level + 1,
-                lua_script=f"""
-local uri, n, err = ngx.re.gsub(ngx.unescape_uri(ngx.var.request_uri), "\\?", "{QUERY_REPLACE}")
-ngx.log(ngx.NOTICE, "rewrote uri: ", ngx.var.request_uri, " --> ", uri)
-ngx.req.set_uri(uri, true)""",
-            )
-        )
+        self.lua_block = RedirectByLuaBlock(indent_level=self.indent_level + 2)
         # Create a catch-all block that will try to match URIs based on longest-prefix if no exact match exists
-        self.sub_blocks.append(LocationBlock(indent_level=self.indent_level + 1, uri="/", exact_match=False))
+        self.sub_blocks.append(
+            LocationBlock(indent_level=self.indent_level + 1, uri="/", exact_match=False, sub_blocks=[self.lua_block])
+        )
+
+    #         self.sub_blocks.append(LocationBlock(indent_level=self.indent_level + 1, uri="/", exact_match=False, sub_blocks=[
+    #             RedirectByLuaBlock(
+    #                 indent_level=self.indent_level + 2,
+    #                 lua_script=f"""
+    # local original_uri = ngx.var.request_uri
+    # if string.find(original_uri, "%?") then
+    # \tlocal uri, n = string.gsub(original_uri, "%?", "{QUERY_REPLACE}")
+    # \tngx.log(ngx.NOTICE, "rewrote uri: ", original_uri, " ", uri)
+    # \tngx.exec(uri)
+    # end""",
+    #             )]))
 
     def add_location_block(self, **kwargs):
+        # Create a URI mapping first
+        new_uri = f"/_internal_{len(self.sub_blocks)}"
+        self.lua_block.add_rewrite_rule(kwargs["uri"], new_uri)
+        kwargs["uri"] = new_uri
         block = LocationBlock(indent_level=self.indent_level + 1, **kwargs)
         self.sub_blocks.append(block)
         return block
@@ -145,7 +217,15 @@ ngx.req.set_uri(uri, true)""",
 
 class HttpBlock(Block):
     def __init__(self, *, indent_level: int):
-        super().__init__(indent_level=indent_level, block_name="http", block_args=[("sendfile", "on")])
+        super().__init__(
+            indent_level=indent_level,
+            block_name="http",
+            block_args=[
+                ("sendfile", "on"),
+                ("access_log", "/var/log/nginx/access.log"),
+                ("error_log", "/var/log/nginx/error.log", "info"),
+            ],
+        )
 
     def add_server(self, *, server_name: str, server_addr: str, **kwargs) -> ServerBlock:
         block = ServerBlock(
