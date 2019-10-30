@@ -24,10 +24,12 @@ class Simulator:
     """
 
     def __init__(self, env_config: EnvironmentConfig):
+        self.env_config = env_config
+        self.log = logger.with_namespace("simulator")
+
         self.root = None
         self.node_map = {}
         self.url_to_node_map = {}
-        self.log = logger.with_namespace("simulator")
         self.create_execution_graph(env_config)
 
         self.pq = None
@@ -35,6 +37,8 @@ class Simulator:
         self.completed_nodes = {}
         self.pushed_nodes = set()
         self.total_time_ms = 0
+
+        self.no_push: Optional[Simulator] = None
 
     def reset_simulation(self, client_env: ClientEnvironment):
         """
@@ -126,10 +130,11 @@ class Simulator:
                 # get the time that the pushed resource would be complete
                 push_completion_time = self.request_queue.estimated_completion_time(child)
                 # get the time that this resource would have completed if it wasn't pushed
-                rq = self.request_queue.copy()
-                rq.remove(child)
-                rq.add_with_delay(child, child_delay)
-                completion_time = rq.estimated_completion_time(child)
+                completion_time = self.no_push.completion_time(child.resource.url) - child.resource.execution_ms
+                # rq = self.request_queue.copy()
+                # rq.remove(child)
+                # rq.add_with_delay(child, child_delay)
+                # completion_time = rq.estimated_completion_time(child)
 
                 child_fetch_delay_correction = 0
                 # case 1: pushed resource was partially downloaded at the point when this resource would have downloaded
@@ -185,6 +190,11 @@ class Simulator:
         """
         self.log.debug("simulating page load with client environment", **client_env._asdict())
         if policy:
+            # First simulate it without the policy to comparing timing information
+            self.no_push = Simulator(self.env_config)
+            self.no_push.log.set_silence(True)
+            self.no_push.simulate_load_time(client_env)
+
             self.log.debug("simulating page load with push policy:")
             self.log.debug(json.dumps(policy.as_dict, indent=4))
         self.reset_simulation(client_env)
@@ -203,7 +213,12 @@ class Simulator:
                 self.step_request_queue(client_env, policy)
             self.schedule_child_requests(curr_node, client_env, policy)
 
-        return max(self.completed_nodes.values())
+        return self.completion_time()
+
+    def completion_time(self, url: Optional[str] = None) -> float:
+        if not url:
+            return max(self.completed_nodes.values())
+        return self.completed_nodes[self.url_to_node_map[url]]
 
     def create_execution_graph(self, env_config: EnvironmentConfig):
         """
