@@ -4,9 +4,6 @@ under the specified circumstances and returns a metric indicating the policy
 quality
 """
 
-import json
-import os
-import tempfile
 from typing import Optional
 
 from blaze.action import Policy
@@ -56,7 +53,6 @@ class Analyzer:
         reward = 0
         if plt < self.min_plt:
             self.log.debug("received best page load time", plt=plt)
-            self.write_eval_result(plt, policy)
             reward = BEST_REWARD_COEFF / plt
         else:
             a, b = sorted([plt, self.last_plt])
@@ -66,25 +62,3 @@ class Analyzer:
         self.min_plt = min(self.min_plt, plt)
         self.last_plt = plt
         return reward
-
-    def write_eval_result(self, speed_index: float, policy: Policy):
-        """
-        Writes a JSON file to the configured eval_results_dir that contains some debugging information
-        about the Lighthouse evaluation result
-        """
-        dirname = self.config.eval_results_dir
-        if not dirname or not os.path.isdir(dirname):
-            self.log.debug("skipping write_eval_result due to invalid eval_results_dir", eval_results_dir=dirname)
-            return
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", dir=dirname, delete=False) as f:
-            json.dump(
-                {
-                    "url": self.config.env_config.request_url,
-                    "speed_index": speed_index,
-                    "policy": policy.as_dict,
-                    "client_environment": self.client_environment._asdict(),
-                },
-                f.file,
-                indent=2,
-            )
-            self.log.debug("wrote eval result", url=self.config.env_config.request_url, path=f.name)
