@@ -1,10 +1,10 @@
 """ Defines methods and classes for representing and instantiating saved models """
-from typing import NamedTuple, Type
+from typing import NamedTuple, Optional, Type
 
 import gym
 from ray.rllib.agents import Agent
 
-from blaze.action import ActionSpace, Policy
+from blaze.action import Action, ActionSpace, Policy
 from blaze.config.config import get_config
 from blaze.config.environment import EnvironmentConfig
 from blaze.config.client import ClientEnvironment
@@ -21,26 +21,28 @@ class ModelInstance:
         self.agent = agent
         self.client_environment = client_environment
         self.env_config = env_config
-        self.policy = None
+        self._policy = None
 
     @property
-    def push_policy(self) -> Policy:
+    def policy(self) -> Policy:
         """
         Generates (and caches) the push policy from the loaded model based on the given environment
         and client configuration
         """
         # check if the policy has been cached
-        if self.policy is not None:
-            return self.policy
+        if self._policy is not None:
+            return self._policy
         # create ActionSpace and Policy objects to record the actions taken by the agent
         action_space = ActionSpace(self.env_config.trainable_push_groups)
-        self.policy = Policy(action_space)
+        self._policy = Policy(action_space)
         # create the initial observation from the environment that gets passed to the agent
-        observation = get_observation(self.client_environment, self.env_config.push_groups, self.policy)
+        observation = get_observation(self.client_environment, self.env_config.push_groups, self._policy)
+        last_action: Optional[Action] = None
         # keep querying the agent until the policy is complete
-        while not self.policy.completed:
+        while not self.policy.completed or (last_action and last_action.is_noop):
             # query the agent for an action
             action = self.agent.compute_action(observation)
+            last_action = action_space.decode_action_id(action)
             # apply the action to the policy
             self.policy.apply_action(action)
             # update the observation based on the action

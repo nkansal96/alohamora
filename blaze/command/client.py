@@ -3,11 +3,8 @@ import json
 
 import grpc
 
-from blaze.action import Policy
 from blaze.config.client import NetworkType, DeviceSpeed
-from blaze.config.config import get_config
 from blaze.config.environment import EnvironmentConfig
-from blaze.mahimahi import MahiMahiConfig
 from blaze.logger import logger as log
 from blaze.serve.client import Client
 
@@ -33,13 +30,6 @@ from . import command
 )
 @command.argument("--host", help="The host of the gRPC policy server to connect to", default="127.0.0.1")
 @command.argument("--port", help="The port of the gRPC policy server to connect to", default=24450, type=int)
-@command.argument(
-    "--mahimahi_format",
-    "-f",
-    help="Print output in the format of a Mahimahi dependency file",
-    action="store_true",
-    default=False,
-)
 @command.command
 def query(args):
     """
@@ -51,7 +41,7 @@ def query(args):
     client = Client(channel)
 
     manifest = EnvironmentConfig.load_file(args.manifest)
-    policy_dict = client.get_policy(
+    policy = client.get_policy(
         url=manifest.request_url,
         network_type=NetworkType(args.network_type),
         device_speed=DeviceSpeed(args.device_speed),
@@ -59,9 +49,4 @@ def query(args):
         train_domain_globs=[group.name for group in manifest.push_groups if group.trainable],
     )
 
-    if args.mahimahi_format:
-        policy = Policy.from_dict(policy_dict)
-        mm_config = MahiMahiConfig(get_config(), push_policy=policy)
-        print(mm_config.formatted_push_policy)
-    else:
-        print(json.dumps(policy_dict, indent=4))
+    print(json.dumps(policy.as_dict, indent=4))
