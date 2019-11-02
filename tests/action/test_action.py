@@ -14,21 +14,32 @@ class TestAction:
     def test_init(self):
         a = Action(0)
         assert isinstance(a, Action)
-        a = Action(0, self.push_groups[0].resources[0], self.push_groups[0].resources[1])
+        a = Action(0, is_push=True, source=self.push_groups[0].resources[0], push=self.push_groups[0].resources[1])
         assert isinstance(a, Action)
 
     def test_source_and_push(self):
         source = self.push_groups[0].resources[0]
         push = self.push_groups[0].resources[2]
-        a = Action(2, source, push)
+        a = Action(2, is_push=True, source=source, push=push)
         assert a.source == source
         assert a.push == push
 
         source = self.push_groups[1].resources[0]
         push = self.push_groups[1].resources[1]
-        a = Action(3, source, push)
+        a = Action(3, is_push=True, source=source, push=push)
         assert a.source == source
         assert a.push == push
+
+    def test_preload(self):
+        source = self.push_groups[0].resources[0]
+        push = self.push_groups[0].resources[2]
+        a = Action(2, is_push=True, source=source, push=push)
+        assert a.is_push
+        assert not a.is_preload
+
+        a = Action(2, is_push=False, source=source, push=push)
+        assert not a.is_push
+        assert a.is_preload
 
     def test_noop(self):
         a = Action(0)

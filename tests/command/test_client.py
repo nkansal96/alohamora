@@ -65,38 +65,3 @@ class TestClient:
             assert len(policy) > 0
         finally:
             server.stop()
-
-    def test_client_mahimahi_format(self, capsys):
-        server = Server(self.serve_config)
-        server.set_policy_service(PolicyService(self.saved_model))
-
-        try:
-            server.start()
-
-            with tempfile.NamedTemporaryFile() as manifest_file:
-                config = EnvironmentConfig(
-                    request_url="http://cs.ucla.edu/", replay_dir="/tmp/tmp_dir", push_groups=get_push_groups()
-                )
-                config.save_file(manifest_file.name)
-                query(
-                    [
-                        "--manifest",
-                        manifest_file.name,
-                        "-n",
-                        "1",
-                        "-d",
-                        "2",
-                        "--host",
-                        str(self.serve_config.host),
-                        "--port",
-                        str(self.serve_config.port),
-                        "--mahimahi_format",
-                    ]
-                )
-
-            policy = capsys.readouterr().out.strip()
-            assert policy
-            assert len(policy.split("\n")) > 0
-            assert len(policy.split("\n")) % 3 == 0
-        finally:
-            server.stop()

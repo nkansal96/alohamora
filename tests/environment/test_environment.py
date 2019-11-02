@@ -85,8 +85,9 @@ class TestEnvironment:
             assert reward == NOOP_ACTION_REWARD
             assert info["action"] == noop_action
             assert self.environment.policy.steps_taken == 1
-            # res[3] refers to the third item in the resource_space for res
+            # res[3] and res[4] refer to the push/preload source respectively
             assert all(res[3] == 0 for res in obs["resources"].values())
+            assert all(res[4] == 0 for res in obs["resources"].values())
         finally:
             self.environment.reset()
 

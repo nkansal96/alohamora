@@ -17,8 +17,8 @@ class TestAnalyzer:
         self.policy = Policy(ActionSpace(self.config.env_config.push_groups))
         self.client_environment = get_random_client_environment()
 
-    def get_analyzer(self, eval_results_dir=None):
-        return Analyzer(get_config(eval_results_dir=eval_results_dir), self.client_environment)
+    def get_analyzer(self):
+        return Analyzer(get_config(), self.client_environment)
 
     def test_init(self):
         analyzer = self.get_analyzer()
@@ -87,27 +87,3 @@ class TestAnalyzer:
     #     assert reward == BEST_REWARD_COEFF / speed_indexes[3]
     #     assert analyzer.min_speed_index == speed_indexes[3]
     #     assert analyzer.last_speed_index == speed_indexes[3]
-
-    def test_write_eval_result(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            analyzer = self.get_analyzer(eval_results_dir=temp_dir)
-            action_space = ActionSpace(self.config.env_config.push_groups)
-            policy = Policy(action_space)
-
-            # generate a push policy
-            for i in range(4):
-                policy.apply_action(action_space.sample())
-            speed_index = 10000
-
-            analyzer.write_eval_result(speed_index, policy)
-
-            files = glob.glob("{}/*.json".format(temp_dir))
-            assert len(files) == 1
-
-            res = json.load(open(files[0], "r"))
-            assert res["url"] == analyzer.config.env_config.request_url
-            assert res["speed_index"] == 10000
-            for (source_url, push_resources) in policy.as_dict.items():
-                assert sorted(p["url"] for p in res["policy"][source_url]) == sorted(p["url"] for p in push_resources)
-            for (k, v) in analyzer.client_environment._asdict().items():
-                assert res["client_environment"][k] == v

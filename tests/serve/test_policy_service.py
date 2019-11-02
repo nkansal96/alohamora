@@ -1,4 +1,6 @@
-from blaze.action import ActionSpace
+import json
+
+from blaze.action import ActionSpace, Policy
 from blaze.config.client import get_random_client_environment
 from blaze.environment import Environment
 from blaze.model.model import ModelInstance, SavedModel
@@ -44,14 +46,15 @@ class TestPolicyService:
 
     def test_create_push_policy(self):
         ps = PolicyService(self.saved_model)
-        policy = ps.create_push_policy(self.page)
+        policy = ps.create_policy(self.page)
         assert policy
         assert isinstance(policy, policy_service_pb2.Policy)
         push_pairs = convert_push_groups_to_push_pairs(self.push_groups)
         push_pairs = [(s.url, p.url) for (s, p) in push_pairs]
-        for policy_entry in policy.policy:
-            for push_resource in policy_entry.push_resources:
-                assert (policy_entry.source_url, push_resource.url) in push_pairs
+        p = Policy.from_dict(json.loads(policy.policy))
+        for (source, push_res) in p.push:
+            for push in push_res:
+                assert (source.url, push.url) in push_pairs
 
     def test_create_model_instance(self):
         ps = PolicyService(self.saved_model)
