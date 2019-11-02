@@ -1,11 +1,12 @@
 """ Defines the environment that the training of the agent occurs in """
 import random
-from typing import Union
+from typing import Optional, Union
 
 import gym
 
 from blaze.action import ActionSpace, Policy
 from blaze.config import client, Config
+from blaze.config.client import ClientEnvironment
 from blaze.evaluator import Analyzer
 from blaze.logger import logger as log
 
@@ -36,9 +37,9 @@ class Environment(gym.Env):
         self.observation_space = get_observation_space()
         self.analyzer = Analyzer(self.config)
 
-        self.action_space = None
-        self.client_environment = None
-        self.policy = None
+        self.client_environment: Optional[ClientEnvironment] = None
+        self.action_space: Optional[ActionSpace] = None
+        self.policy: Optional[Policy] = None
         self.initialize_environment(client.get_random_fast_lte_client_environment())
 
     def reset(self):
@@ -69,7 +70,7 @@ class Environment(gym.Env):
         if candidate_push_groups:
             default_group = random.choice(candidate_push_groups)
             for push in default_group.resources[1:]:
-                self.policy.add_default_action(default_group.resources[0], push)
+                self.policy.add_default_push_action(default_group.resources[0], push)
             log.info("chose group to auto push", group=default_group.name, rules_added=len(default_group.resources) - 1)
 
     def step(self, action):
@@ -88,7 +89,7 @@ class Environment(gym.Env):
         log.info("got reward", action=repr(decoded_action), reward=reward)
 
         info = {"action": decoded_action, "policy": self.policy.as_dict}
-        return self.observation, reward, self.policy.completed, info
+        return self.observation, reward, self.policy.completed or decoded_action.is_noop, info
 
     def render(self, mode="human"):
         return super(Environment, self).render(mode=mode)

@@ -32,6 +32,8 @@ def get_observation_space():
             MAX_KBYTES,
             # the resource that pushed this one, offset by 1 so that 0 indicates not pushed
             MAX_RESOURCES + 1,
+            # the resource that preloaded this one, offset by 1 so that 0 indicates not preloaded
+            MAX_RESOURCES + 1,
         ]
     )
     return gym.spaces.Dict(
@@ -53,19 +55,24 @@ def get_observation(client_environment: ClientEnvironment, push_groups: List[Pus
     return an observation
     """
     # Encode the push groups
-    encoded_resources = {str(i): np.array([0, 0, 0, 0]) for i in range(MAX_RESOURCES)}
+    encoded_resources = {str(i): np.array([0, 0, 0, 0, 0]) for i in range(MAX_RESOURCES)}
 
     for group in push_groups:
         for res in group.resources:
             # for some reason, sometimes res.type is in int instead of a ResourceType
             res_type = res.type.value if isinstance(res.type, ResourceType) else res.type
             res_size_kb = res.size // 1000
-            encoded_resources[str(res.order)] = np.array([1, res_type, res_size_kb, 0])
+            encoded_resources[str(res.order)] = np.array([1, res_type, res_size_kb, 0, 0])
 
-    for (source, push) in policy.observable:
+    for (source, push) in policy.observable_push:
         for push_res in push:
             # note that the pushed-from field is offset by 1, so that 0 indictates not pushed
             encoded_resources[str(push_res.order)][3] = source.order + 1
+
+    for (source, preload) in policy.observable_preload:
+        for preload_res in preload:
+            # note that the preloaded-from field is offset by 1, so that 0 indictates not pushed
+            encoded_resources[str(preload_res.order)][4] = source.order + 1
 
     return {
         "client": {

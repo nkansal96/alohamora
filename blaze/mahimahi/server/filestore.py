@@ -89,15 +89,11 @@ class File(RecordClass):
         method, uri, *_ = record.request.first_line.decode().split(" ")
         _, status, *_ = record.response.first_line.decode().split(" ")
         host = req_headers["host"]
+
+        # it doesn't work when specifying the 'typename' parameter, but pylint complains
+        # pylint: disable=no-value-for-parameter
         return File(
-            file_path=path,
-            method=method,
-            uri=uri,
-            host=host,
-            headers=res_headers,
-            status=int(status),
-            body=body,
-            typename="File",
+            file_path=path, method=method, uri=uri, host=host, headers=res_headers, status=int(status), body=body
         )
 
 
