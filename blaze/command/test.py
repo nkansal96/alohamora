@@ -23,13 +23,7 @@ from . import command
 
 
 @command.argument(
-    "--policy_type", help="The test type to run", choices=["simple", "push", "push_preload"], required=True
-)
-@command.argument(
-    "--random_chance",
-    help="Probability of pushing a particular resource (only used for --policy_type=push)",
-    type=float,
-    default=None,
+    "--policy_type", help="The test type to run", choices=["simple", "push", "push_preload", "preload"], required=True
 )
 @command.argument("--from_manifest", required=True, help="The training manifest file to use as input to the simulator")
 @command.command
@@ -37,16 +31,14 @@ def random_push_policy(args):
     """
     Outputs a random push policy for the given recorded website
     """
-    log.info("generating a random policy", policy_type=args.policy_type, random_chance=args.random_chance or "auto")
+    log.info("generating a random policy", policy_type=args.policy_type)
     env_config = EnvironmentConfig.load_file(args.from_manifest)
 
-    policy = None
     if args.policy_type == "simple":
         policy = _simple_push_policy_generator()(env_config.push_groups)
-    if args.policy_type == "push":
-        policy = _random_push_policy_generator(args.random_chance)(env_config.push_groups)
-    if args.policy_type == "push_preload":
-        policy = _random_push_preload_policy_generator()(env_config.push_groups)
+    else:
+        weight = 0 if args.policy_type == "preload" else 1 if args.policy_type == "push" else None
+        policy = _random_push_preload_policy_generator(weight)(env_config.push_groups)
 
     print(json.dumps(policy.as_dict, indent=4))
 
@@ -89,13 +81,11 @@ def test_push(args):
         log.error("must specify a manifest if loading only simulator")
         return 1
 
-    policy_generator = None
     if args.policy_type == "simple":
         policy_generator = _simple_push_policy_generator()
-    if args.policy_type == "push":
-        policy_generator = _random_push_policy_generator(args.random_chance)
-    if args.policy_type == "push_preload":
-        policy_generator = _random_push_preload_policy_generator()
+    else:
+        weight = 0 if args.policy_type == "preload" else 1 if args.policy_type == "push" else None
+        policy_generator = _random_push_preload_policy_generator(weight)
 
     _test_push(
         **{
@@ -133,27 +123,7 @@ def _simple_push_policy_generator() -> Callable[[List[PushGroup]], Policy]:
     return _generator
 
 
-def _random_push_policy_generator(chance: Optional[float] = None) -> Callable[[List[PushGroup]], Policy]:
-    def _generator(push_groups: List[PushGroup]) -> Policy:
-        _chance = chance
-        if not _chance:
-            _chance = random.random()
-
-        policy = Policy()
-        for group in push_groups:
-            for push in range(1, len(group.resources)):
-                if random.random() > _chance:
-                    continue
-                source = random.randint(0, push - 1)
-                policy.add_default_push_action(group.resources[source], group.resources[push])
-                policy.steps_taken += 1
-
-        return policy
-
-    return _generator
-
-
-def _random_push_preload_policy_generator() -> Callable[[List[PushGroup]], Policy]:
+def _random_push_preload_policy_generator(push_weight: Optional[float] = None) -> Callable[[List[PushGroup]], Policy]:
     dist = {ResourceType.SCRIPT: 32, ResourceType.CSS: 32, ResourceType.IMAGE: 24, ResourceType.FONT: 12}
 
     def _choose_with_dist(groups, distribution):
@@ -173,9 +143,9 @@ def _random_push_preload_policy_generator() -> Callable[[List[PushGroup]], Polic
                 res_by_type[res.type].append(res)
 
         # choose the number of resources to push/preload
-        n = random.randint(1, len(all_resources))
+        n = random.randint(1, len(all_resources) - 1)
         # choose the weight factor between push and preload
-        weight = random.random()
+        weight = push_weight if push_weight is not None else random.random()
 
         # Choose n resources based on the resource type distribution without replacement
         log.debug("generating push-preload policy", num_resources=len(all_resources), total_size=n, push_weight=weight)
@@ -188,13 +158,15 @@ def _random_push_preload_policy_generator() -> Callable[[List[PushGroup]], Polic
         policy = Policy()
 
         for r in res:
+            if r.source_id == 0 or r.order == 0:
+                continue
             push = random.random() < weight
             policy.steps_taken += 1
             if push:
-                source = random.randint(0, r.source_id)
+                source = random.randint(0, r.source_id - 1)
                 policy.add_default_push_action(push_groups[r.group_id].resources[source], r)
             else:
-                source = random.randint(0, r.order)
+                source = random.randint(0, r.order - 1)
                 policy.add_default_preload_action(all_resources[source], r)
 
         return policy
