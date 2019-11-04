@@ -143,7 +143,8 @@ def _random_push_preload_policy_generator(push_weight: Optional[float] = None) -
                 res_by_type[res.type].append(res)
 
         # choose the number of resources to push/preload
-        n = random.randint(1, len(all_resources) - 1)
+        total = sum(map(len, res_by_type.values()))
+        n = random.randint(1, total)
         # choose the weight factor between push and preload
         weight = push_weight if push_weight is not None else random.random()
 
