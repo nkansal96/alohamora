@@ -35,7 +35,7 @@ class Simulator:
         self.pq: Optional[PriorityQueue] = None
         self.request_queue: Optional[RequestQueue] = None
         self.completed_nodes = {}
-        self.pushed_nodes = set()
+        self.pushed_nodes = {}
         self.total_time_ms = 0
 
         self.no_push: Optional[Simulator] = None
@@ -53,7 +53,7 @@ class Simulator:
         self.pq = PriorityQueue()
         self.request_queue = RequestQueue(client_env.bandwidth, client_env.latency)
         self.completed_nodes = {}
-        self.pushed_nodes = set()
+        self.pushed_nodes = {}
         self.total_time_ms = 0
 
         self.no_push = None
@@ -82,7 +82,7 @@ class Simulator:
             if push_node and push_node not in self.completed_nodes and push_node not in self.request_queue:
                 self.pq.put((push_node.priority, push_node))
                 self.request_queue.add_with_delay(push_node, delay + push_node.resource.time_to_first_byte_ms)
-                self.pushed_nodes.add(push_node)
+                self.pushed_nodes[push_node] = True
                 self.log.debug(
                     "push resource",
                     time=self.total_time_ms,
@@ -107,7 +107,7 @@ class Simulator:
                     preload_node,
                     delay + preload_node.resource.time_to_first_byte_ms + self.request_queue.rtt_latency_ms,
                 )
-                self.pushed_nodes.add(preload_node)
+                self.pushed_nodes[preload_node] = True
                 self.log.debug(
                     "push resource",
                     time=self.total_time_ms,
@@ -122,11 +122,16 @@ class Simulator:
         """
 
         completed_this_step, time_ms_this_step = self.request_queue.step()
-        self.total_time_ms += time_ms_this_step
+
         for node in completed_this_step:
-            self.completed_nodes[node] = self.total_time_ms + node.resource.execution_ms
+            self.completed_nodes[node] = self.total_time_ms + time_ms_this_step + node.resource.execution_ms
             self.log.debug("resource completed", resource=node.resource.url, time=self.completed_nodes[node])
             self.schedule_child_requests(node)
+
+        # Pushed/preloaded resources don't affect the total page load time so far if they were the only objects
+        # received in this iteration
+        if not completed_this_step or not all(node in self.pushed_nodes for node in completed_this_step):
+            self.total_time_ms += time_ms_this_step
 
     def schedule_child_requests(self, parent: Node):
         """
@@ -154,31 +159,28 @@ class Simulator:
 
             # If it was pushed, calculate its delay as the difference between
             # when it was scheduled and how much time has passed since then
-            if child in self.pushed_nodes:
+            if self.pushed_nodes.get(child):
                 # get the time that the pushed resource would be complete
-                push_completion_time = (
-                    (self.completion_time(child.resource.url) - child.resource.execution_ms)
-                    if child in self.completed_nodes
-                    else (self.total_time_ms + self.request_queue.estimated_completion_time(child))
-                )
-                # get the time that this resource would have completed if it wasn't pushed
-                completion_time = self.no_push.completion_time(child.resource.url) - child.resource.execution_ms
-                # get the time that this resource would have started downloading
-                download_start_time = self.total_time_ms + child_delay
+                time_already_downloaded = self.request_queue.time_spent_downloading(child)
+                time_remaining_to_download = self.request_queue.estimated_completion_time(child)
+                remaining_delay_before_download = self.request_queue.remaining_delay(child)
+                normal_time_spent_downloading = self.no_push.request_queue.time_spent_downloading(child)
 
                 child_fetch_delay_correction = 0
                 # case 1: pushed resource was partially downloaded at the point when this resource would have downloaded
                 #         --> subtract the time saved by downloading it
-                if download_start_time < push_completion_time < completion_time:
-                    child_fetch_delay_correction = completion_time - push_completion_time
+                if time_already_downloaded > 0 and time_remaining_to_download > child_delay:
+                    child_fetch_delay_correction = time_already_downloaded + child_delay
                 # case 2: pushed resource completed downloading before this resource would have started downloading
                 #         --> subtract the entire download time
-                if push_completion_time < download_start_time:
-                    child_fetch_delay_correction = completion_time - download_start_time
+                if time_already_downloaded > 0 and time_remaining_to_download < child_delay:
+                    child_fetch_delay_correction = time_already_downloaded + time_remaining_to_download
                 # case 3: pushed resource will finish after this resource would have finished
-                #         --> add the extra time spent downloading
-                if push_completion_time > completion_time:
-                    child_fetch_delay_correction = -(push_completion_time - completion_time)
+                #         --> add the extra time spent downloading, unless it would download faster
+                if time_already_downloaded == 0 and remaining_delay_before_download >= child_delay:
+                    child_fetch_delay_correction = -(remaining_delay_before_download - child_delay) + (
+                        normal_time_spent_downloading - (time_remaining_to_download - remaining_delay_before_download)
+                    )
 
                 # only consider scripts and css as those are blocking and receiving them
                 # earlier will affect the delay of the next objects (other objects' times
@@ -189,13 +191,10 @@ class Simulator:
                         "correcting fetch delay",
                         parent=parent.resource.url,
                         resource=child.resource.url,
-                        push_completion_time=push_completion_time,
-                        orig_completion_time=completion_time,
-                        download_time=completion_time - child_delay,
                         child_fetch_delay_correction=child_fetch_delay_correction,
                         total_fetch_delay_correction=fetch_delay_correction,
                     )
-                self.pushed_nodes.remove(child)
+                self.pushed_nodes[child] = False
 
             if child.resource.type == ResourceType.SCRIPT:
                 execution_delay += child.resource.execution_ms

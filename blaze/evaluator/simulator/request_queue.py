@@ -5,7 +5,7 @@ It also defines the RequestQueue, which simulates the network link.
 
 import copy
 from collections import defaultdict
-from typing import DefaultDict, List, NamedTuple, Set, Tuple
+from typing import DefaultDict, Dict, List, NamedTuple, Set, Tuple
 
 from blaze.config.environment import Resource
 from blaze.preprocess.url import Url
@@ -35,6 +35,7 @@ class QueueItem:
         self.bytes_left = size
         self.origin = origin
         self.delay_ms_left = delay_ms
+        self.time_spent_downloading = 0
 
 
 class RequestQueue:
@@ -47,6 +48,7 @@ class RequestQueue:
         self.queue: List[QueueItem] = []
         self.delayed: List[QueueItem] = []
         self.connected_origins: Set[str] = set()
+        self.node_to_queue_item_map: Dict[Node, QueueItem] = {}
         # convert kilobits per second (kbps) to bytes per second (Bps)
         self.link_bandwidth_bps = bandwidth_kbps * (1000 / 8)
         self.bandwidth_kbps = bandwidth_kbps
@@ -115,6 +117,7 @@ class RequestQueue:
             self.queue.append(queue_item)
         else:
             self.delayed.append(queue_item)
+        self.node_to_queue_item_map[node] = queue_item
 
     def estimated_completion_time(self, node: Node) -> float:
         """
@@ -135,6 +138,24 @@ class RequestQueue:
             completed_nodes, step_ms = rq.step()
             total_time += step_ms
         return total_time
+
+    def time_spent_downloading(self, node: Node) -> float:
+        """
+        Returns the ms spent downloading the given node. It returns 0 if the node is not in the queue,
+        has not been scheduled to download, or has not downloaded any bytes yet
+        :param node: The node to get the time spent downloading for
+        """
+        if node not in self.node_to_queue_item_map:
+            return 0
+        return self.node_to_queue_item_map[node].time_spent_downloading
+
+    def remaining_delay(self, node: Node) -> float:
+        """
+        Returns the delay ms left for a node before it starts downloading
+        """
+        if node not in self.node_to_queue_item_map:
+            return 0
+        return self.node_to_queue_item_map[node].delay_ms_left
 
     def step(self) -> Tuple[List[Node], float]:
         """
@@ -169,6 +190,7 @@ class RequestQueue:
         # Reduce all queue elements by bytes_to_download
         for item in self.queue:
             item.bytes_left -= bytes_to_download
+            item.time_spent_downloading += time_ms_to_download
 
         # Update the idle time for each TCP state
         domains_downloaded_from = set(item.origin for item in self.queue)
