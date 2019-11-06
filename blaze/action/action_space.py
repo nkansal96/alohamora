@@ -33,11 +33,13 @@ class PushActionSpace(gym.spaces.Tuple):
         self.group_id_to_source_id = {group.id: [r.source_id for r in group.resources] for group in push_groups}
         self.group_id_to_resource_map = {group.id: {r.source_id: r for r in group.resources} for group in push_groups}
 
-        super().__init__((
-            gym.spaces.Discrete(self.max_group_id + 1),
-            gym.spaces.Discrete(self.max_source_id + 1),
-            gym.spaces.Discrete(self.max_source_id + 1),
-        ))
+        super().__init__(
+            (
+                gym.spaces.Discrete(self.max_group_id + 1),
+                gym.spaces.Discrete(self.max_source_id + 1),
+                gym.spaces.Discrete(self.max_source_id + 1),
+            )
+        )
 
     def sample(self) -> PushActionIDType:
         if self.empty():
@@ -115,10 +117,7 @@ class PreloadActionSpace(gym.spaces.Tuple):
         self.source_list = sorted([r.order for group in push_groups for r in group.resources])
         self.max_order = self.source_list[-1]
 
-        super().__init__((
-            gym.spaces.Discrete(self.max_order + 1),
-            gym.spaces.Discrete(self.max_order + 1),
-        ))
+        super().__init__((gym.spaces.Discrete(self.max_order + 1), gym.spaces.Discrete(self.max_order + 1)))
 
     def sample(self) -> PreloadActionIDType:
         if self.empty():
