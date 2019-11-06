@@ -39,12 +39,12 @@ class ModelInstance:
         observation = get_observation(self.client_environment, self.env_config.push_groups, self._policy)
         last_action: Optional[Action] = None
         # keep querying the agent until the policy is complete
-        while not self.policy.completed or (last_action and last_action.is_noop):
+        while not last_action or not last_action.is_noop:
             # query the agent for an action
             action = self.agent.compute_action(observation)
-            last_action = action_space.decode_action_id(action)
+            last_action = action_space.decode_action(action)
             # apply the action to the policy
-            self.policy.apply_action(action)
+            self.policy.apply_action(last_action)
             # update the observation based on the action
             observation = get_observation(self.client_environment, self.env_config.push_groups, self.policy)
         return self.policy

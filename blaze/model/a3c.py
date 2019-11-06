@@ -26,8 +26,8 @@ def train(train_config: TrainConfig, config: Config):
                 "checkpoint_freq": 10,
                 "max_failures": 1000,
                 "config": {
-                    "sample_batch_size": 128,
-                    "train_batch_size": 512,
+                    "sample_batch_size": 256,
+                    "train_batch_size": 1024,
                     "batch_mode": "truncate_episodes",
                     "collect_metrics_timeout": 1200,
                     "num_workers": train_config.num_cpus // 2,

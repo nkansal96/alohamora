@@ -1,6 +1,5 @@
 """ This module defines the model for training and instantiating APEX agents """
 
-from blaze.action import ActionSpace, Policy
 from blaze.config.config import Config
 from blaze.config.train import TrainConfig
 from blaze.environment import Environment
@@ -16,7 +15,6 @@ def train(train_config: TrainConfig, config: Config):
 
     ray.init(num_cpus=train_config.num_cpus)
 
-    policy = Policy(ActionSpace(config.env_config.trainable_push_groups))
     name = train_config.experiment_name
     run_experiments(
         {
@@ -30,8 +28,6 @@ def train(train_config: TrainConfig, config: Config):
                 "config": {
                     "sample_batch_size": 128,
                     "train_batch_size": 512,
-                    "timesteps_per_iteration": policy.total_steps,
-                    "target_network_update_freq": policy.total_steps * 4,
                     "batch_mode": "truncate_episodes",
                     "collect_metrics_timeout": 1200,
                     "num_workers": train_config.num_cpus // 2,
