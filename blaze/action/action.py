@@ -12,11 +12,11 @@ from blaze.config.environment import Resource
 
 PushActionIDType = Tuple[int, int, int]
 PreloadActionIDType = Tuple[int, int]
-ActionIDType = Tuple[int, PushActionIDType, PreloadActionIDType]
+ActionIDType = Tuple[int, int, int, int, int, int]
 
 NOOP_PUSH_ACTION_ID = (0, 0, 0)
 NOOP_PRELOAD_ACTION_ID = (0, 0)
-NOOP_ACTION_ID = (0, NOOP_PUSH_ACTION_ID, NOOP_PRELOAD_ACTION_ID)
+NOOP_ACTION_ID = (0, *NOOP_PUSH_ACTION_ID, *NOOP_PRELOAD_ACTION_ID)
 
 
 class Action:

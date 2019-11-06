@@ -182,9 +182,11 @@ class ActionSpace(gym.spaces.Tuple):
         self.num_action_types = 2 if disable_push or disable_preload else 3
         self.action_types = list(range(self.num_action_types))
         self.action_type_space = gym.spaces.Discrete(self.num_action_types)
+
         self.push_space = PushActionSpace(push_groups)
         self.preload_space = PreloadActionSpace(push_groups)
-        super().__init__((self.action_type_space, self.push_space, self.preload_space))
+
+        super().__init__((self.action_type_space, *self.push_space.spaces, *self.preload_space.spaces))
 
     def seed(self, seed):
         self.np_random.seed(seed)
@@ -203,20 +205,24 @@ class ActionSpace(gym.spaces.Tuple):
             push_action = self.push_space.sample()
             if push_action == NOOP_PUSH_ACTION_ID:
                 return NOOP_ACTION_ID
-            return action_type, push_action, NOOP_PRELOAD_ACTION_ID
+            return (action_type, *push_action, *NOOP_PRELOAD_ACTION_ID)
 
         # Preload if action type is 2 or action_type is 1 and push is disabled
         if action_type == 2 or self.disable_push:
             preload_action = self.preload_space.sample()
             if preload_action == NOOP_PRELOAD_ACTION_ID:
                 return NOOP_ACTION_ID
-            return action_type, NOOP_PUSH_ACTION_ID, preload_action
+            return (action_type, *NOOP_PUSH_ACTION_ID, *preload_action)
 
         # The case where preload is disabled and action_type is 2 will never happen
         return NOOP_ACTION_ID
 
     def decode_action(self, action: ActionIDType) -> Action:
         """ Decodes the given action ID into an Action object """
+        # Temporary for compatibility:
+        if len(action) == 6:
+            action = (action[0], tuple(action[1:4]), tuple(action[4:]))
+
         (action_type, push_id, preload_id) = action
         if action_type == 0:
             return Action()

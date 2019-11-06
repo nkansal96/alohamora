@@ -264,10 +264,13 @@ class TestActionSpace:
         assert action_space.num_action_types == 2
         assert action_space.action_types == [0, 1]
 
-        assert len(action_space.spaces) == 3
+        assert len(action_space.spaces) == 6
         assert action_space.spaces[0].n == 2
-        assert action_space.spaces[1] == action_space.push_space
-        assert action_space.spaces[2] == action_space.preload_space
+        assert action_space.spaces[1].n == action_space.push_space.spaces[0].n
+        assert action_space.spaces[2].n == action_space.push_space.spaces[1].n
+        assert action_space.spaces[3].n == action_space.push_space.spaces[2].n
+        assert action_space.spaces[4].n == action_space.preload_space.spaces[0].n
+        assert action_space.spaces[5].n == action_space.preload_space.spaces[1].n
 
     def test_init_disabled_preload(self):
         action_space = ActionSpace(self.push_groups, disable_preload=True)
@@ -277,10 +280,13 @@ class TestActionSpace:
         assert action_space.num_action_types == 2
         assert action_space.action_types == [0, 1]
 
-        assert len(action_space.spaces) == 3
+        assert len(action_space.spaces) == 6
         assert action_space.spaces[0].n == 2
-        assert action_space.spaces[1] == action_space.push_space
-        assert action_space.spaces[2] == action_space.preload_space
+        assert action_space.spaces[1].n == action_space.push_space.spaces[0].n
+        assert action_space.spaces[2].n == action_space.push_space.spaces[1].n
+        assert action_space.spaces[3].n == action_space.push_space.spaces[2].n
+        assert action_space.spaces[4].n == action_space.preload_space.spaces[0].n
+        assert action_space.spaces[5].n == action_space.preload_space.spaces[1].n
 
     def test_sample_returns_infinitely_when_actions_not_used(self):
         action_space = ActionSpace(self.push_groups)
@@ -290,7 +296,7 @@ class TestActionSpace:
 
         for _ in range(num_iters):
             action_id = action_space.sample()
-            action_type, push_action, preload_action = action_id
+            action_type, push_action, preload_action = (action_id[0], tuple(action_id[1:4]), tuple(action_id[4:]))
 
             if action_type == 0:
                 assert action_id == NOOP_ACTION_ID, "should be a noop"
@@ -306,7 +312,7 @@ class TestActionSpace:
             all_actions.append(action_id)
 
         # Should return approximately 4-48-48 proportion of each type of action
-        action_types = Counter(a for (a, _, _) in all_actions)
+        action_types = Counter(a for (a, *_) in all_actions)
         assert (num_iters * 0.04 * 0.90) <= action_types[0] <= (num_iters * 0.04 * 1.1)
         assert (num_iters * 0.48 * 0.95) <= action_types[1] <= (num_iters * 0.48 * 1.05)
         assert (num_iters * 0.48 * 0.95) <= action_types[2] <= (num_iters * 0.48 * 1.05)
@@ -320,7 +326,7 @@ class TestActionSpace:
 
         for _ in range(num_iters):
             action_id = action_space.sample()
-            action_type, push_action, preload_action = action_id
+            action_type, push_action, preload_action = (action_id[0], tuple(action_id[1:4]), tuple(action_id[4:]))
 
             if action_type == 0:
                 assert action_id == NOOP_ACTION_ID, "should be a noop"
@@ -334,7 +340,7 @@ class TestActionSpace:
             all_actions.append(action_id)
 
         # Should return approximately 4-96 proportion of each type of action
-        action_types = Counter(a for (a, _, _) in all_actions)
+        action_types = Counter(a for (a, *_) in all_actions)
         assert (num_iters * 0.04 * 0.8) <= action_types[0] <= (num_iters * 0.04 * 1.2)
         assert (num_iters * 0.96 * 0.95) <= action_types[1] <= (num_iters * 0.96 * 1.05)
         assert sum(action_types.values()) == num_iters == len(all_actions)
@@ -347,7 +353,7 @@ class TestActionSpace:
 
         for _ in range(num_iters):
             action_id = action_space.sample()
-            action_type, push_action, preload_action = action_id
+            action_type, push_action, preload_action = (action_id[0], tuple(action_id[1:4]), tuple(action_id[4:]))
 
             if action_type == 0:
                 assert action_id == NOOP_ACTION_ID, "should be a noop"
@@ -361,7 +367,7 @@ class TestActionSpace:
             all_actions.append(action_id)
 
         # Should return approximately 4-96 proportion of each type of action
-        action_types = Counter(a for (a, _, _) in all_actions)
+        action_types = Counter(a for (a, *_) in all_actions)
         assert (num_iters * 0.04 * 0.8) <= action_types[0] <= (num_iters * 0.04 * 1.2)
         assert (num_iters * 0.96 * 0.95) <= action_types[1] <= (num_iters * 0.96 * 1.05)
         assert sum(action_types.values()) == num_iters == len(all_actions)
@@ -377,7 +383,7 @@ class TestActionSpace:
         all_actions = set()
         for i in range(num_iters):
             action_id = action_space.sample()
-            action_type, _, _ = action_id
+            action_type, *_ = action_id
 
             if action_type == 0 and action_space.empty():
                 break
