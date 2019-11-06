@@ -23,12 +23,8 @@ class PushActionSpace(gym.spaces.MultiDiscrete):
     """
     PushActionSpace defines the valid set of possible push actions and faciliates the
     selection and management of actions as the agent explores. As actions are
-    used, ActionSpace should be notified so that subsequent action selections
-    do not result in repeated or invalid actions.Action
-
-    ActionSpace uses a conditional geometric probability distribution for selecting
-    push and source resources (in that order) and biases selection towards earlier
-    resources
+    used, PushActionSpace should be notified so that subsequent action selections
+    do not result in repeated or invalid Actions
     """
 
     def __init__(self, push_groups: List[PushGroup]):
@@ -101,6 +97,13 @@ class PushActionSpace(gym.spaces.MultiDiscrete):
 
 
 class PreloadActionSpace(gym.spaces.MultiDiscrete):
+    """
+    PreloadActionSpace defines the valid set of possible preload actions and faciliates the
+    selection and management of actions as the agent explores. As actions are
+    used, PreloadctionSpace should be notified so that subsequent action selections
+    do not result in repeated or invalid Actions
+    """
+
     def __init__(self, push_groups: List[PushGroup]):
         self.order_to_resource_map = {r.order: r for group in push_groups for r in group.resources}
         self.preload_list = sorted([r.order for group in push_groups for r in group.resources if r.order != 0])
@@ -154,6 +157,13 @@ class PreloadActionSpace(gym.spaces.MultiDiscrete):
 
 
 class ActionSpace(gym.spaces.Tuple):
+    """
+    ActionSpace is a combination of a PushActionSpace and PreloadActionSpace and returns random
+    actions from either one randomly, or chooses a no-op. It keeps track of which resources have been
+    pushed/preloaded and notifies the underlying PushActionSpace and PreloadActionSpace respectively so that
+    resources that were pushed are not preloaded, and vice-versa.
+    """
+
     def __init__(self, push_groups: List[PushGroup], *, disable_push: bool = False, disable_preload: bool = False):
         assert not (disable_preload and disable_push), "Both push and preload cannot be disabled"
 
