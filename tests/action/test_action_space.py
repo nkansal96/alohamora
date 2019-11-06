@@ -10,13 +10,6 @@ from blaze.action.action_space import ActionSpace, PreloadActionSpace, PushActio
 from tests.mocks.config import get_push_groups, convert_push_groups_to_push_pairs
 
 
-def to_tuple(o):
-    try:
-        return tuple(map(to_tuple, o))
-    except TypeError:
-        return o
-
-
 class TestPushActionSpace:
     def setup(self):
         self.push_groups = [group for group in get_push_groups() if group.trainable]
@@ -24,17 +17,18 @@ class TestPushActionSpace:
         self.action_space.seed(2048)  # for deterministic output
 
     def test_init(self):
-        assert isinstance(self.action_space, gym.spaces.MultiDiscrete)
-        assert self.action_space.nvec.shape == (3,)
+        assert isinstance(self.action_space, gym.spaces.Tuple)
+        assert len(self.action_space.spaces) == 3
+        assert all(isinstance(space, gym.spaces.Discrete) for space in self.action_space.spaces)
 
         max_group_id = max(g.id for g in self.push_groups)
         assert self.action_space.max_group_id == max_group_id
-        assert self.action_space.nvec[0] == 1 + max_group_id
+        assert self.action_space.spaces[0].n == 1 + max_group_id
 
         max_source_id = max(r.source_id for g in self.push_groups for r in g.resources)
         assert self.action_space.max_source_id == max_source_id
-        assert self.action_space.nvec[1] == 1 + max_source_id
-        assert self.action_space.nvec[2] == 1 + max_source_id
+        assert self.action_space.spaces[1].n == 1 + max_source_id
+        assert self.action_space.spaces[2].n == 1 + max_source_id
 
         all_source_id = set([r for g, v in self.action_space.group_id_to_source_id.items() for r in v])
         all_resources = set([r for g, v in self.action_space.group_id_to_resource_map.items() for r in v.values()])
@@ -49,13 +43,13 @@ class TestPushActionSpace:
 
         for _ in range(50):
             action_id = action_space.sample()
-            assert (action_id != NOOP_PUSH_ACTION_ID).any(), "Should not return a NOOP"
-            all_actions.append(tuple(action_id))
+            assert action_id != NOOP_PUSH_ACTION_ID, "Should not return a NOOP"
+            all_actions.append(action_id)
 
         # Chances are it returned some pushed object more than once
         counter = Counter((g, p) for (g, _, p) in all_actions)
         assert sum(counter.values()) == 50
-        assert len(counter.keys()) < 10
+        assert len(counter.keys()) <= 10
         assert any(v > 1 for v in counter.values()), "Should have returned a pushed object more than once"
 
         # Chances are it returned some action more than once
@@ -72,11 +66,11 @@ class TestPushActionSpace:
         all_actions = set()
         for i in range(50):
             action_id = action_space.sample()
-            if (action_id == NOOP_PUSH_ACTION_ID).all():
+            if action_id == NOOP_PUSH_ACTION_ID:
                 break
             assert not action_space.empty()
-            assert tuple(action_id) not in all_actions
-            all_actions.add(tuple(action_id))
+            assert action_id not in all_actions
+            all_actions.add(action_id)
             action_space.use_action(action_space.decode_action_id(action_id))
         else:
             # If there was no break, sample did not stop
@@ -104,7 +98,7 @@ class TestPushActionSpace:
             for source in group.resources:
                 for push in group.resources:
                     action_id = (group.id, source.source_id, push.source_id)
-                    if action_id == tuple(NOOP_PUSH_ACTION_ID):
+                    if action_id == NOOP_PUSH_ACTION_ID:
                         continue
                     if source.source_id < push.source_id:
                         assert self.action_space.contains(action_id)
@@ -150,13 +144,13 @@ class TestPreloadActionSpace:
         self.all_resources = set(r for g in self.push_groups for r in g.resources)
 
     def test_init(self):
-        assert isinstance(self.action_space, gym.spaces.MultiDiscrete)
-        assert self.action_space.nvec.shape == (2,)
+        assert isinstance(self.action_space, gym.spaces.Tuple)
+        assert len(self.action_space.spaces) == 2
 
         max_order = max(r.order for r in self.all_resources)
 
-        assert self.action_space.nvec[0] == max_order + 1
-        assert self.action_space.nvec[1] == max_order + 1
+        assert self.action_space.spaces[0].n == max_order + 1
+        assert self.action_space.spaces[1].n == max_order + 1
 
         assert set(self.action_space.order_to_resource_map.values()) == self.all_resources
 
@@ -175,13 +169,13 @@ class TestPreloadActionSpace:
 
         for _ in range(50):
             action_id = action_space.sample()
-            assert (action_id != NOOP_PRELOAD_ACTION_ID).any(), "Should not return a NOOP"
-            all_actions.append(tuple(action_id))
+            assert action_id != NOOP_PRELOAD_ACTION_ID, "Should not return a NOOP"
+            all_actions.append(action_id)
 
         # Chances are it returned some preloaded object more than once
         counter = Counter(p for (_, p) in all_actions)
         assert sum(counter.values()) == 50
-        assert len(counter.keys()) < 13
+        assert len(counter.keys()) <= 13
         assert any(v > 1 for v in counter.values()), "Should have returned a preloaded object more than once"
 
         # Chances are it returned some action more than once
@@ -198,11 +192,11 @@ class TestPreloadActionSpace:
         all_actions = set()
         for i in range(50):
             action_id = action_space.sample()
-            if (action_id == NOOP_PRELOAD_ACTION_ID).all():
+            if action_id == NOOP_PRELOAD_ACTION_ID:
                 break
             assert not action_space.empty()
-            assert tuple(action_id) not in all_actions
-            all_actions.add(tuple(action_id))
+            assert action_id not in all_actions
+            all_actions.add(action_id)
             action_space.use_action(action_space.decode_action_id(action_id))
         else:
             # If there was no break, sample did not stop
@@ -227,7 +221,7 @@ class TestPreloadActionSpace:
         for source in self.all_resources:
             for preload in self.all_resources:
                 action_id = (source.order, preload.order)
-                if action_id == tuple(NOOP_PRELOAD_ACTION_ID):
+                if action_id == NOOP_PRELOAD_ACTION_ID:
                     continue
                 if source.order < preload.order:
                     assert self.action_space.contains(action_id)
@@ -299,17 +293,17 @@ class TestActionSpace:
             action_type, push_action, preload_action = action_id
 
             if action_type == 0:
-                assert to_tuple(action_id) == to_tuple(NOOP_ACTION_ID), "should be a noop"
+                assert action_id == NOOP_ACTION_ID, "should be a noop"
             if action_type == 1:
-                assert to_tuple(push_action) != to_tuple(NOOP_PUSH_ACTION_ID), "push should not be a noop"
-                assert to_tuple(preload_action) == to_tuple(NOOP_PRELOAD_ACTION_ID), "preload should be noop"
+                assert push_action != NOOP_PUSH_ACTION_ID, "push should not be a noop"
+                assert preload_action == NOOP_PRELOAD_ACTION_ID, "preload should be noop"
                 assert action_space.push_space.contains(push_action)
             if action_type == 2:
-                assert to_tuple(push_action) == to_tuple(NOOP_PUSH_ACTION_ID), "preload should not be noop"
-                assert to_tuple(preload_action) != to_tuple(NOOP_PRELOAD_ACTION_ID), "push should be a noop"
+                assert push_action == NOOP_PUSH_ACTION_ID, "preload should not be noop"
+                assert preload_action != NOOP_PRELOAD_ACTION_ID, "push should be a noop"
                 assert action_space.preload_space.contains(preload_action)
 
-            all_actions.append(tuple(action_id))
+            all_actions.append(action_id)
 
         # Should return approximately 4-48-48 proportion of each type of action
         action_types = Counter(a for (a, _, _) in all_actions)
@@ -329,15 +323,15 @@ class TestActionSpace:
             action_type, push_action, preload_action = action_id
 
             if action_type == 0:
-                assert to_tuple(action_id) == to_tuple(NOOP_ACTION_ID), "should be a noop"
+                assert action_id == NOOP_ACTION_ID, "should be a noop"
             if action_type == 1:
-                assert to_tuple(push_action) != to_tuple(NOOP_PUSH_ACTION_ID), "push should not be a noop"
-                assert to_tuple(preload_action) == to_tuple(NOOP_PRELOAD_ACTION_ID), "preload should be noop"
+                assert push_action != NOOP_PUSH_ACTION_ID, "push should not be a noop"
+                assert preload_action == NOOP_PRELOAD_ACTION_ID, "preload should be noop"
                 assert action_space.push_space.contains(push_action)
             if action_type == 2:
                 assert False, "action_type == 2 should not be possible"
 
-            all_actions.append(tuple(action_id))
+            all_actions.append(action_id)
 
         # Should return approximately 4-96 proportion of each type of action
         action_types = Counter(a for (a, _, _) in all_actions)
@@ -356,15 +350,15 @@ class TestActionSpace:
             action_type, push_action, preload_action = action_id
 
             if action_type == 0:
-                assert to_tuple(action_id) == to_tuple(NOOP_ACTION_ID), "should be a noop"
+                assert action_id == NOOP_ACTION_ID, "should be a noop"
             if action_type == 1:
-                assert to_tuple(push_action) == to_tuple(NOOP_PUSH_ACTION_ID), "push should be a noop"
-                assert to_tuple(preload_action) != to_tuple(NOOP_PRELOAD_ACTION_ID), "preload should not be noop"
+                assert push_action == NOOP_PUSH_ACTION_ID, "push should be a noop"
+                assert preload_action != NOOP_PRELOAD_ACTION_ID, "preload should not be noop"
                 assert action_space.push_space.contains(push_action)
             if action_type == 2:
                 assert False, "action_type == 2 should not be possible"
 
-            all_actions.append(tuple(action_id))
+            all_actions.append(action_id)
 
         # Should return approximately 4-96 proportion of each type of action
         action_types = Counter(a for (a, _, _) in all_actions)
@@ -388,8 +382,8 @@ class TestActionSpace:
             if action_type == 0 and action_space.empty():
                 break
 
-            assert to_tuple(action_id) not in all_actions
-            all_actions.add(to_tuple(action_id))
+            assert action_id not in all_actions
+            all_actions.add(action_id)
             action_space.use_action(action_space.decode_action(action_id))
         else:
             # If there was no break, sample did not stop

@@ -19,7 +19,7 @@ from .action import (
 )
 
 
-class PushActionSpace(gym.spaces.MultiDiscrete):
+class PushActionSpace(gym.spaces.Tuple):
     """
     PushActionSpace defines the valid set of possible push actions and faciliates the
     selection and management of actions as the agent explores. As actions are
@@ -32,9 +32,14 @@ class PushActionSpace(gym.spaces.MultiDiscrete):
         self.max_source_id = max(r.source_id for group in push_groups for r in group.resources)
         self.group_id_to_source_id = {group.id: [r.source_id for r in group.resources] for group in push_groups}
         self.group_id_to_resource_map = {group.id: {r.source_id: r for r in group.resources} for group in push_groups}
-        super().__init__((self.max_group_id + 1, self.max_source_id + 1, self.max_source_id + 1))
 
-    def sample(self):
+        super().__init__((
+            gym.spaces.Discrete(self.max_group_id + 1),
+            gym.spaces.Discrete(self.max_source_id + 1),
+            gym.spaces.Discrete(self.max_source_id + 1),
+        ))
+
+    def sample(self) -> PushActionIDType:
         if self.empty():
             return NOOP_PUSH_ACTION_ID
 
@@ -52,10 +57,10 @@ class PushActionSpace(gym.spaces.MultiDiscrete):
         valid_sources = [r for r in self.group_id_to_source_id[g] if r < p]
         s = self.np_random.choice(valid_sources)
 
-        return np.array((g, s, p)).astype(np.int64)
+        return g, s, p
 
     def contains(self, x: PushActionIDType):
-        if tuple(x) == tuple(NOOP_PUSH_ACTION_ID):
+        if x == NOOP_PUSH_ACTION_ID:
             return True
 
         g, s, p = x
@@ -68,12 +73,12 @@ class PushActionSpace(gym.spaces.MultiDiscrete):
 
     def decode_action_id(self, action_id: PushActionIDType) -> Action:
         """ Returns the Action object corresponding to the encoded action ID """
-        if tuple(action_id) == tuple(NOOP_PUSH_ACTION_ID) or not self.contains(action_id):
+        if action_id == NOOP_PUSH_ACTION_ID or not self.contains(action_id):
             return Action()
 
         g, s, p = action_id
         return Action(
-            action_id=tuple(action_id),
+            action_id=action_id,
             is_push=True,
             source=self.group_id_to_resource_map[g][s],
             push=self.group_id_to_resource_map[g][p],
@@ -96,7 +101,7 @@ class PushActionSpace(gym.spaces.MultiDiscrete):
         self.group_id_to_source_id[g] = [r for r in self.group_id_to_source_id[g] if r != p]
 
 
-class PreloadActionSpace(gym.spaces.MultiDiscrete):
+class PreloadActionSpace(gym.spaces.Tuple):
     """
     PreloadActionSpace defines the valid set of possible preload actions and faciliates the
     selection and management of actions as the agent explores. As actions are
@@ -109,9 +114,13 @@ class PreloadActionSpace(gym.spaces.MultiDiscrete):
         self.preload_list = sorted([r.order for group in push_groups for r in group.resources if r.order != 0])
         self.source_list = sorted([r.order for group in push_groups for r in group.resources])
         self.max_order = self.source_list[-1]
-        super().__init__((self.max_order + 1, self.max_order + 1))
 
-    def sample(self):
+        super().__init__((
+            gym.spaces.Discrete(self.max_order + 1),
+            gym.spaces.Discrete(self.max_order + 1),
+        ))
+
+    def sample(self) -> PreloadActionIDType:
         if self.empty():
             return NOOP_PRELOAD_ACTION_ID
 
@@ -121,10 +130,10 @@ class PreloadActionSpace(gym.spaces.MultiDiscrete):
         # choose a source URL
         valid_sources = [r for r in self.source_list if r < preload]
         source = self.np_random.choice(valid_sources)
-        return np.array((source, preload)).astype(np.int64)
+        return source, preload
 
     def contains(self, x: PreloadActionIDType):
-        if tuple(x) == tuple(NOOP_PRELOAD_ACTION_ID):
+        if x == NOOP_PRELOAD_ACTION_ID:
             return True
 
         source, preload = x
@@ -132,11 +141,11 @@ class PreloadActionSpace(gym.spaces.MultiDiscrete):
 
     def decode_action_id(self, action_id: PreloadActionIDType) -> Action:
         """ Returns the Action object corresponding to the encoded action ID """
-        if not self.contains(action_id) or tuple(action_id) == tuple(NOOP_PRELOAD_ACTION_ID):
+        if action_id == NOOP_PRELOAD_ACTION_ID or not self.contains(action_id):
             return Action()
         source, preload = action_id
         return Action(
-            action_id=tuple(action_id),
+            action_id=action_id,
             is_push=False,
             source=self.order_to_resource_map[source],
             push=self.order_to_resource_map[preload],
@@ -193,16 +202,16 @@ class ActionSpace(gym.spaces.Tuple):
         # Push if action_type is 1 and push is not disabled
         if action_type == 1 and not self.disable_push:
             push_action = self.push_space.sample()
-            if tuple(push_action) == tuple(NOOP_PUSH_ACTION_ID):
+            if push_action == NOOP_PUSH_ACTION_ID:
                 return NOOP_ACTION_ID
-            return np.array((action_type, push_action, NOOP_PRELOAD_ACTION_ID))
+            return action_type, push_action, NOOP_PRELOAD_ACTION_ID
 
         # Preload if action type is 2 or action_type is 1 and push is disabled
         if action_type == 2 or self.disable_push:
             preload_action = self.preload_space.sample()
-            if tuple(preload_action) == tuple(NOOP_PRELOAD_ACTION_ID):
+            if preload_action == NOOP_PRELOAD_ACTION_ID:
                 return NOOP_ACTION_ID
-            return np.array((action_type, NOOP_PUSH_ACTION_ID, preload_action))
+            return action_type, NOOP_PUSH_ACTION_ID, preload_action
 
         # The case where preload is disabled and action_type is 2 will never happen
         return NOOP_ACTION_ID
