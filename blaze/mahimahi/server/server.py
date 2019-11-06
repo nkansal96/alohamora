@@ -115,7 +115,7 @@ def start_server(
         # Create the interfaces, start the DNS server, and start the NGINX server
         with interfaces:
             with DNSServer(host_ip_map):
-                # If wait lasts for more than 2 seconds, a TimeoutError will be raised, which is okay since it
+                # If wait lasts for more than 0.5 seconds, a TimeoutError will be raised, which is okay since it
                 # means that nginx is running successfully. If it finishes sooner, it means it crashed and
                 # we should raise an exception
                 try:
