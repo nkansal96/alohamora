@@ -24,7 +24,7 @@ class TestMahiMahiConfig:
         self.action_space = ActionSpace(get_push_groups())
         self.client_environment = get_random_client_environment()
         self.policy = Policy(self.action_space)
-        while not self.policy.completed:
+        while len(self.policy) < 100:
             self.policy.apply_action(self.action_space.sample())
 
     def test_init_without_policy(self):

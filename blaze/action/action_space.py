@@ -2,19 +2,26 @@
 This module contains the main class representing an action that an agent can
 take when exploring push policies
 """
-from typing import Dict, List, Tuple
+from typing import List
 
 import gym
 import numpy as np
 
-from blaze.config.environment import PushGroup, Resource
-from blaze.logger import logger
-from .action import Action
+from blaze.config.environment import PushGroup
+from .action import (
+    Action,
+    ActionIDType,
+    PreloadActionIDType,
+    PushActionIDType,
+    NOOP_ACTION_ID,
+    NOOP_PRELOAD_ACTION_ID,
+    NOOP_PUSH_ACTION_ID,
+)
 
 
-class ActionSpace(gym.spaces.Discrete):
+class PushActionSpace(gym.spaces.MultiDiscrete):
     """
-    ActionSpace defines the valid set of possible actions and faciliates the
+    PushActionSpace defines the valid set of possible push actions and faciliates the
     selection and management of actions as the agent explores. As actions are
     used, ActionSpace should be notified so that subsequent action selections
     do not result in repeated or invalid actions.Action
@@ -25,53 +32,60 @@ class ActionSpace(gym.spaces.Discrete):
     """
 
     def __init__(self, push_groups: List[PushGroup]):
-        self.rand = np.random.RandomState()
-        self.push_groups = push_groups
-        self.push_resources: List[Resource] = []
-        self.action_id_map: Dict[Tuple[int, int, int], int] = {}
-        self.actions: List[Action] = [Action()]
-        for group in push_groups:
-            max_depth = 100  # max(20, len(group.resources) // 3)
-            for source in group.resources:
-                if source.source_id != 0:
-                    self.push_resources.append(source)
-                for push in group.resources[source.source_id + 1 : (source.source_id + 1 + max_depth)]:
-                    self.action_id_map[(group.id, source.source_id, push.source_id)] = len(self.actions)
-                    self.actions.append(Action(len(self.actions), is_push=True, source=source, push=push))
-        self.push_resources.sort(key=lambda r: r.order)
-        logger.with_namespace("action_space").debug("initialized push resources", total=len(self.push_resources))
-        super(ActionSpace, self).__init__(len(self.actions))
-
-    def seed(self, seed):
-        self.rand.seed(seed)
+        self.max_group_id = max(group.id for group in push_groups)
+        self.max_source_id = max(r.source_id for group in push_groups for r in group.resources)
+        self.group_id_to_source_id = {group.id: [r.source_id for r in group.resources] for group in push_groups}
+        self.group_id_to_resource_map = {group.id: {r.source_id: r for r in group.resources} for group in push_groups}
+        super().__init__((self.max_group_id + 1, self.max_source_id + 1, self.max_source_id + 1))
 
     def sample(self):
-        # xxTODO: LIMIT THIS TO THE ACTION SPACE DEPTH RATHER THAN ALL RESOURCES IN THE PUSH GROUP
-        # First decide whether we will push anything at all
-        if self.rand.rand() < 0.2:
-            return 0
+        if self.empty():
+            return NOOP_PUSH_ACTION_ID
 
-        # Otherwise choose a push URL
-        i = (self.rand.geometric(0.1) - 1) % len(self.push_resources)
-        push_res = self.push_resources[i]
-        p = push_res.source_id
-        g = push_res.group_id
+        # Choose a push group
+        g = -1
+        while g not in self.group_id_to_source_id or len(self.group_id_to_source_id[g]) <= 1:
+            g = self.np_random.choice(list(self.group_id_to_source_id.keys()))
+
+        # Choose a push URL
+        p = 0
+        while p == 0:
+            p = self.np_random.choice(self.group_id_to_source_id[g])
 
         # Choose a source URL
-        group = next(group for group in self.push_groups if group.id == g)
-        source_resources = [res for res in group.resources if res.order < push_res.order]
-        source_resources.sort(key=lambda r: r.order)
-        j = len(source_resources) - 1 - (self.rand.geometric(0.01) - 1) % len(source_resources)
-        s = source_resources[j].source_id
+        valid_sources = [r for r in self.group_id_to_source_id[g] if r < p]
+        s = self.np_random.choice(valid_sources)
 
-        return self.action_id_map[(g, s, p)]
+        return np.array((g, s, p)).astype(np.int64)
 
-    def contains(self, x):
-        return 0 <= x < len(self.actions)
+    def contains(self, x: PushActionIDType):
+        if tuple(x) == tuple(NOOP_PUSH_ACTION_ID):
+            return True
 
-    def decode_action_id(self, action_id) -> Action:
+        g, s, p = x
+        return (
+            g in self.group_id_to_source_id
+            and s in self.group_id_to_resource_map[g].keys()
+            and p in self.group_id_to_resource_map[g].keys()
+            and s < p
+        )
+
+    def decode_action_id(self, action_id: PushActionIDType) -> Action:
         """ Returns the Action object corresponding to the encoded action ID """
-        return self.actions[action_id]
+        if tuple(action_id) == tuple(NOOP_PUSH_ACTION_ID) or not self.contains(action_id):
+            return Action()
+
+        g, s, p = action_id
+        return Action(
+            action_id=tuple(action_id),
+            is_push=True,
+            source=self.group_id_to_resource_map[g][s],
+            push=self.group_id_to_resource_map[g][p],
+        )
+
+    def empty(self):
+        """ Returns True if there are no more valid actions in the action space """
+        return all(len(v) <= 1 for v in self.group_id_to_source_id.values())
 
     def use_action(self, action: Action):
         """
@@ -79,15 +93,126 @@ class ActionSpace(gym.spaces.Discrete):
         of pushable resources, effectively removing a subset of the actions to prevent
         pushing the same resource twice. If the action was a noop, it doesn't do anything
         """
-        log = logger.with_namespace("action_space.use_action")
         if action.is_noop:
-            log.debug("noop: doing nothing", action=action)
             return
-        for i, res in enumerate(self.push_resources):
-            if res.order == action.push.order:
-                del self.push_resources[i]
-                log.debug("removed push resource", push=action.push.url, remaining=len(self.push_resources))
-                break
+        g = action.push.group_id
+        p = action.push.source_id
+        self.group_id_to_source_id[g] = [r for r in self.group_id_to_source_id[g] if r != p]
 
-    def __len__(self):
-        return len(self.push_resources)
+
+class PreloadActionSpace(gym.spaces.MultiDiscrete):
+    def __init__(self, push_groups: List[PushGroup]):
+        self.order_to_resource_map = {r.order: r for group in push_groups for r in group.resources}
+        self.preload_list = sorted([r.order for group in push_groups for r in group.resources if r.order != 0])
+        self.source_list = sorted([r.order for group in push_groups for r in group.resources])
+        self.max_order = self.source_list[-1]
+        super().__init__((self.max_order + 1, self.max_order + 1))
+
+    def sample(self):
+        if self.empty():
+            return NOOP_PRELOAD_ACTION_ID
+
+        # choose a preload URL
+        preload = self.np_random.choice(self.preload_list)
+
+        # choose a source URL
+        valid_sources = [r for r in self.source_list if r < preload]
+        source = self.np_random.choice(valid_sources)
+        return np.array((source, preload)).astype(np.int64)
+
+    def contains(self, x: PreloadActionIDType):
+        if tuple(x) == tuple(NOOP_PRELOAD_ACTION_ID):
+            return True
+
+        source, preload = x
+        return 0 <= source < preload <= self.max_order
+
+    def decode_action_id(self, action_id: PreloadActionIDType) -> Action:
+        """ Returns the Action object corresponding to the encoded action ID """
+        if not self.contains(action_id) or tuple(action_id) == tuple(NOOP_PRELOAD_ACTION_ID):
+            return Action()
+        source, preload = action_id
+        return Action(
+            action_id=tuple(action_id),
+            is_push=False,
+            source=self.order_to_resource_map[source],
+            push=self.order_to_resource_map[preload],
+        )
+
+    def use_action(self, action: Action):
+        """
+        Marks the given action as used. It removes the pushed resource from the list
+        of pushable resources, effectively removing a subset of the actions to prevent
+        pushing the same resource twice. If the action was a noop, it doesn't do anything
+        """
+        if not action.is_noop:
+            self.preload_list = [r for r in self.preload_list if r != action.push.order]
+
+    def empty(self):
+        """ Returns true if there are no more valid actions in the action space """
+        return not self.preload_list
+
+
+class ActionSpace(gym.spaces.Tuple):
+    def __init__(self, push_groups: List[PushGroup], *, disable_push: bool = False, disable_preload: bool = False):
+        assert not (disable_preload and disable_push), "Both push and preload cannot be disabled"
+
+        self.push_groups = push_groups
+        self.disable_push = disable_push
+        self.disable_preload = disable_preload
+
+        self.num_action_types = 2 if disable_push or disable_preload else 3
+        self.action_types = list(range(self.num_action_types))
+        self.action_type_space = gym.spaces.Discrete(self.num_action_types)
+        self.push_space = PushActionSpace(push_groups)
+        self.preload_space = PreloadActionSpace(push_groups)
+        super().__init__((self.action_type_space, self.push_space, self.preload_space))
+
+    def seed(self, seed):
+        self.np_random.seed(seed)
+        super().seed(seed)
+
+    def sample(self):
+        action_weights = [0.04] + ([(0.96 / (self.num_action_types - 1))] * (self.num_action_types - 1))
+        action_type = self.np_random.choice(self.num_action_types, size=1, p=action_weights)[0]
+
+        # Case: do nothing
+        if action_type == 0:
+            return NOOP_ACTION_ID
+
+        # Push if action_type is 1 and push is not disabled
+        if action_type == 1 and not self.disable_push:
+            push_action = self.push_space.sample()
+            if tuple(push_action) == tuple(NOOP_PUSH_ACTION_ID):
+                return NOOP_ACTION_ID
+            return np.array((action_type, push_action, NOOP_PRELOAD_ACTION_ID))
+
+        # Preload if action type is 2 or action_type is 1 and push is disabled
+        if action_type == 2 or self.disable_push:
+            preload_action = self.preload_space.sample()
+            if tuple(preload_action) == tuple(NOOP_PRELOAD_ACTION_ID):
+                return NOOP_ACTION_ID
+            return np.array((action_type, NOOP_PUSH_ACTION_ID, preload_action))
+
+        # The case where preload is disabled and action_type is 2 will never happen
+        return NOOP_ACTION_ID
+
+    def decode_action(self, action: ActionIDType) -> Action:
+        """ Decodes the given action ID into an Action object """
+        (action_type, push_id, preload_id) = action
+        if action_type == 0:
+            return Action()
+
+        is_push = action_type == 1 and not self.disable_push
+        if is_push:
+            return self.push_space.decode_action_id(push_id)
+        return self.preload_space.decode_action_id(preload_id)
+
+    def use_action(self, action: Action):
+        """ Marks the action as used in both the push and preload spaces """
+        self.push_space.use_action(action)
+        self.preload_space.use_action(action)
+
+    def empty(self):
+        """ Returns true if there are no more valid actions in the action space """
+        return self.push_space.empty() and self.preload_space.empty()

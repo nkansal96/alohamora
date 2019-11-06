@@ -24,17 +24,13 @@ class TestModelInstance:
         assert not m._policy
 
     def test_policy(self):
-        push_pairs = convert_push_groups_to_push_pairs(self.trainable_push_groups)
         observation_space = get_observation_space()
         action_space = ActionSpace(self.trainable_push_groups)
         mock_agent = MockAgent(action_space)
         m = ModelInstance(mock_agent, self.env_config, self.client_environment)
         policy = m.policy
         assert policy
-        assert policy.completed
         assert len(mock_agent.observations) == len(policy)
-        assert all((source, p) in push_pairs for (source, push) in policy.push for p in push)
-        assert all((source, p) in push_pairs for (source, push) in policy.preload for p in push)
         assert all(observation_space.contains(obs) for obs in mock_agent.observations)
 
     def test_push_policy_returns_cached_policy(self):

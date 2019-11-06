@@ -5,9 +5,12 @@ representation and the actual URL representation
 """
 
 import collections
-from typing import Optional, Set
+from typing import Optional, Set, Tuple, Union
+
+import numpy as np
 
 from blaze.config.environment import Resource, ResourceType
+from .action import Action
 from .action_space import ActionSpace
 
 
@@ -57,21 +60,6 @@ class Policy:
         return self.steps_taken
 
     @property
-    def total_steps(self):
-        """ Returns the maximum number of steps to take before completing the policy """
-        return min(self.total_actions, max(10, self.total_actions // 2))
-
-    @property
-    def steps_remaining(self):
-        """ Returns the number of steps remaining before the policy is complete """
-        return self.total_steps - self.steps_taken
-
-    @property
-    def completed(self):
-        """ Returns true if all steps have been taken """
-        return self.steps_remaining <= 0
-
-    @property
     def observable_push(self):
         """
         Returns the observable push policy, which is only the set of items that are a subset
@@ -101,17 +89,17 @@ class Policy:
                 policy["preload"][s.url] = [{"url": p.url, "type": ResourceType(p.type).name} for p in preload_list]
         return policy
 
-    def apply_action(self, action_id: int):
+    def apply_action(self, action: Union[Action, Tuple[int, Tuple[int, int, int], Tuple[int, int]]]):
         """ Given an encoded action, applies the action towards the push policy """
-        action = self.action_space.decode_action_id(action_id)
-        if not action.is_noop and action.push not in self.push_to_source:
-            if action.is_push:
+        if isinstance(action, (tuple, np.ndarray)):
+            action = self.action_space.decode_action(action)
+        if not action.is_noop:
+            if action.is_push and action.push not in self.push_to_source:
                 self.push_to_source[action.push] = action.source
                 self.source_to_push[action.source].add(action.push)
-            elif action.is_preload:
+            elif action.is_preload and action.push not in self.preload_to_source:
                 self.preload_to_source[action.push] = action.source
                 self.source_to_preload[action.source].add(action.push)
-            self.action_space.use_action(action)
         self.steps_taken += 1
         return not action.is_noop
 

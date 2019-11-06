@@ -19,6 +19,7 @@ class TestClient:
         self.trainable_push_groups = [group for group in self.push_groups if group.trainable]
         self.serve_config = get_serve_config()
         self.action_space = ActionSpace(self.trainable_push_groups)
+        self.action_space.seed(2048)
         self.mock_agent = mock_agent_with_action_space(self.action_space)
         self.saved_model = SavedModel(self.mock_agent, Environment, "/tmp/model_location")
 
@@ -41,6 +42,8 @@ class TestClient:
                 train_domain_globs=[group.name for group in self.trainable_push_groups],
             )
 
-            assert policy
+            assert policy is not None
+            assert len(list(policy.push)) > 0
+            assert len(list(policy.preload)) > 0
         finally:
             server.stop()
