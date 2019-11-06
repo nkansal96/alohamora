@@ -202,7 +202,7 @@ class RedirectByLuaBlock(Block):
             expanded = []
             for rule in rules:
                 if callable(rule):
-                    expanded.extend((level, rule()))
+                    expanded.append((level, rule()))
                 else:
                     expanded.append((level, rule))
             return expanded

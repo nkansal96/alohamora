@@ -1,6 +1,5 @@
 """ Implements the commands for training """
 import multiprocessing
-import os
 import sys
 
 from blaze.config.config import get_config
@@ -17,12 +16,6 @@ from . import command
     "--model", help="The RL technique to use while training", default="PPO", choices=["A3C", "APEX", "PPO"]
 )
 @command.argument("--cpus", help="Number of CPUs to use for training", default=multiprocessing.cpu_count(), type=int)
-@command.argument(
-    "--eval_results_dir",
-    help="Directory to store intermediate policy evaluation results (for debugging)",
-    default=None,
-    type=str,
-)
 @command.argument("--timesteps", help="Maximum number of timesteps to train for", default=500000000, type=int)
 @command.argument(
     "--manifest_file",
@@ -47,11 +40,7 @@ def train(args):
         log.error("invalid options: cannot specify both --resume and --no-resume")
         sys.exit(1)
 
-    # check and create eval results directory
-    if args.eval_results_dir:
-        os.makedirs(args.eval_results_dir, exist_ok=True)
-
-    log.info("starting train", name=args.name, model=args.model, eval_results_dir=args.eval_results_dir)
+    log.info("starting train", name=args.name, model=args.model)
 
     # import specified model
     if args.model == "A3C":
@@ -67,5 +56,5 @@ def train(args):
         experiment_name=args.name, model_dir=args.dir, num_cpus=args.cpus, max_timesteps=args.timesteps, resume=resume
     )
     env_config = EnvironmentConfig.load_file(args.manifest_file)
-    config = get_config(env_config, args.eval_results_dir)
+    config = get_config(env_config)
     model.train(train_config, config)

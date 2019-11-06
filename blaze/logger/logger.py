@@ -15,10 +15,11 @@ class Logger:
         self.time_start = time_start
         self.print_fn = print_fn
         self.context = context or {}
+        self.silent = False
 
     def log(self, level=None, namespace=None, message="", **context):
         """ Logs a message with the given level, namespace, message, and contextual information """
-        if level is None or level < self.min_level:
+        if level is None or level < self.min_level or self.silent:
             return
 
         level_str = "[" + level.color + str(level) + Style.RESET_ALL + "]"
@@ -76,3 +77,7 @@ class Logger:
     def critical(self, message, **context):
         """ Logs the given message with the critical level """
         self.log(level=Level.CRITICAL, message=message, **context)
+
+    def set_silence(self, silence: bool):
+        """ Temporarily enable/disable logging """
+        self.silent = silence

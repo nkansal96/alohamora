@@ -15,16 +15,10 @@ class MahiMahiConfig:
     """ MahiMahiConfig represents a configuration for some Mahimahi shells """
 
     def __init__(
-        self,
-        config: Config,
-        *,
-        push_policy: Optional[Policy] = None,
-        preload_policy: Optional[Policy] = None,
-        client_environment: Optional[ClientEnvironment] = None,
+        self, config: Config, *, policy: Optional[Policy] = None, client_environment: Optional[ClientEnvironment] = None
     ):
         self.config = config
-        self.push_policy = push_policy
-        self.preload_policy = preload_policy
+        self.policy = policy
         self.client_environment = client_environment
 
     def har_capture_cmd(
@@ -32,8 +26,7 @@ class MahiMahiConfig:
         *,
         share_dir: str,
         har_output_file_name: str,
-        push_policy_file_name: Optional[str] = None,
-        preload_policy_file_name: Optional[str] = None,
+        policy_file_name: Optional[str] = None,
         link_trace_file_name: str = "",
         capture_url: str,
     ) -> List[str]:
@@ -43,8 +36,7 @@ class MahiMahiConfig:
 
         :param share_dir: the directory to share to the container
         :param har_output_file_name: the file inside share_dir to write the HAR output to
-        :param push_policy_file_name: the file inside share_dir to read the push policy from (JSON formatted)
-        :param preload_policy_file_name: the file inside share_dir to read the preload policy from (JSON formatted)
+        :param policy_file_name: the file inside share_dir to read the push/preload policy from (JSON formatted)
         :param link_trace_file_name: the file inside share_dir to read the link trace from (Mahimahi formatted). If not
                                      specified, no mm-link shell will be spawned.
         :param capture_url: The url to capture HAR for
@@ -63,8 +55,7 @@ class MahiMahiConfig:
             "/mnt/filestore",
             "--output-file",
             f"/mnt/share/{har_output_file_name}",
-            *(["--push-policy-path", f"/mnt/share/{push_policy_file_name}"] if push_policy_file_name else []),
-            *(["--preload-policy-path", f"/mnt/share/{preload_policy_file_name}"] if preload_policy_file_name else []),
+            *(["--policy-path", f"/mnt/share/{policy_file_name}"] if policy_file_name else []),
             *(["--link-trace-path", f"/mnt/share/{link_trace_file_name}"] if link_trace_file_name else []),
             *(["--link-latency-ms", str(self.client_environment.latency // 2)] if self.client_environment else []),
             *(["--cpu-slowdown", str(self.client_environment.cpu_slowdown)] if self.client_environment else []),
@@ -135,10 +126,10 @@ class MahiMahiConfig:
     @property
     def formatted_push_policy(self):
         """ Returns the push policy in a format that Mahimahi understands """
-        if self.push_policy is None:
+        if self.policy is None:
             raise AttributeError("Push policy must be specified in the constructor")
         return "\n".join(
-            [f"{parent.url}\n{push.url}\n{push.type.name}" for (parent, deps) in self.push_policy for push in deps]
+            [f"{parent.url}\n{push.url}\n{push.type.name}" for (parent, deps) in self.policy.push for push in deps]
         )
 
     @property

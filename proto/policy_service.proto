@@ -38,18 +38,8 @@ message Page {
     repeated string train_domain_globs = 5;
 }
 
-message PolicyResource {
-    string url = 1;
-    string type = 2;
-}
-
-message PolicyEntry {
-    string source_url = 1;
-    repeated PolicyResource push_resources = 2;
-}
-
 message Policy {
-    repeated PolicyEntry policy = 1;
+    string policy = 1;
 }
 
 service PolicyService {

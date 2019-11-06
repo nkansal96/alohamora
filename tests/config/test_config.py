@@ -17,13 +17,12 @@ class TestConfig:
         )
         assert isinstance(conf, config.Config)
         assert conf.env_config is None
-        assert conf.eval_results_dir is None
 
     def test_items(self):
         conf = config.get_config()
         items = conf.items()
         assert all(len(v) == 2 for v in items)
-        assert len(items) == 8
+        assert len(items) == 7
 
 
 class TestGetConfig:
@@ -37,17 +36,10 @@ class TestGetConfig:
         assert conf.http2push_image == config.DEFAULT_HTTP2PUSH_IMAGE
         assert conf.chrome_bin == config.DEFAULT_CHROME_BIN
         assert conf.env_config is None
-        assert conf.eval_results_dir is None
 
     def test_get_config_with_env_config(self):
         conf = config.get_config(get_env_config())
         assert conf.env_config == get_env_config()
-        assert conf.eval_results_dir is None
-
-    def test_get_config_with_eval_results_dir(self):
-        conf = config.get_config(get_env_config(), "/tmp/results_dir")
-        assert conf.env_config == get_env_config()
-        assert conf.eval_results_dir == "/tmp/results_dir"
 
     @mock.patch.dict(
         os.environ, {"CHROME_BIN": "test_chrome", "MAHIMAHI_CERT_DIR": "test_mm_dir", "HTTP2PUSH_IMAGE": "test_image"}

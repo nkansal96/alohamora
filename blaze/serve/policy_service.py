@@ -1,4 +1,5 @@
 """ Defines classes and methods to instantiate, evaluate, and serve push policies """
+import json
 from typing import Dict
 
 import grpc
@@ -23,20 +24,14 @@ class PolicyService(policy_service_pb2_grpc.PolicyServiceServicer):
 
     def GetPolicy(self, request: policy_service_pb2.Page, context: grpc.ServicerContext) -> policy_service_pb2.Policy:
         if request.url not in self.policies:
-            self.policies[request.url] = self.create_push_policy(request)
+            self.policies[request.url] = self.create_policy(request)
         return self.policies[request.url]
 
-    def create_push_policy(self, page: policy_service_pb2.Page) -> policy_service_pb2.Policy:
+    def create_policy(self, page: policy_service_pb2.Page) -> policy_service_pb2.Policy:
         """ Creates and formats a push policy for the given page """
         model = self.create_model_instance(page)
         response = policy_service_pb2.Policy()
-        for (source, push_list) in model.push_policy:
-            policy_entry = response.policy.add()  # pylint: disable=no-member
-            policy_entry.source_url = source.url
-            for push in push_list:
-                push_resource = policy_entry.push_resources.add()
-                push_resource.url = push.url
-                push_resource.type = push.type.name
+        response.policy = json.dumps(model.policy.as_dict)
         return response
 
     def create_model_instance(self, page: policy_service_pb2.Page) -> ModelInstance:

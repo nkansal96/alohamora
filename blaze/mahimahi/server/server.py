@@ -18,11 +18,7 @@ from blaze.mahimahi.server.nginx_config import Config
 
 @contextlib.contextmanager
 def start_server(
-    replay_dir: str,
-    cert_path: Optional[str] = None,
-    key_path: Optional[str] = None,
-    push_policy: Optional[Policy] = None,
-    preload_policy: Optional[Policy] = None,
+    replay_dir: str, cert_path: Optional[str] = None, key_path: Optional[str] = None, policy: Optional[Policy] = None
 ):
     """
     Reads the given replay directory and sets up the NGINX server to replay it. This function also
@@ -31,12 +27,11 @@ def start_server(
     :param replay_dir: The directory to replay (should be mahimahi-recorded)
     :param cert_path: The path to the SSL certificate for the HTTP/2 NGINX server
     :param key_path: The path to the SSL key for the HTTP/2 NGINX server
-    :param push_policy: The path to the push policy to use for the server
-    :param preload_policy: The path to the preload policy to use for the server
+    :param policy: The path to the push/preload policy to use for the server
     """
     log = logger.with_namespace("replay_server")
-    push_policy = push_policy.as_dict if push_policy else {}
-    preload_policy = preload_policy.as_dict if preload_policy else {}
+    push_policy = policy.as_dict["push"] if policy else {}
+    preload_policy = policy.as_dict["preload"] if policy else {}
 
     # Load the file store into memory
     if not os.path.isdir(replay_dir):
@@ -120,12 +115,12 @@ def start_server(
         # Create the interfaces, start the DNS server, and start the NGINX server
         with interfaces:
             with DNSServer(host_ip_map):
-                # If wait lasts for more than 2 seconds, a TimeoutError will be raised, which is okay since it
+                # If wait lasts for more than 0.5 seconds, a TimeoutError will be raised, which is okay since it
                 # means that nginx is running successfully. If it finishes sooner, it means it crashed and
                 # we should raise an exception
                 try:
                     proc = subprocess.Popen(["/usr/local/openresty/nginx/sbin/nginx", "-c", conf_file])
-                    proc.wait(2)
+                    proc.wait(0.5)
                     raise RuntimeError("nginx exited unsuccessfully")
                 except subprocess.TimeoutExpired:
                     yield

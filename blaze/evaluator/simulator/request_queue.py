@@ -5,7 +5,7 @@ It also defines the RequestQueue, which simulates the network link.
 
 import copy
 from collections import defaultdict
-from typing import DefaultDict, List, NamedTuple, Set, Tuple
+from typing import DefaultDict, Dict, List, NamedTuple, Set, Tuple
 
 from blaze.config.environment import Resource
 from blaze.preprocess.url import Url
@@ -30,11 +30,12 @@ class Node(NamedTuple):
 class QueueItem:
     """ An item in the RequestQueue """
 
-    def __init__(self, node: Node, size: int, origin: str, delay_ms: int = 0):
+    def __init__(self, node: Node, size: int, origin: str, delay_ms: float = 0):
         self.node = node
         self.bytes_left = size
         self.origin = origin
         self.delay_ms_left = delay_ms
+        self.time_spent_downloading = 0
 
 
 class RequestQueue:
@@ -47,6 +48,7 @@ class RequestQueue:
         self.queue: List[QueueItem] = []
         self.delayed: List[QueueItem] = []
         self.connected_origins: Set[str] = set()
+        self.node_to_queue_item_map: Dict[Node, QueueItem] = {}
         # convert kilobits per second (kbps) to bytes per second (Bps)
         self.link_bandwidth_bps = bandwidth_kbps * (1000 / 8)
         self.bandwidth_kbps = bandwidth_kbps
@@ -70,6 +72,7 @@ class RequestQueue:
         rq = RequestQueue(self.bandwidth_kbps, self.rtt_latency_ms)
         rq.queue = [copy.copy(qi) for qi in self.queue]
         rq.delayed = [copy.copy(qi) for qi in self.delayed]
+        rq.node_to_queue_item_map = {node: copy.copy(qi) for (node, qi) in self.node_to_queue_item_map.items()}
         rq.connected_origins = set(self.connected_origins)
         rq.tcp_state = copy.deepcopy(self.tcp_state)
         return rq
@@ -97,7 +100,7 @@ class RequestQueue:
         self.queue = [qi for qi in self.queue if qi.node != node]
         self.delayed = [qi for qi in self.delayed if qi.node != node]
 
-    def add_with_delay(self, node: Node, delay_ms: int):
+    def add_with_delay(self, node: Node, delay_ms: float):
         """
         Adds an item to the queue but does not start it until the delay has occurred. Additionally,
         this method checks to see if a connection has been opened for the resource's origin. If not,
@@ -109,12 +112,13 @@ class RequestQueue:
         if domain not in self.connected_origins:
             num_rtts += 1
 
-        delay_ms = max(0, delay_ms + (num_rtts * self.rtt_latency_ms))
+        delay_ms = max(0.0, delay_ms + (num_rtts * self.rtt_latency_ms))
         queue_item = QueueItem(node, node.resource.size, domain, delay_ms)
         if delay_ms <= 0:
             self.queue.append(queue_item)
         else:
             self.delayed.append(queue_item)
+        self.node_to_queue_item_map[node] = queue_item
 
     def estimated_completion_time(self, node: Node) -> float:
         """
@@ -135,6 +139,24 @@ class RequestQueue:
             completed_nodes, step_ms = rq.step()
             total_time += step_ms
         return total_time
+
+    def time_spent_downloading(self, node: Node) -> float:
+        """
+        Returns the ms spent downloading the given node. It returns 0 if the node is not in the queue,
+        has not been scheduled to download, or has not downloaded any bytes yet
+        :param node: The node to get the time spent downloading for
+        """
+        if node not in self.node_to_queue_item_map:
+            return 0
+        return self.node_to_queue_item_map[node].time_spent_downloading
+
+    def remaining_delay(self, node: Node) -> float:
+        """
+        Returns the delay ms left for a node before it starts downloading
+        """
+        if node not in self.node_to_queue_item_map:
+            return 0
+        return self.node_to_queue_item_map[node].delay_ms_left
 
     def step(self) -> Tuple[List[Node], float]:
         """
@@ -169,6 +191,7 @@ class RequestQueue:
         # Reduce all queue elements by bytes_to_download
         for item in self.queue:
             item.bytes_left -= bytes_to_download
+            item.time_spent_downloading += time_ms_to_download
 
         # Update the idle time for each TCP state
         domains_downloaded_from = set(item.origin for item in self.queue)

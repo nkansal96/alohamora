@@ -196,13 +196,13 @@ def get_serve_config() -> ServeConfig:
     return ServeConfig(host="0.0.0.0", port=41568 + random.randint(0, 1000), max_workers=1)
 
 
-def get_config(eval_results_dir=None) -> Config:
-    return _get_config(env_config=get_env_config(), eval_results_dir=eval_results_dir)
+def get_config() -> Config:
+    return _get_config(env_config=get_env_config())
 
 
 def get_mahimahi_config() -> MahiMahiConfig:
     return MahiMahiConfig(
         config=get_config(),
-        push_policy=Policy(ActionSpace(get_push_groups())),
+        policy=Policy(ActionSpace(get_push_groups())),
         client_environment=get_random_client_environment(),
     )

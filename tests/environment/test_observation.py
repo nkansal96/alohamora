@@ -35,6 +35,8 @@ class TestGetObservation:
 
         # assert that all resources are not pushed initially
         assert all(res[3] == 0 for res in obs["resources"].values())
+        # assert that all resources are not preloaded initially
+        assert all(res[4] == 0 for res in obs["resources"].values())
 
         # assert that the push_groups are encoded correctly
         for group in self.push_groups:
@@ -58,14 +60,22 @@ class TestGetObservation:
             assert self.observation_space.contains(obs)
 
             # make sure the push sources are recorded correctly
-            for (source, push) in policy:
+            for (source, push) in policy.push:
                 for push_res in push:
                     # +1 since we have defined it that way
                     assert obs["resources"][str(push_res.order)][3] == source.order + 1
 
+            # make sure the push sources are recorded correctly
+            for (source, preload) in policy.preload:
+                for push_res in preload:
+                    # +1 since we have defined it that way
+                    assert obs["resources"][str(push_res.order)][4] == source.order + 1
+
             # check that all other resources are not pushed
-            pushed_res = set(push_res.order for (source, push) in policy for push_res in push)
+            pushed_res = set(push_res.order for (source, push) in policy.push for push_res in push)
+            preloaded_res = set(push_res.order for (source, push) in policy.preload for push_res in push)
             assert all(res[3] == 0 for order, res in obs["resources"].items() if int(order) not in pushed_res)
+            assert all(res[4] == 0 for order, res in obs["resources"].items() if int(order) not in preloaded_res)
 
     def test_observation_with_nonempty_policy_with_default_actions(self):
         # use all push groups except the chosen default group
@@ -80,7 +90,7 @@ class TestGetObservation:
 
         # apply some default action
         for push in default_group.resources[1:]:
-            policy.add_default_action(default_group.resources[0], push)
+            policy.add_default_push_action(default_group.resources[0], push)
 
         # do some actions and check the observation space over time
         for _ in range(len(action_space) - 1):
@@ -92,12 +102,20 @@ class TestGetObservation:
             obs = get_observation(self.client_environment, self.push_groups, policy)
             assert self.observation_space.contains(obs)
 
-            # make sure the push sources are recorded correctly according to the observable policy
-            for (source, push) in policy.observable:
+            # make sure the push sources are recorded correctly
+            for (source, push) in policy.observable_push:
                 for push_res in push:
                     # +1 since we have defined it that way
                     assert obs["resources"][str(push_res.order)][3] == source.order + 1
 
-            # check that all other resources are not pushed according to the observable policy
-            pushed_res = set(push_res.order for (source, push) in policy.observable for push_res in push)
+            # make sure the push sources are recorded correctly
+            for (source, preload) in policy.observable_preload:
+                for push_res in preload:
+                    # +1 since we have defined it that way
+                    assert obs["resources"][str(push_res.order)][4] == source.order + 1
+
+            # check that all other resources are not pushed
+            pushed_res = set(push_res.order for (source, push) in policy.observable_push for push_res in push)
+            preloaded_res = set(push_res.order for (source, push) in policy.observable_preload for push_res in push)
             assert all(res[3] == 0 for order, res in obs["resources"].items() if int(order) not in pushed_res)
+            assert all(res[4] == 0 for order, res in obs["resources"].items() if int(order) not in preloaded_res)

@@ -69,15 +69,18 @@ class TestPolicy:
             policy.apply_action(action_space.sample())
 
         policy_dict = policy.as_dict
-        for (source, push) in policy:
-            assert all(p.url in [pp["url"] for pp in policy_dict[source.url]] for p in push)
+        for (source, push) in policy.push:
+            assert all(p.url in [pp["url"] for pp in policy_dict["push"][source.url]] for p in push)
+        for (source, preload) in policy.preload:
+            assert all(p.url in [pp["url"] for pp in policy_dict["preload"][source.url]] for p in preload)
 
     def test_apply_action_noop_as_first_action(self):
         action_space = ActionSpace(self.push_groups)
         policy = Policy(action_space)
         applied = policy.apply_action(0)
         assert not applied  # check that action was not applied
-        assert not list(policy)  # check that no URLs were added to the policy
+        assert not list(policy.push)  # check that no URLs were added to the policy
+        assert not list(policy.preload)  # check that no URLs were added to the policy
         assert len(policy) == 1  # check that the policy length > 0
 
     def test_apply_action_noop_as_second_action(self):
@@ -85,14 +88,14 @@ class TestPolicy:
         policy = Policy(action_space)
 
         applied = policy.apply_action(1)
-        output_policy = list(policy)
+        output_policy = list(policy.push)
         assert applied
         assert output_policy
         assert len(policy) == 1
 
         applied = policy.apply_action(0)
         assert not applied
-        assert output_policy == list(policy)
+        assert output_policy == list(policy.push)
         assert len(policy) == 2
 
     def test_apply_action(self):
@@ -101,7 +104,7 @@ class TestPolicy:
 
         action = action_space.decode_action_id(1)
         applied = policy.apply_action(1)
-        output_policy = list(policy)
+        output_policy = list(policy.push)
         assert applied
         assert len(policy) == 1
         assert len(output_policy) == 1
@@ -118,7 +121,7 @@ class TestPolicy:
         assert policy.apply_action(1)
         assert policy.apply_action(2)
 
-        output_policy = list(policy)
+        output_policy = list(policy.push)
         assert len(policy) == 2
         assert len(output_policy) == 1
         assert len(output_policy[0][1]) == 2
@@ -143,7 +146,7 @@ class TestPolicy:
         assert len(policy) == num_push_res
         for action in actions:
             assert any(
-                action.source == source and action.push == push for source, push_res in policy for push in push_res
+                action.source == source and action.push == push for source, push_res in policy.push for push in push_res
             )
 
     def test_push_list_for_source(self):
@@ -176,17 +179,30 @@ class TestPolicy:
 
     def test_from_dict(self):
         policy_dict = {
-            "A": [{"url": "B", "type": "SCRIPT"}, {"url": "C", "type": "IMAGE"}],
-            "B": [{"url": "D", "type": "IMAGE"}, {"url": "E", "type": "CSS"}, {"url": "F", "type": "FONT"}],
+            "push": {"A": [{"url": "B", "type": "SCRIPT"}, {"url": "C", "type": "IMAGE"}]},
+            "preload": {
+                "B": [{"url": "D", "type": "IMAGE"}],
+                "G": [{"url": "E", "type": "CSS"}, {"url": "F", "type": "FONT"}],
+            },
         }
         policy = Policy.from_dict(policy_dict)
         assert policy.total_actions == 0
-        assert policy.action_space is not None
-        for (source, deps) in policy:
+        assert not policy.action_space
+        for (source, deps) in policy.push:
             assert isinstance(source, Resource)
             assert all(isinstance(push, Resource) for push in deps)
-            assert [p["url"] for p in policy_dict[source.url]] == sorted([push.url for push in deps])
+            assert [p["url"] for p in policy_dict["push"][source.url]] == sorted([push.url for push in deps])
             for push in deps:
                 assert policy.push_to_source[push] == source
-                assert push.url in [p["url"] for p in policy_dict[source.url]]
-        assert len(policy.source_to_push) == len(policy_dict)
+                assert push.url in [p["url"] for p in policy_dict["push"][source.url]]
+
+        for (source, deps) in policy.preload:
+            assert isinstance(source, Resource)
+            assert all(isinstance(push, Resource) for push in deps)
+            assert [p["url"] for p in policy_dict["preload"][source.url]] == sorted([push.url for push in deps])
+            for push in deps:
+                assert policy.preload_to_source[push] == source
+                assert push.url in [p["url"] for p in policy_dict["preload"][source.url]]
+
+        assert len(policy.source_to_push) == len(policy_dict["push"])
+        assert len(policy.source_to_preload) == len(policy_dict["preload"])

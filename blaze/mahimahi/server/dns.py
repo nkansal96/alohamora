@@ -28,11 +28,11 @@ class DNSServer:
 
         self.proc = subprocess.Popen(["dnsmasq", *args])
 
-        # If wait lasts for more than 2 seconds, a TimeoutError will be raised, which is okay since it
+        # If wait lasts for more than 1 second, a TimeoutError will be raised, which is okay since it
         # means that dnsmasq is running successfully. If it finishes sooner, it means it crashed and
         # we should raise an exception
         try:
-            self.proc.wait(2)
+            self.proc.wait(1)
             raise RuntimeError("dnsmasq exited unsuccessfully")
         except subprocess.TimeoutExpired:
             pass

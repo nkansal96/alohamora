@@ -4,11 +4,15 @@ import json
 import os
 import random
 import tempfile
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional
 
 from blaze.action import Policy
-from blaze.config.client import get_client_environment_from_parameters, get_default_client_environment
-from blaze.config.config import get_config
+from blaze.config.client import (
+    get_client_environment_from_parameters,
+    get_default_client_environment,
+    ClientEnvironment,
+)
+from blaze.config.config import get_config, Config
 from blaze.config.environment import EnvironmentConfig, PushGroup, ResourceType
 from blaze.evaluator.simulator import Simulator
 from blaze.logger import logger as log
@@ -19,13 +23,7 @@ from . import command
 
 
 @command.argument(
-    "--policy_type", help="The test type to run", choices=["simple", "random", "push_preload"], required=True
-)
-@command.argument(
-    "--random_chance",
-    help="Probability of pushing a particular resource (only used for --policy_type=random)",
-    type=float,
-    default=None,
+    "--policy_type", help="The test type to run", choices=["simple", "push", "push_preload", "preload"], required=True
 )
 @command.argument("--from_manifest", required=True, help="The training manifest file to use as input to the simulator")
 @command.command
@@ -33,24 +31,16 @@ def random_push_policy(args):
     """
     Outputs a random push policy for the given recorded website
     """
-    log.info("generating a random policy", policy_type=args.policy_type, random_chance=args.random_chance or "auto")
+    log.info("generating a random policy", policy_type=args.policy_type)
     env_config = EnvironmentConfig.load_file(args.from_manifest)
 
-    push_policy = None
-    preload_policy = None
     if args.policy_type == "simple":
-        push_policy, preload_policy = _simple_push_policy_generator()(env_config.push_groups)
-    if args.policy_type == "random":
-        push_policy, preload_policy = _random_push_policy_generator(args.random_chance)(env_config.push_groups)
-    if args.policy_type == "push_preload":
-        push_policy, preload_policy = _random_push_preload_policy_generator()(env_config.push_groups)
+        policy = _simple_push_policy_generator()(env_config.push_groups)
+    else:
+        weight = 0 if args.policy_type == "preload" else 1 if args.policy_type == "push" else None
+        policy = _random_push_preload_policy_generator(weight)(env_config.push_groups)
 
-    policy = {}
-    if push_policy:
-        policy["push"] = push_policy.as_dict
-    if preload_policy:
-        policy["preload"] = preload_policy.as_dict
-    print(json.dumps(policy, indent=4))
+    print(json.dumps(policy.as_dict, indent=4))
 
 
 @command.argument("url", nargs="?", help="The URL to analyze the page load time for")
@@ -61,11 +51,11 @@ def random_push_policy(args):
     help="Only evaluate the page load time on the simulator (must be loaded from manifest to use this)",
 )
 @command.argument(
-    "--policy_type", help="The test type to run", choices=["simple", "random", "push_preload"], default="random"
+    "--policy_type", help="The test type to run", choices=["simple", "push", "push_preload"], default="random"
 )
 @command.argument(
     "--random_chance",
-    help="Probability of pushing a particular resource (only used for --policy_type=random). If not specified, the "
+    help="Probability of pushing a particular resource (only used for --policy_type=push). If not specified, the "
     "chance is generated randomly each time a random policy is generated.",
     type=float,
     default=None,
@@ -91,13 +81,11 @@ def test_push(args):
         log.error("must specify a manifest if loading only simulator")
         return 1
 
-    policy_generator = None
     if args.policy_type == "simple":
         policy_generator = _simple_push_policy_generator()
-    if args.policy_type == "random":
-        policy_generator = _random_push_policy_generator(args.random_chance)
-    if args.policy_type == "push_preload":
-        policy_generator = _random_push_preload_policy_generator()
+    else:
+        weight = 0 if args.policy_type == "preload" else 1 if args.policy_type == "push" else None
+        policy_generator = _random_push_preload_policy_generator(weight)
 
     _test_push(
         **{
@@ -114,8 +102,8 @@ def test_push(args):
     return 0
 
 
-def _simple_push_policy_generator() -> Callable[[List[PushGroup]], Tuple[Policy, Policy]]:
-    def _generator(push_groups: List[PushGroup]) -> Tuple[Policy, Policy]:
+def _simple_push_policy_generator() -> Callable[[List[PushGroup]], Policy]:
+    def _generator(push_groups: List[PushGroup]) -> Policy:
         group = max(push_groups, key=lambda g: len(g.resources))
         source_res = min(group.resources, key=lambda r: r.order)
         push_res = min(
@@ -127,35 +115,15 @@ def _simple_push_policy_generator() -> Callable[[List[PushGroup]], Tuple[Policy,
             ),
             key=lambda r: r.size,
         )
-        policy = Policy.from_dict({})
-        policy.add_default_action(source_res, push_res)
+        policy = Policy()
+        policy.add_default_push_action(source_res, push_res)
         policy.steps_taken += 1
-        return policy, Policy.from_dict({})
+        return policy
 
     return _generator
 
 
-def _random_push_policy_generator(chance: Optional[float] = None) -> Callable[[List[PushGroup]], Tuple[Policy, Policy]]:
-    def _generator(push_groups: List[PushGroup]) -> Tuple[Policy, Policy]:
-        _chance = chance
-        if not _chance:
-            _chance = random.random()
-
-        policy = Policy.from_dict({})
-        for group in push_groups:
-            for push in range(1, len(group.resources)):
-                if random.random() > _chance:
-                    continue
-                source = random.randint(0, push - 1)
-                policy.add_default_action(group.resources[source], group.resources[push])
-                policy.steps_taken += 1
-
-        return policy, Policy.from_dict({})
-
-    return _generator
-
-
-def _random_push_preload_policy_generator() -> Callable[[List[PushGroup]], Tuple[Policy, Policy]]:
+def _random_push_preload_policy_generator(push_weight: Optional[float] = None) -> Callable[[List[PushGroup]], Policy]:
     dist = {ResourceType.SCRIPT: 32, ResourceType.CSS: 32, ResourceType.IMAGE: 24, ResourceType.FONT: 12}
 
     def _choose_with_dist(groups, distribution):
@@ -165,7 +133,7 @@ def _random_push_preload_policy_generator() -> Callable[[List[PushGroup]], Tuple
         r = random.randrange(0, len(random_group))
         return g, r, random_group[r]
 
-    def _generator(push_groups: List[PushGroup]) -> Tuple[Policy, Policy]:
+    def _generator(push_groups: List[PushGroup]) -> Policy:
         # Collect all resources and group them by type
         all_resources = sorted([res for group in push_groups for res in group.resources], key=lambda res: res.order)
         res_by_type = collections.defaultdict(list)
@@ -175,9 +143,10 @@ def _random_push_preload_policy_generator() -> Callable[[List[PushGroup]], Tuple
                 res_by_type[res.type].append(res)
 
         # choose the number of resources to push/preload
-        n = random.randint(1, len(all_resources))
+        total = sum(map(len, res_by_type.values()))
+        n = random.randint(1, total)
         # choose the weight factor between push and preload
-        weight = random.random()
+        weight = push_weight if push_weight is not None else random.random()
 
         # Choose n resources based on the resource type distribution without replacement
         log.debug("generating push-preload policy", num_resources=len(all_resources), total_size=n, push_weight=weight)
@@ -187,21 +156,21 @@ def _random_push_preload_policy_generator() -> Callable[[List[PushGroup]], Tuple
             res_by_type[g].pop(r)
             res.append(s)
 
-        push_policy = Policy.from_dict({})
-        preload_policy = Policy.from_dict({})
+        policy = Policy()
 
         for r in res:
+            if r.source_id == 0 or r.order == 0:
+                continue
             push = random.random() < weight
+            policy.steps_taken += 1
             if push:
-                source = random.randint(0, r.source_id)
-                push_policy.add_default_action(push_groups[r.group_id].resources[source], r)
-                push_policy.steps_taken += 1
+                source = random.randint(0, r.source_id - 1)
+                policy.add_default_push_action(push_groups[r.group_id].resources[source], r)
             else:
-                source = random.randint(0, r.order)
-                preload_policy.add_default_action(all_resources[source], r)
-                preload_policy.steps_taken += 1
+                source = random.randint(0, r.order - 1)
+                policy.add_default_preload_action(all_resources[source], r)
 
-        return push_policy, preload_policy
+        return policy
 
     return _generator
 
@@ -210,7 +179,7 @@ def _test_push(
     url: Optional[str],
     manifest: Optional[str],
     iterations: int,
-    policy_generator: Callable[[List[PushGroup]], Tuple[Policy, Policy]],
+    policy_generator: Callable[[List[PushGroup]], Policy],
     bandwidth: Optional[int],
     latency: Optional[int],
     cpu_slowdown: Optional[int],
@@ -240,7 +209,7 @@ def _test_push(
                 config = get_config(EnvironmentConfig.load_file(manifest))
                 log.debug("using recorded webpage", record_dir=config.env_config.replay_dir)
 
-            plt, res_list, push_groups, push_plts, push_policies = _get_results_in_mahimahi(
+            plt, res_list, push_groups, push_plts, policies = _get_results_in_replay_server(
                 config, client_env, iterations, policy_generator, capture_default=bool(bandwidth or latency)
             )
 
@@ -253,12 +222,12 @@ def _test_push(
 
     else:
         env_config = EnvironmentConfig.load_file(manifest)
-        push_policies = [policy_generator(env_config.push_groups)[0] for _ in range(iterations)]
+        policies = [policy_generator(env_config.push_groups) for _ in range(iterations)]
 
     log.debug("running simulator...")
     sim = Simulator(env_config)
     sim_plt = sim.simulate_load_time(client_env)
-    push_sim_plts = [sim.simulate_load_time(client_env, policy) for policy in push_policies]
+    push_sim_plts = [sim.simulate_load_time(client_env, policy) for policy in policies]
 
     if not only_simulator:
         log.info("real page load time", page_load_time=plt)
@@ -267,9 +236,15 @@ def _test_push(
     log.info("simulated push page load time", page_load_time=[round(plt, 3) for plt in push_sim_plts])
 
 
-def _get_results_in_mahimahi(config, client_env, iterations, policy_generator, capture_default=False):
+def _get_results_in_replay_server(
+    config: Config,
+    client_env: ClientEnvironment,
+    iterations: int,
+    policy_generator: Callable[[List[PushGroup]], Policy],
+    capture_default: bool = False,
+):
     log.debug("capturing median PLT in mahimahi with given environment")
-    plt, res_list, push_groups = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config)
+    orig_plt, res_list, push_groups = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config)
 
     # If the user passed in a custom environment, we want to use the PLT from that environment
     # but we want to use the HAR from the default page load to run in the simulator. This is to
@@ -282,20 +257,16 @@ def _get_results_in_mahimahi(config, client_env, iterations, policy_generator, c
         res_list = har_entries_to_resources(default_har)
         push_groups = resource_list_to_push_groups(res_list)
 
-    push_plts = []
-    push_policies = []
+    plts = []
+    policies = []
 
     for _ in range(iterations):
-        push_policy, preload_policy = policy_generator(push_groups)
-        push_policies.append(push_policy)
+        policy = policy_generator(push_groups)
+        policies.append(policy)
 
-        log.debug("getting HAR in mahimahi with push policy:")
-        log.debug(json.dumps(push_policy.as_dict, indent=4))
-        log.debug("preload policy:")
-        log.debug(json.dumps(preload_policy.as_dict, indent=4))
-        push_plt, *_ = get_page_load_time_in_mahimahi(
-            config.env_config.request_url, client_env, config, push_policy, preload_policy
-        )
-        push_plts.append(push_plt)
+        log.debug("getting HAR in mahimahi with policy:")
+        log.debug(json.dumps(policy.as_dict, indent=4))
+        plt, *_ = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config, policy)
+        plts.append(plt)
 
-    return plt, res_list, push_groups, push_plts, push_policies
+    return orig_plt, res_list, push_groups, plts, policies

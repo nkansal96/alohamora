@@ -37,7 +37,7 @@ class ActionSpace(gym.spaces.Discrete):
                     self.push_resources.append(source)
                 for push in group.resources[source.source_id + 1 : (source.source_id + 1 + max_depth)]:
                     self.action_id_map[(group.id, source.source_id, push.source_id)] = len(self.actions)
-                    self.actions.append(Action(len(self.actions), source, push))
+                    self.actions.append(Action(len(self.actions), is_push=True, source=source, push=push))
         self.push_resources.sort(key=lambda r: r.order)
         logger.with_namespace("action_space").debug("initialized push resources", total=len(self.push_resources))
         super(ActionSpace, self).__init__(len(self.actions))
