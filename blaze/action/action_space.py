@@ -146,9 +146,10 @@ class PreloadActionSpace(gym.spaces.Tuple):
 
     def decode_action_id(self, action_id: PreloadActionIDType) -> Action:
         """ Returns the Action object corresponding to the encoded action ID """
-        if action_id == NOOP_PRELOAD_ACTION_ID or not self.contains(action_id):
-            return Action()
         source, preload = action_id
+        if action_id == NOOP_PRELOAD_ACTION_ID or preload == 0:
+            return Action()
+
         return Action(
             action_id=action_id,
             is_push=False,
