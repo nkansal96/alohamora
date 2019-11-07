@@ -79,16 +79,17 @@ class PushActionSpace(gym.spaces.Tuple):
             return Action()
 
         g, s, p = action_id
-        if g not in self.group_id_to_source_id or p == 0 or p not in self.group_id_to_source_id[g]:
+        if g not in self.group_id_to_source_id or p == 0:
             return Action()
 
         p = p % (max(self.group_id_to_resource_map[g].keys()) + 1)
-        s = s % p
+        if p not in self.group_id_to_source_id[g]:
+            return Action()
 
         return Action(
             action_id=action_id,
             is_push=True,
-            source=self.group_id_to_resource_map[g][s],
+            source=self.group_id_to_resource_map[g][s % p],
             push=self.group_id_to_resource_map[g][p],
         )
 
