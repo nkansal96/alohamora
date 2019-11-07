@@ -72,7 +72,11 @@ class RequestQueue:
         rq = RequestQueue(self.bandwidth_kbps, self.rtt_latency_ms)
         rq.queue = [copy.copy(qi) for qi in self.queue]
         rq.delayed = [copy.copy(qi) for qi in self.delayed]
-        rq.node_to_queue_item_map = {node: copy.copy(qi) for (node, qi) in self.node_to_queue_item_map.items()}
+        rq.node_to_queue_item_map = {
+            **{node: copy.copy(qi) for (node, qi) in self.node_to_queue_item_map.items()},
+            **{qi.node: qi for qi in rq.queue},
+            **{qi.node: qi for qi in rq.delayed},
+        }
         rq.connected_origins = set(self.connected_origins)
         rq.tcp_state = copy.deepcopy(self.tcp_state)
         return rq

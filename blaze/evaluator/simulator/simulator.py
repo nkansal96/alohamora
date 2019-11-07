@@ -179,7 +179,7 @@ class Simulator:
                 #         --> add the extra time spent downloading, unless it would download faster
                 if time_already_downloaded == 0 and remaining_delay_before_download >= child_delay:
                     child_fetch_delay_correction = -(remaining_delay_before_download - child_delay) + (
-                        normal_time_spent_downloading - (time_remaining_to_download - remaining_delay_before_download)
+                        normal_time_spent_downloading - time_remaining_to_download
                     )
 
                 # only consider scripts and css as those are blocking and receiving them
