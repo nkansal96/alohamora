@@ -1,5 +1,6 @@
 """ This module defines the model for training and instantiating A3C agents """
 
+from blaze.action.action_distribution import action_distribution_creator
 from blaze.config.config import Config
 from blaze.config.train import TrainConfig
 from blaze.environment import Environment
@@ -33,6 +34,7 @@ def train(train_config: TrainConfig, config: Config):
                     "num_workers": train_config.num_cpus // 2,
                     "num_gpus": 0,
                     "env_config": config,
+                    # "model": {"custom_action_dist": action_distribution_creator},
                 },
             }
         },

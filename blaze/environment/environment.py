@@ -75,7 +75,7 @@ class Environment(gym.Env):
     def step(self, action: ActionIDType):
         decoded_action = self.action_space.decode_action(action)
         action_applied = self.policy.apply_action(decoded_action)
-        log.info("trying action", action=repr(decoded_action), steps_taken=self.policy.steps_taken)
+        log.info("trying action", action_id=action, action=repr(decoded_action), steps_taken=self.policy.steps_taken)
 
         reward = NOOP_ACTION_REWARD
         if action_applied:
