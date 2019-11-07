@@ -93,15 +93,18 @@ class Policy:
         """ Given an encoded action, applies the action towards the push policy """
         if isinstance(action, (tuple, np.ndarray)):
             action = self.action_space.decode_action(action)
+        action_applied = False
         if not action.is_noop:
             if action.is_push and action.push not in self.push_to_source:
                 self.push_to_source[action.push] = action.source
                 self.source_to_push[action.source].add(action.push)
+                action_applied = True
             elif action.is_preload and action.push not in self.preload_to_source:
                 self.preload_to_source[action.push] = action.source
                 self.source_to_preload[action.source].add(action.push)
-        self.steps_taken += 1
-        return not action.is_noop
+                action_applied = True
+        self.steps_taken += 1 if action_applied else 0
+        return action_applied
 
     def add_default_push_action(self, source: Resource, push: Resource):
         """

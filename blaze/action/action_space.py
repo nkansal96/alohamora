@@ -8,6 +8,7 @@ import gym
 import numpy as np
 
 from blaze.config.environment import PushGroup
+from blaze.logger import logger
 from .action import (
     Action,
     ActionIDType,
@@ -97,6 +98,9 @@ class PushActionSpace(gym.spaces.Tuple):
         """ Returns True if there are no more valid actions in the action space """
         return all(len(v) <= 1 for v in self.group_id_to_source_id.values())
 
+    def __len__(self):
+        return sum(len(v) - 1 for v in self.group_id_to_source_id.values())
+
     def use_action(self, action: Action):
         """
         Marks the given action as used. It removes the pushed resource from the list
@@ -171,6 +175,9 @@ class PreloadActionSpace(gym.spaces.Tuple):
         """ Returns true if there are no more valid actions in the action space """
         return not self.preload_list
 
+    def __len__(self):
+        return len(self.preload_list)
+
 
 class ActionSpace(gym.spaces.Tuple):
     """
@@ -244,6 +251,9 @@ class ActionSpace(gym.spaces.Tuple):
         """ Marks the action as used in both the push and preload spaces """
         self.push_space.use_action(action)
         self.preload_space.use_action(action)
+        logger.with_namespace("action_space").info(
+            "used_action", new_push_size=len(self.push_space), new_preload_size=len(self.preload_space)
+        )
 
     def empty(self):
         """ Returns true if there are no more valid actions in the action space """
