@@ -88,7 +88,7 @@ class PushActionSpace(gym.spaces.Tuple):
             return Action()
 
         return Action(
-            action_id=action_id,
+            action_id=(g, s % p, p),
             is_push=True,
             source=self.group_id_to_resource_map[g][s % p],
             push=self.group_id_to_resource_map[g][p],
@@ -96,7 +96,7 @@ class PushActionSpace(gym.spaces.Tuple):
 
     def empty(self):
         """ Returns True if there are no more valid actions in the action space """
-        return all(len(v) <= 1 for v in self.group_id_to_source_id.values())
+        return len(self) == 0
 
     def __len__(self):
         return sum(len(v) - 1 for v in self.group_id_to_source_id.values())
@@ -156,7 +156,7 @@ class PreloadActionSpace(gym.spaces.Tuple):
             return Action()
 
         return Action(
-            action_id=action_id,
+            action_id=(source % preload, preload),
             is_push=False,
             source=self.order_to_resource_map[source % preload],
             push=self.order_to_resource_map[preload],
@@ -252,7 +252,10 @@ class ActionSpace(gym.spaces.Tuple):
         self.push_space.use_action(action)
         self.preload_space.use_action(action)
         logger.with_namespace("action_space").info(
-            "used_action", new_push_size=len(self.push_space), new_preload_size=len(self.preload_space)
+            "used_action",
+            action=repr(action),
+            new_push_size=len(self.push_space),
+            new_preload_size=len(self.preload_space),
         )
 
     def empty(self):
