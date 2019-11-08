@@ -7,7 +7,6 @@ import grpc
 from blaze.config import client
 from blaze.config import environment
 from blaze.model.model import ModelInstance, SavedModel
-from blaze.preprocess.resource import convert_policy_resource_to_environment_resource, resource_list_to_push_groups
 from blaze.proto import policy_service_pb2
 from blaze.proto import policy_service_pb2_grpc
 
@@ -36,10 +35,6 @@ class PolicyService(policy_service_pb2_grpc.PolicyServiceServicer):
 
     def create_model_instance(self, page: policy_service_pb2.Page) -> ModelInstance:
         """ Instantiates a model for the given page """
-        # convert page resources to ordered push groups
-        page_resources = sorted(page.resources, key=lambda r: r.timestamp)
-        page_resources = list(map(convert_policy_resource_to_environment_resource, page_resources))
-        push_groups = resource_list_to_push_groups(page_resources, train_domain_globs=page.train_domain_globs)
         # convert page network_type and device_speed to client environment
         client_environment = client.ClientEnvironment(
             device_speed=client.DeviceSpeed(page.device_speed),
@@ -47,6 +42,6 @@ class PolicyService(policy_service_pb2_grpc.PolicyServiceServicer):
             network_speed=client.NetworkSpeed.FAST,  # this one doesn't matter
         )
         # create environment config
-        env_config = environment.EnvironmentConfig(request_url=page.url, push_groups=push_groups, replay_dir="")
+        env_config = environment.EnvironmentConfig.deserialize(page.manifest)
         # instantiate a model for this config
         return self.saved_model.instantiate(env_config, client_environment)

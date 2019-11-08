@@ -45,8 +45,7 @@ def query(args):
         url=manifest.request_url,
         network_type=NetworkType(args.network_type),
         device_speed=DeviceSpeed(args.device_speed),
-        resources=[res for group in manifest.push_groups for res in group.resources],
-        train_domain_globs=[group.name for group in manifest.push_groups if group.trainable],
+        manifest=manifest,
     )
 
     print(json.dumps(policy.as_dict, indent=4))

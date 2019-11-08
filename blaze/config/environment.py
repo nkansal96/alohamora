@@ -65,6 +65,9 @@ class EnvironmentConfig(NamedTuple):
         """ Returns the subset of push_groups that is trainable """
         return [group for group in self.push_groups if group.trainable]
 
+    def serialize(self) -> bytes:
+        return pickle.dumps(self)
+
     def save_file(self, file_name: str):
         """ Serialize the EnvironmentConfig to the given file path """
         pickle.dump(self, open(file_name, "wb"))
@@ -73,3 +76,7 @@ class EnvironmentConfig(NamedTuple):
     def load_file(file_name: str) -> "EnvironmentConfig":
         """ Load an EnvironmentConfig from the given file path """
         return pickle.load(open(file_name, "rb"))
+
+    @staticmethod
+    def deserialize(data: bytes) -> "EnvironmentConfig":
+        return pickle.loads(data)

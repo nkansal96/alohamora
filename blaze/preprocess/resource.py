@@ -42,8 +42,3 @@ def resource_list_to_push_groups(res_list: List[Resource], train_domain_globs=No
         push_groups[new_res.group_id].resources.append(new_res)
 
     return push_groups
-
-
-def convert_policy_resource_to_environment_resource(res: policy_service_pb2.Resource) -> Resource:
-    """ Converts a policy_service_pb2.Resource to an environment.Resource """
-    return Resource(url=res.url, size=res.size, type=ResourceType(res.type))
