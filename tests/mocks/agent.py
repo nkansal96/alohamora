@@ -1,6 +1,8 @@
 from typing import Optional
 from blaze.action import ActionSpace
 
+import numpy as np
+
 
 def mock_agent_with_action_space(action_space: ActionSpace):
     return lambda **kwargs: MockAgent(action_space, **kwargs)
@@ -16,7 +18,8 @@ class MockAgent:
 
     def compute_action(self, observation: dict):
         self.observations.append(observation)
-        action = self.action_space.sample()
+        # The action agent converts the sampled value to an array of (1,) numpy arrays
+        action = [np.array([x]) for x in self.action_space.sample()]
         self.sampled_actions.append(action)
         return action
 

@@ -42,6 +42,8 @@ class ModelInstance:
         while not last_action or not last_action.is_noop:
             # query the agent for an action
             action = self.agent.compute_action(observation)
+            # deflate the action
+            action = tuple(x[0] for x in action)
             last_action = action_space.decode_action(action)
             # apply the action to the policy
             self.policy.apply_action(last_action)
