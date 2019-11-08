@@ -46,7 +46,7 @@ class ModelInstance:
             action_id = tuple(x[0] for x in action_id)
             action = action_space.decode_action(action_id)
             # apply the action to the policy
-            action_applied = self.policy.apply_action(action_applied)
+            action_applied = self.policy.apply_action(action)
             # update the observation based on the action
             observation = get_observation(self.client_environment, self.env_config.push_groups, self.policy)
         return self.policy
