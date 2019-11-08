@@ -92,7 +92,7 @@ class PushActionSpace(gym.spaces.Tuple):
         return len(self) == 0
 
     def __len__(self):
-        return sum(len(v) - 1 for v in self.group_id_to_source_id.values())
+        return sum(max(0, len(v) - 1) for v in self.group_id_to_source_id.values())
 
     def use_action(self, action: Action):
         """
