@@ -10,13 +10,13 @@ from blaze.serve.server import Server
 from blaze.serve.policy_service import PolicyService
 
 from tests.mocks.agent import mock_agent_with_action_space
-from tests.mocks.config import get_push_groups, get_serve_config
+from tests.mocks.config import get_env_config, get_serve_config
 
 
 class TestClient:
     def setup(self):
-        self.push_groups = get_push_groups()
-        self.trainable_push_groups = [group for group in self.push_groups if group.trainable]
+        self.env_config = get_env_config()
+        self.trainable_push_groups = self.env_config.trainable_push_groups
         self.serve_config = get_serve_config()
         self.action_space = ActionSpace(self.trainable_push_groups)
         self.action_space.seed(2048)
@@ -38,8 +38,7 @@ class TestClient:
                 url="https://www.example.com",
                 network_type=client.NetworkType.LTE,
                 device_speed=client.DeviceSpeed.FAST_MOBILE,
-                resources=[res for group in self.push_groups for res in group.resources],
-                train_domain_globs=[group.name for group in self.trainable_push_groups],
+                manifest=self.env_config,
             )
 
             assert policy is not None

@@ -25,6 +25,7 @@ class TestPolicy:
 
     def test_as_dict(self):
         action_space = get_action_space()
+        action_space.seed(2048)
         policy = Policy(action_space)
         for _ in range(10):
             action = action_space.decode_action(action_space.sample())
