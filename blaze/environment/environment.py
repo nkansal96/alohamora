@@ -73,16 +73,19 @@ class Environment(gym.Env):
         #     log.info("chose group to auto push", group=default_group.name, rules_added=len(default_group.resources))
 
     def step(self, action: ActionIDType):
+        # decode the action and apply it to the policy
         decoded_action = self.action_space.decode_action(action)
         action_applied = self.policy.apply_action(decoded_action)
+
+        # make sure the action isn't used again
         log.info("trying action", action_id=action, action=repr(decoded_action), steps_taken=self.policy.steps_taken)
+        self.action_space.use_action(decoded_action)
 
         reward = NOOP_ACTION_REWARD
         valid_action = action_applied and not decoded_action.is_noop
-        if valid_action:
-            self.action_space.use_action(decoded_action)
-            reward = self.analyzer.get_reward(self.policy) or NOOP_ACTION_REWARD
-        log.info("got reward", action=repr(decoded_action), reward=reward)
+        if not valid_action:
+            reward = self.analyzer.get_reward(self.policy)
+            log.info("got reward", action=repr(decoded_action), reward=reward)
 
         info = {"action": decoded_action, "policy": self.policy.as_dict}
         return self.observation, reward, not valid_action, info
