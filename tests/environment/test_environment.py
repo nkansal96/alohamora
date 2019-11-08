@@ -23,6 +23,7 @@ def get_action(action_space: ActionSpace) -> ActionIDType:
 class TestEnvironment:
     def setup(self):
         self.environment = Environment(get_config())
+        self.environment.action_space.seed(2048)
         self.push_groups = self.environment.env_config.push_groups
         self.trainable_push_groups = self.environment.env_config.trainable_push_groups
 
@@ -81,9 +82,9 @@ class TestEnvironment:
     def test_step_noop_action(self):
         try:
             obs, reward, _, info = self.environment.step(NOOP_ACTION_ID)
-            assert reward == NOOP_ACTION_REWARD
+            assert reward != NOOP_ACTION_REWARD
             assert info["action"].is_noop
-            assert self.environment.policy.steps_taken == 1
+            assert self.environment.policy.steps_taken == 0
             # res[-2] and res[-1] refer to the push/preload source respectively
             assert all(res[-2] == 0 for res in obs["resources"].values())
             assert all(res[-1] == 0 for res in obs["resources"].values())
@@ -100,7 +101,7 @@ class TestEnvironment:
             action = self.environment.action_space.decode_action(action_id)
 
             obs, reward, complete, info = self.environment.step(action_id)
-            assert reward == action_rew
+            assert reward == NOOP_ACTION_REWARD
             assert not complete
             assert info["action"] == action
             assert self.environment.policy.steps_taken == 1

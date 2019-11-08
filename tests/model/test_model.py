@@ -30,7 +30,6 @@ class TestModelInstance:
         m = ModelInstance(mock_agent, self.env_config, self.client_environment)
         policy = m.policy
         assert policy
-        assert len(mock_agent.observations) == len(policy)
         assert all(observation_space.contains(obs) for obs in mock_agent.observations)
 
     def test_push_policy_returns_cached_policy(self):
@@ -40,7 +39,6 @@ class TestModelInstance:
         first_policy = m.policy
         second_policy = m.policy
         assert first_policy is second_policy
-        assert len(mock_agent.observations) == len(first_policy)
 
 
 class TestSavedModel:

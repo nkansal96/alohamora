@@ -7,21 +7,29 @@ from blaze.config.environment import Resource
 from tests.mocks.config import get_push_groups
 
 
+def get_action_space():
+    action_space = ActionSpace(get_push_groups())
+    action_space.seed(2048)
+    return action_space
+
+
 class TestPolicy:
     def setup(self):
         self.push_groups = get_push_groups()
 
     def test_init(self):
-        action_space = ActionSpace(self.push_groups)
+        action_space = get_action_space()
         policy = Policy(action_space)
         assert isinstance(policy, Policy)
         assert policy.action_space == action_space
 
     def test_as_dict(self):
-        action_space = ActionSpace(self.push_groups)
+        action_space = get_action_space()
         policy = Policy(action_space)
-        for _ in range(len(action_space)):
-            policy.apply_action(action_space.sample())
+        for _ in range(10):
+            action = action_space.decode_action(action_space.sample())
+            policy.apply_action(action)
+            action_space.use_action(action)
 
         policy_dict = policy.as_dict
         for (source, push) in policy.push:
@@ -30,16 +38,16 @@ class TestPolicy:
             assert all(p.url in [pp["url"] for pp in policy_dict["preload"][source.url]] for p in preload)
 
     def test_apply_action_noop_as_first_action(self):
-        action_space = ActionSpace(self.push_groups)
+        action_space = get_action_space()
         policy = Policy(action_space)
         applied = policy.apply_action(Action())
         assert not applied  # check that action was not applied
         assert not list(policy.push)  # check that no URLs were added to the policy
         assert not list(policy.preload)  # check that no URLs were added to the policy
-        assert len(policy) == 1  # check that the policy length > 0
+        assert len(policy) == 0  # check that the policy length == 0
 
     def test_apply_action_noop_as_second_action(self):
-        action_space = ActionSpace(self.push_groups)
+        action_space = get_action_space()
         policy = Policy(action_space)
 
         applied = policy.apply_action((1, (0, 0, 1), (0, 0)))
@@ -51,10 +59,10 @@ class TestPolicy:
         applied = policy.apply_action(Action())
         assert not applied
         assert output_policy == list(policy.push)
-        assert len(policy) == 2
+        assert len(policy) == 1
 
     def test_apply_push_action(self):
-        action_space = ActionSpace(self.push_groups)
+        action_space = get_action_space()
         policy = Policy(action_space)
 
         action = action_space.decode_action((1, (0, 0, 1), (0, 0)))
@@ -68,7 +76,7 @@ class TestPolicy:
         assert output_policy[0][1] == {action.push}
 
     def test_apply_push_action_same_source_resource(self):
-        action_space = ActionSpace(self.push_groups)
+        action_space = get_action_space()
         policy = Policy(action_space)
 
         action_1 = action_space.decode_action((1, (0, 0, 1), (0, 0)))
@@ -85,7 +93,7 @@ class TestPolicy:
         assert output_policy[0][1] == {action_1.push, action_2.push}
 
     def test_apply_multiple_actions(self):
-        action_space = ActionSpace(self.push_groups)
+        action_space = get_action_space()
         num_push_res = len(action_space)
         policy = Policy(action_space)
 
@@ -93,9 +101,10 @@ class TestPolicy:
         while len(policy) < 10:
             action_id = action_space.sample()
             action = action_space.decode_action(action_id)
-            policy.apply_action(action)
+            action_applied = policy.apply_action(action)
+            action_space.use_action(action)
 
-            if not action.is_noop:
+            if action_applied:
                 actions.append(action)
                 action_space.use_action(action)
 
@@ -106,7 +115,7 @@ class TestPolicy:
             ) or any(action.source == source and action.push == push for source, res in policy.preload for push in res)
 
     def test_push_preload_list_for_source(self):
-        action_space = ActionSpace(self.push_groups)
+        action_space = get_action_space()
         action_space.seed(2048)
         policy = Policy(action_space)
 
@@ -116,9 +125,9 @@ class TestPolicy:
         while len(policy) < 10:
             action_id = action_space.sample()
             action = action_space.decode_action(action_id)
-            policy.apply_action(action)
+            action_applied = policy.apply_action(action)
 
-            if not action.is_noop:
+            if action_applied:
                 if action.is_push:
                     push_map[action.source].add(action.push)
                 if action.is_preload:
@@ -132,7 +141,7 @@ class TestPolicy:
             assert policy.preload_set_for_resource(source) == preload_set
 
     def test_resource_push_from(self):
-        action_space = ActionSpace(self.push_groups)
+        action_space = get_action_space()
         policy = Policy(action_space)
         action = Action()
         while action.is_noop or not action.is_push:
