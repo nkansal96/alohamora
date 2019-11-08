@@ -82,13 +82,12 @@ class Environment(gym.Env):
         self.action_space.use_action(decoded_action)
 
         reward = NOOP_ACTION_REWARD
-        valid_action = action_applied and not decoded_action.is_noop
-        if not valid_action:
+        if not action_applied:
             reward = self.analyzer.get_reward(self.policy)
             log.info("got reward", action=repr(decoded_action), reward=reward)
 
         info = {"action": decoded_action, "policy": self.policy.as_dict}
-        return self.observation, reward, not valid_action, info
+        return self.observation, reward, not action_applied, info
 
     def render(self, mode="human"):
         return super(Environment, self).render(mode=mode)
