@@ -25,7 +25,6 @@ class TestPolicy:
 
     def test_as_dict(self):
         action_space = get_action_space()
-        action_space.seed(2048)
         policy = Policy(action_space)
         for _ in range(10):
             action = action_space.decode_action(action_space.sample())
@@ -95,7 +94,6 @@ class TestPolicy:
 
     def test_apply_multiple_actions(self):
         action_space = get_action_space()
-        num_push_res = len(action_space)
         policy = Policy(action_space)
 
         actions = []
@@ -117,7 +115,6 @@ class TestPolicy:
 
     def test_push_preload_list_for_source(self):
         action_space = get_action_space()
-        action_space.seed(2048)
         policy = Policy(action_space)
 
         push_map = collections.defaultdict(set)

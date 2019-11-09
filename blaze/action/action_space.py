@@ -5,7 +5,6 @@ take when exploring push policies
 from typing import List
 
 import gym
-import numpy as np
 
 from blaze.config.environment import PushGroup
 from blaze.logger import logger
@@ -41,6 +40,10 @@ class PushActionSpace(gym.spaces.Tuple):
                 gym.spaces.Discrete(self.max_source_id + 1),
             )
         )
+
+    def seed(self, seed):
+        self.np_random.seed(seed)
+        super().seed(seed)
 
     def sample(self) -> PushActionIDType:
         if self.empty():
@@ -123,6 +126,10 @@ class PreloadActionSpace(gym.spaces.Tuple):
 
         super().__init__((gym.spaces.Discrete(self.max_order + 1), gym.spaces.Discrete(self.max_order + 1)))
 
+    def seed(self, seed):
+        self.np_random.seed(seed)
+        super().seed(seed)
+
     def sample(self) -> PreloadActionIDType:
         if self.empty():
             return NOOP_PRELOAD_ACTION_ID
@@ -198,6 +205,8 @@ class ActionSpace(gym.spaces.Tuple):
 
     def seed(self, seed):
         self.np_random.seed(seed)
+        self.push_space.seed(seed)
+        self.preload_space.seed(seed)
         super().seed(seed)
 
     def sample(self):
