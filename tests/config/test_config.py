@@ -3,6 +3,7 @@ from unittest import mock
 
 from blaze.config import config
 from tests.mocks.config import get_env_config
+from tests.mocks.config import get_random_client_environment
 
 
 class TestConfig:
@@ -22,7 +23,7 @@ class TestConfig:
         conf = config.get_config()
         items = conf.items()
         assert all(len(v) == 2 for v in items)
-        assert len(items) == 7
+        assert len(items) == 8
 
 
 class TestGetConfig:
@@ -40,6 +41,12 @@ class TestGetConfig:
     def test_get_config_with_env_config(self):
         conf = config.get_config(get_env_config())
         assert conf.env_config == get_env_config()
+
+    def test_get_config_with_client_env(self):
+        client_env = get_random_client_environment()
+        conf = config.get_config(get_env_config(), client_env)
+        assert conf.env_config == get_env_config()
+        assert conf.client_env == client_env
 
     @mock.patch.dict(
         os.environ, {"CHROME_BIN": "test_chrome", "MAHIMAHI_CERT_DIR": "test_mm_dir", "HTTP2PUSH_IMAGE": "test_image"}

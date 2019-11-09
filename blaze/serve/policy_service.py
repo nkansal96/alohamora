@@ -39,7 +39,9 @@ class PolicyService(policy_service_pb2_grpc.PolicyServiceServicer):
         client_environment = client.ClientEnvironment(
             device_speed=client.DeviceSpeed(page.device_speed),
             network_type=client.NetworkType(page.network_type),
-            network_speed=client.NetworkSpeed.FAST,  # this one doesn't matter
+            network_speed=client.NetworkSpeed(page.network_speed),
+            bandwidth=page.bandwidth_kbps,
+            latency=page.latency_ms,
         )
         # create environment config
         env_config = environment.EnvironmentConfig.deserialize(page.manifest)

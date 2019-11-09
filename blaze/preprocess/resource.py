@@ -2,8 +2,7 @@
 import pathlib
 from typing import List
 
-from blaze.config.environment import PushGroup, Resource, ResourceType
-from blaze.proto import policy_service_pb2
+from blaze.config.environment import PushGroup, Resource
 from .url import Url
 
 

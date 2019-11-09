@@ -9,7 +9,7 @@ import gym
 import numpy as np
 
 from blaze.action import Policy
-from blaze.config.client import NetworkType, DeviceSpeed, ClientEnvironment
+from blaze.config.client import NetworkSpeed, NetworkType, DeviceSpeed, ClientEnvironment
 from blaze.config.environment import PushGroup, ResourceType
 
 MAX_RESOURCES = 200
@@ -48,7 +48,10 @@ def get_observation_space():
             "client": gym.spaces.Dict(
                 {
                     "network_type": gym.spaces.Discrete(len(NetworkType)),
+                    "network_speed": gym.spaces.Discrete(len(NetworkSpeed)),
                     "device_speed": gym.spaces.Discrete(len(DeviceSpeed)),
+                    "bandwidth_mbps": gym.spaces.Discrete(100),
+                    "latency_ms": gym.spaces.Discrete(1000),
                 }
             ),
             "resources": gym.spaces.Dict({str(i): resource_space for i in range(MAX_RESOURCES)}),
@@ -85,8 +88,11 @@ def get_observation(client_environment: ClientEnvironment, push_groups: List[Pus
 
     return {
         "client": {
+            "network_speed": client_environment.network_speed.value,
             "network_type": client_environment.network_type.value,
             "device_speed": client_environment.device_speed.value,
+            "bandwidth_mbps": client_environment.bandwidth // 1000,
+            "latency_ms": 10 * client_environment.latency // 10,
         },
         "resources": encoded_resources,
     }

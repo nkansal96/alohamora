@@ -5,6 +5,7 @@ import platform
 from typing import NamedTuple, Optional
 
 from blaze.util.cmd import run
+from .client import ClientEnvironment
 from .environment import EnvironmentConfig
 
 ABSPATH = lambda path: os.path.abspath(os.path.join(os.path.dirname(__file__), path))
@@ -31,13 +32,16 @@ class Config(NamedTuple):
     http2push_image: str
     chrome_bin: str
     env_config: Optional[EnvironmentConfig] = None
+    client_env: Optional[ClientEnvironment] = None
 
     def items(self):
         """ Return the dictionary items() method for this object """
         return self._asdict().items()  # pylint: disable=no-member
 
 
-def get_config(env_config: Optional[EnvironmentConfig] = None) -> Config:
+def get_config(
+    env_config: Optional[EnvironmentConfig] = None, client_env: Optional[ClientEnvironment] = None
+) -> Config:
     """
     get_config returns the runtime configuration, taking values from environment variables
     when available to override the defaults
@@ -50,4 +54,5 @@ def get_config(env_config: Optional[EnvironmentConfig] = None) -> Config:
         http2push_image=os.environ.get("HTTP2PUSH_IMAGE", DEFAULT_HTTP2PUSH_IMAGE),
         chrome_bin=os.environ.get("CHROME_BIN", DEFAULT_CHROME_BIN),
         env_config=env_config,
+        client_env=client_env,
     )

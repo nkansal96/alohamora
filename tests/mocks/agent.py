@@ -16,7 +16,7 @@ class MockAgent:
         self.file_path = None
         self.observations = []
 
-    def compute_action(self, observation: dict):
+    def compute_action(self, observation: dict, **kwargs):
         self.observations.append(observation)
         # The action agent converts the sampled value to an array of (1,) numpy arrays
         action = [np.array([x]) for x in self.action_space.sample()]

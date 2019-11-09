@@ -11,7 +11,7 @@ from blaze.serve.server import Server
 from blaze.serve.policy_service import PolicyService
 
 from tests.mocks.agent import mock_agent_with_action_space
-from tests.mocks.config import get_push_groups, get_serve_config
+from tests.mocks.config import get_env_config, get_push_groups, get_serve_config
 
 
 class TestClient:
@@ -21,7 +21,7 @@ class TestClient:
         self.serve_config = get_serve_config()
         self.action_space = ActionSpace(self.trainable_push_groups)
         self.mock_agent = mock_agent_with_action_space(self.action_space)
-        self.saved_model = SavedModel(self.mock_agent, Environment, "/tmp/model_location")
+        self.saved_model = SavedModel(self.mock_agent, Environment, "/tmp/model_location", {})
 
     def test_client_exits_with_invalid_arguments(self):
         with pytest.raises(SystemExit):
@@ -29,9 +29,9 @@ class TestClient:
         with pytest.raises(SystemExit):
             query(["--manifest", "/tmp/manifest"])
         with pytest.raises(SystemExit):
-            query(["--manifest", "/tmp/manifest", "-n", 0])
+            query(["--manifest", "/tmp/manifest", "-b", 0])
         with pytest.raises(SystemExit):
-            query(["--manifest", "/tmp/manifest", "-d", 0])
+            query(["--manifest", "/tmp/manifest", "-l", 0])
 
     def test_client(self, capsys):
         server = Server(self.serve_config)
@@ -41,18 +41,16 @@ class TestClient:
             server.start()
 
             with tempfile.NamedTemporaryFile() as manifest_file:
-                config = EnvironmentConfig(
-                    request_url="http://cs.ucla.edu/", replay_dir="/tmp/tmp_dir", push_groups=get_push_groups()
-                )
+                config = get_env_config()
                 config.save_file(manifest_file.name)
                 query(
                     [
                         "--manifest",
                         manifest_file.name,
-                        "-n",
-                        "1",
-                        "-d",
-                        "2",
+                        "-l",
+                        "10",
+                        "-b",
+                        "24000",
                         "--host",
                         str(self.serve_config.host),
                         "--port",

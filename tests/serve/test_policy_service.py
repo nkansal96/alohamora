@@ -19,7 +19,7 @@ class TestPolicyService:
         self.push_groups = get_push_groups()
         self.trainable_push_groups = [group for group in self.push_groups if group.trainable]
         self.action_space = ActionSpace(self.trainable_push_groups)
-        self.saved_model = SavedModel(mock_agent_with_action_space(self.action_space), Environment, "")
+        self.saved_model = SavedModel(mock_agent_with_action_space(self.action_space), Environment, "", {})
 
     def test_init(self):
         ps = PolicyService(self.saved_model)
@@ -61,6 +61,6 @@ class TestPolicyService:
         model_instance = ps.create_model_instance(self.page)
         assert isinstance(model_instance, ModelInstance)
         assert isinstance(model_instance.agent, MockAgent)
-        assert model_instance.client_environment.network_type == self.client_environment.network_type
-        assert model_instance.client_environment.device_speed == self.client_environment.device_speed
+        assert model_instance.client_env.network_type == self.client_environment.network_type
+        assert model_instance.client_env.device_speed == self.client_environment.device_speed
         assert model_instance.env_config.push_groups == self.push_groups

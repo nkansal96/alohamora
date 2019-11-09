@@ -3,8 +3,11 @@ syntax = "proto3";
 message Page {
     string url = 1;
     int32 network_type = 2;
-    int32 device_speed = 3;
-    bytes manifest = 4;
+    int32 network_speed = 3;
+    int32 device_speed = 4;
+    int32 bandwidth_kbps = 5;
+    int32 latency_ms = 6;
+    bytes manifest = 7;
 }
 
 message Policy {

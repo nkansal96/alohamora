@@ -21,7 +21,7 @@ class TestClient:
         self.action_space = ActionSpace(self.trainable_push_groups)
         self.action_space.seed(2048)
         self.mock_agent = mock_agent_with_action_space(self.action_space)
-        self.saved_model = SavedModel(self.mock_agent, Environment, "/tmp/model_location")
+        self.saved_model = SavedModel(self.mock_agent, Environment, "/tmp/model_location", {})
 
     def test_get_policy(self):
         server = Server(self.serve_config)
@@ -36,8 +36,7 @@ class TestClient:
             client_stub = Client(channel)
             policy = client_stub.get_policy(
                 url="https://www.example.com",
-                network_type=client.NetworkType.LTE,
-                device_speed=client.DeviceSpeed.FAST_MOBILE,
+                client_env=client.get_random_client_environment(),
                 manifest=self.env_config,
             )
 

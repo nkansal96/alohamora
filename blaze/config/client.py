@@ -81,7 +81,7 @@ def get_random_client_environment():
         network_type=network_type,
         network_speed=network_speed,
         device_speed=device_speed,
-        bandwidth=random.randrange(*bandwidth_range, 100),
+        bandwidth=random.randrange(*bandwidth_range, 1000),
         latency=random.randrange(*latency_range, 2),
         cpu_slowdown=cpu_slowdown,
     )
@@ -99,7 +99,7 @@ def get_random_fast_lte_client_environment():
         network_type=network_type,
         network_speed=network_speed,
         device_speed=device_speed,
-        bandwidth=random.randrange(*bandwidth_range, 100),
+        bandwidth=random.randrange(*bandwidth_range, 1000),
         latency=random.randrange(*latency_range, 2),
         cpu_slowdown=cpu_slowdown,
     )

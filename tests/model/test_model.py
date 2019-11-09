@@ -6,7 +6,7 @@ from blaze.environment.observation import get_observation_space
 from blaze.model.model import ModelInstance, SavedModel
 
 from tests.mocks.agent import MockAgent
-from tests.mocks.config import get_env_config, convert_push_groups_to_push_pairs
+from tests.mocks.config import get_env_config
 
 
 class TestModelInstance:
@@ -43,20 +43,20 @@ class TestModelInstance:
 
 class TestSavedModel:
     def test_create(self):
-        saved_model = SavedModel(MockAgent, Environment, "/tmp/model_location")
+        saved_model = SavedModel(MockAgent, Environment, "/tmp/model_location", {})
         assert saved_model
         assert isinstance(saved_model, SavedModel)
 
     def test_instantiate_creates_model_with_given_environment(self):
         env_config = get_env_config()
-        client_environment = get_random_client_environment()
+        client_env = get_random_client_environment()
 
-        saved_model = SavedModel(MockAgent, Environment, "/tmp/model_location")
-        model_instance = saved_model.instantiate(env_config, client_environment)
+        saved_model = SavedModel(MockAgent, Environment, "/tmp/model_location", {})
+        model_instance = saved_model.instantiate(env_config, client_env)
         assert isinstance(model_instance, ModelInstance)
         assert isinstance(model_instance.agent, MockAgent)
         assert model_instance.agent.kwargs["env"] == Environment
-        assert model_instance.agent.kwargs["config"] == {"env_config": get_config(env_config)}
+        assert model_instance.agent.kwargs["config"] == {"env_config": get_config(env_config, client_env)}
         assert model_instance.agent.file_path == saved_model.location
         assert model_instance.env_config == env_config
-        assert model_instance.client_environment == client_environment
+        assert model_instance.client_env == client_env

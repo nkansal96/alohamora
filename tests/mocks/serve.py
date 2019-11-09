@@ -10,7 +10,10 @@ def get_page(url: str, client_environment=get_random_client_environment()) -> po
     return policy_service_pb2.Page(
         url=url,
         network_type=client_environment.network_type.value,
+        network_speed=client_environment.network_speed.value,
         device_speed=client_environment.device_speed.value,
+        bandwidth_kbps=client_environment.bandwidth,
+        latency_ms=client_environment.latency,
         manifest=get_env_config().serialize(),
     )
 
