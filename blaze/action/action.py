@@ -5,8 +5,6 @@ take when exploring push policies
 
 from typing import Optional, Tuple, Union
 
-import numpy as np
-
 from blaze.config.environment import Resource
 
 
