@@ -23,11 +23,9 @@ class Client:
         """ Queries the policy service for a push policy for the given configuration """
         page = policy_service_pb2.Page(
             url=url,
-            network_type=client_env.network_type.value,
-            network_speed=client_env.network_speed.value,
-            device_speed=client_env.device_speed.value,
             bandwidth_kbps=client_env.bandwidth,
             latency_ms=client_env.latency,
+            cpu_slowdown=client_env.cpu_slowdown,
             manifest=manifest.serialize(),
         )
 

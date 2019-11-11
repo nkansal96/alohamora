@@ -36,12 +36,8 @@ class PolicyService(policy_service_pb2_grpc.PolicyServiceServicer):
     def create_model_instance(self, page: policy_service_pb2.Page) -> ModelInstance:
         """ Instantiates a model for the given page """
         # convert page network_type and device_speed to client environment
-        client_environment = client.ClientEnvironment(
-            device_speed=client.DeviceSpeed(page.device_speed),
-            network_type=client.NetworkType(page.network_type),
-            network_speed=client.NetworkSpeed(page.network_speed),
-            bandwidth=page.bandwidth_kbps,
-            latency=page.latency_ms,
+        client_environment = client.get_client_environment_from_parameters(
+            page.bandwidth_kbps, page.latency_ms, page.cpu_slowdown
         )
         # create environment config
         env_config = environment.EnvironmentConfig.deserialize(page.manifest)
