@@ -22,7 +22,7 @@ class Node(NamedTuple):
     parent: Optional["Node"] = None
 
     def __hash__(self):
-        return id(self)
+        return hash(self.resource.url)
 
     def __eq__(self, other: "Node"):
         return self.resource == other.resource
@@ -125,7 +125,7 @@ class RequestQueue:
             self.delayed.append(queue_item)
         self.node_to_queue_item_map[node] = queue_item
 
-    def estimated_completion_time(self, node: Node) -> float:
+    def estimated_completion_time(self, node: Node) -> Tuple[float, float]:
         """
         Runs through a copy of the request queue and returns the relative time offset
         at which the given node would have completed.
@@ -143,7 +143,7 @@ class RequestQueue:
         while rq and node not in completed_nodes:
             completed_nodes, step_ms = rq.step()
             total_time += step_ms
-        return total_time
+        return total_time, rq.time_spent_downloading(node)
 
     def time_spent_downloading(self, node: Node) -> float:
         """
