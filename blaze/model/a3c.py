@@ -1,5 +1,6 @@
 """ This module defines the model for training and instantiating A3C agents """
 
+from collections import deque
 from statistics import stdev
 
 from blaze.config.config import Config
@@ -15,49 +16,57 @@ MAX_ITERATIONS = 400
 MIN_ITERATIONS = 100
 
 
-class StopCondition:
+def stop_condition():
     """
     Implements a stateful stopping condition to automatically stop the training based on analyzing the running
     episode reward mean over a certain window size. It also stop automatically if the number of training iterations
     exceeds some maximum, but not before it exceeds some minimum.
     """
 
-    def __init__(self):
-        self.log = logger.with_namespace("stop_condition")
-        self.num_iters = 0
-        self.episode_max_rewards = []
-        self.episode_min_rewards = []
-        self.episode_mean_rewards = []
+    log = logger.with_namespace("stop_condition")
+    num_iters = 0
+    episode_max_rewards = deque()
+    episode_min_rewards = deque()
+    episode_mean_rewards = deque()
 
-    def __call__(self, trial_id, result):
-        self.num_iters += 1
+    def stopper(trial_id, result):
+        nonlocal num_iters, episode_max_rewards, episode_min_rewards, episode_mean_rewards
 
+        num_iters += 1
         if "episode_reward_max" in result and "episode_reward_min" in result and "episode_reward_mean" in result:
-            self.log.debug("recording trial result", trial_id=trial_id, num_iters=self.num_iters)
-            self.episode_max_rewards.append(result["episode_reward_max"])
-            self.episode_min_rewards.append(result["episode_reward_min"])
-            self.episode_mean_rewards.append(result["episode_reward_mean"])
+            log.debug("recording trial result", trial_id=trial_id, num_iters=num_iters)
+            episode_max_rewards.append(result["episode_reward_max"])
+            episode_min_rewards.append(result["episode_reward_min"])
+            episode_mean_rewards.append(result["episode_reward_mean"])
         else:
-            self.log.warn("unable to record episode result", result=result, trial_id=trial_id)
+            log.warn("unable to record episode result", result=result, trial_id=trial_id)
             return False
 
         # truncate the rewards list to past `WINDOW_SIZE` iterations only
-        self.episode_max_rewards = self.episode_max_rewards[-WINDOW_SIZE:]
-        self.episode_min_rewards = self.episode_min_rewards[-WINDOW_SIZE:]
-        self.episode_mean_rewards = self.episode_mean_rewards[-WINDOW_SIZE:]
+        if len(episode_max_rewards) > WINDOW_SIZE:
+            episode_max_rewards.popleft()
+        if len(episode_min_rewards) > WINDOW_SIZE:
+            episode_min_rewards.popleft()
+        if len(episode_mean_rewards) > WINDOW_SIZE:
+            episode_mean_rewards.popleft()
 
-        if self.num_iters > MIN_ITERATIONS:
-            self.log.debug(
+        if num_iters > MIN_ITERATIONS:
+            log.debug(
                 "reward stats",
-                stdev_max=stdev(self.episode_max_rewards),
-                stdev_min=stdev(self.episode_min_rewards),
-                stdev_mean=stdev(self.episode_mean_rewards),
+                stdev_max=stdev(episode_max_rewards),
+                stdev_min=stdev(episode_min_rewards),
+                stdev_mean=stdev(episode_mean_rewards),
             )
-            relative_stdev_based_stop = stdev(self.episode_mean_rewards) < 0.01 * self.episode_mean_rewards[-1]
-            if self.num_iters > MAX_ITERATIONS or relative_stdev_based_stop:
-                self.log.info("auto stopping", iters=self.num_iters)
+            relative_stdev_based_stop = stdev(episode_mean_rewards) < 0.01 * episode_mean_rewards[-1]
+            if num_iters > MAX_ITERATIONS or relative_stdev_based_stop:
+                log.info("auto stopping", iters=num_iters)
                 return True
         return False
+
+    stopper.episode_max_rewards = episode_max_rewards
+    stopper.episode_min_rewards = episode_min_rewards
+    stopper.episode_mean_rewards = episode_mean_rewards
+    return stopper
 
 
 COMMON_CONFIG = {
@@ -84,7 +93,7 @@ def train(train_config: TrainConfig, config: Config):
             name: {
                 "run": "A3C",
                 "env": Environment,
-                "stop": ray.tune.function(StopCondition()),
+                "stop": ray.tune.function(stop_condition()),
                 "checkpoint_at_end": True,
                 "checkpoint_freq": 10,
                 "max_failures": 1000,
