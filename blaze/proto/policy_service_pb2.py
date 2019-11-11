@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x14policy_service.proto\"\x94\x01\n\x04Page\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x14\n\x0cnetwork_type\x18\x02 \x01(\x05\x12\x15\n\rnetwork_speed\x18\x03 \x01(\x05\x12\x14\n\x0c\x64\x65vice_speed\x18\x04 \x01(\x05\x12\x16\n\x0e\x62\x61ndwidth_kbps\x18\x05 \x01(\x05\x12\x12\n\nlatency_ms\x18\x06 \x01(\x05\x12\x10\n\x08manifest\x18\x07 \x01(\x0c\"\x18\n\x06Policy\x12\x0e\n\x06policy\x18\x01 \x01(\t2,\n\rPolicyService\x12\x1b\n\tGetPolicy\x12\x05.Page\x1a\x07.Policyb\x06proto3')
+  serialized_pb=_b('\n\x14policy_service.proto\"g\n\x04Page\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x16\n\x0e\x62\x61ndwidth_kbps\x18\x02 \x01(\x05\x12\x12\n\nlatency_ms\x18\x03 \x01(\x05\x12\x14\n\x0c\x63pu_slowdown\x18\x04 \x01(\x05\x12\x10\n\x08manifest\x18\x05 \x01(\x0c\"\x18\n\x06Policy\x12\x0e\n\x06policy\x18\x01 \x01(\t2,\n\rPolicyService\x12\x1b\n\tGetPolicy\x12\x05.Page\x1a\x07.Policyb\x06proto3')
 )
 
 
@@ -40,43 +40,29 @@ _PAGE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='network_type', full_name='Page.network_type', index=1,
+      name='bandwidth_kbps', full_name='Page.bandwidth_kbps', index=1,
       number=2, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='network_speed', full_name='Page.network_speed', index=2,
+      name='latency_ms', full_name='Page.latency_ms', index=2,
       number=3, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='device_speed', full_name='Page.device_speed', index=3,
+      name='cpu_slowdown', full_name='Page.cpu_slowdown', index=3,
       number=4, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='bandwidth_kbps', full_name='Page.bandwidth_kbps', index=4,
-      number=5, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='latency_ms', full_name='Page.latency_ms', index=5,
-      number=6, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='manifest', full_name='Page.manifest', index=6,
-      number=7, type=12, cpp_type=9, label=1,
+      name='manifest', full_name='Page.manifest', index=4,
+      number=5, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -93,8 +79,8 @@ _PAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=25,
-  serialized_end=173,
+  serialized_start=24,
+  serialized_end=127,
 )
 
 
@@ -124,8 +110,8 @@ _POLICY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=175,
-  serialized_end=199,
+  serialized_start=129,
+  serialized_end=153,
 )
 
 DESCRIPTOR.message_types_by_name['Page'] = _PAGE
@@ -154,8 +140,8 @@ _POLICYSERVICE = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=201,
-  serialized_end=245,
+  serialized_start=155,
+  serialized_end=199,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetPolicy',

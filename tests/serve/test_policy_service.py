@@ -61,6 +61,6 @@ class TestPolicyService:
         model_instance = ps.create_model_instance(self.page)
         assert isinstance(model_instance, ModelInstance)
         assert isinstance(model_instance.agent, MockAgent)
-        assert model_instance.client_env.network_type == self.client_environment.network_type
-        assert model_instance.client_env.device_speed == self.client_environment.device_speed
-        assert model_instance.env_config.push_groups == self.push_groups
+        assert model_instance.config.client_env.network_type == self.client_environment.network_type
+        assert model_instance.config.client_env.device_speed == self.client_environment.device_speed
+        assert model_instance.config.env_config.push_groups == self.push_groups

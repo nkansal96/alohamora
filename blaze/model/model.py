@@ -3,9 +3,10 @@ from typing import NamedTuple, Optional, Type
 
 import gym
 from ray.rllib.agents import Agent
+from ray.rllib.evaluation.episode import _flatten_action
 
 from blaze.action import Policy
-from blaze.config.config import get_config
+from blaze.config.config import get_config, Config
 from blaze.config.environment import EnvironmentConfig
 from blaze.config.client import ClientEnvironment
 from blaze.environment.environment import Environment
@@ -17,11 +18,9 @@ class ModelInstance:
     an environment and client configuration
     """
 
-    def __init__(self, agent: Agent, env_config: EnvironmentConfig, client_env: ClientEnvironment):
+    def __init__(self, agent: Agent, config: Config):
         self.agent = agent
-        self.client_env = client_env
-        self.env_config = env_config
-        self.config = get_config(self.env_config, self.client_env)
+        self.config = config
         self._policy: Optional[Policy] = None
 
     @property
@@ -40,8 +39,9 @@ class ModelInstance:
         while not completed:
             # query the agent for an action
             action = self.agent.compute_action(obs, prev_action=action, prev_reward=reward)
+            action = _flatten_action(action)
             # deflate and apply the action
-            obs, reward, completed, _ = env.step(tuple(x[0] for x in action))
+            obs, reward, completed, _ = env.step(action)
         self._policy = env.policy
         return self._policy
 
@@ -60,6 +60,7 @@ class SavedModel(NamedTuple):
 
     def instantiate(self, env_config: EnvironmentConfig, client_env: ClientEnvironment) -> ModelInstance:
         """ Instantiates the saved model and returns a ModelInstance for the given environment """
-        agent = self.cls(env=self.env, config={**self.common_config, "env_config": get_config(env_config, client_env)})
+        config = get_config(env_config, client_env)
+        agent = self.cls(env=self.env, config={**self.common_config, "env_config": config})
         agent.restore(self.location)
-        return ModelInstance(agent, env_config, client_env)
+        return ModelInstance(agent, config)

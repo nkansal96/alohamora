@@ -1,5 +1,6 @@
 from typing import Optional
 from blaze.action import ActionSpace
+from blaze.action.action import NOOP_ACTION_ID
 
 import numpy as np
 
@@ -18,10 +19,14 @@ class MockAgent:
 
     def compute_action(self, observation: dict, **kwargs):
         self.observations.append(observation)
+        # Don't choose a no-op for the first one, else this doesn't really simulate anything
+        action_id = NOOP_ACTION_ID
+        while action_id == NOOP_ACTION_ID and not self.sampled_actions:
+            action_id = self.action_space.sample()
         # The action agent converts the sampled value to an array of (1,) numpy arrays
-        action = [np.array([x]) for x in self.action_space.sample()]
+        action = [np.array([x]) for x in action_id]
         self.sampled_actions.append(action)
-        return action
+        return [action]
 
     def restore(self, file_path):
         self.file_path = file_path

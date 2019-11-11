@@ -41,7 +41,6 @@ class TestClient:
             )
 
             assert policy is not None
-            assert len(list(policy.push)) > 0
-            assert len(list(policy.preload)) > 0
+            assert len(list(policy.push)) + len(list(policy.preload)) > 0
         finally:
             server.stop()

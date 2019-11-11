@@ -13,12 +13,13 @@ class TestModelInstance:
     def setup(self):
         self.client_environment = get_random_client_environment()
         self.env_config = get_env_config()
+        self.config = get_config(self.env_config, self.client_environment)
         self.trainable_push_groups = self.env_config.trainable_push_groups
 
     def test_init(self):
         action_space = ActionSpace(self.env_config.push_groups)
         mock_agent = MockAgent(action_space)
-        m = ModelInstance(mock_agent, self.env_config, self.client_environment)
+        m = ModelInstance(mock_agent, self.config)
         assert isinstance(m, ModelInstance)
         assert m.agent is mock_agent
         assert not m._policy
@@ -27,7 +28,7 @@ class TestModelInstance:
         observation_space = get_observation_space()
         action_space = ActionSpace(self.trainable_push_groups)
         mock_agent = MockAgent(action_space)
-        m = ModelInstance(mock_agent, self.env_config, self.client_environment)
+        m = ModelInstance(mock_agent, self.config)
         policy = m.policy
         assert policy
         assert all(observation_space.contains(obs) for obs in mock_agent.observations)
@@ -35,7 +36,7 @@ class TestModelInstance:
     def test_push_policy_returns_cached_policy(self):
         action_space = ActionSpace(self.trainable_push_groups)
         mock_agent = MockAgent(action_space)
-        m = ModelInstance(mock_agent, self.env_config, self.client_environment)
+        m = ModelInstance(mock_agent, self.config)
         first_policy = m.policy
         second_policy = m.policy
         assert first_policy is second_policy
@@ -58,5 +59,4 @@ class TestSavedModel:
         assert model_instance.agent.kwargs["env"] == Environment
         assert model_instance.agent.kwargs["config"] == {"env_config": get_config(env_config, client_env)}
         assert model_instance.agent.file_path == saved_model.location
-        assert model_instance.env_config == env_config
-        assert model_instance.client_env == client_env
+        assert model_instance.config == get_config(env_config, client_env)
