@@ -5,7 +5,7 @@ loading a webpage and simulating its page load time from a dependency graph
 
 import json
 from queue import PriorityQueue
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from blaze.action.policy import Policy
 from blaze.config.environment import EnvironmentConfig, ResourceType
@@ -62,16 +62,20 @@ class Simulator:
         self.client_env = client_env
         self.policy = policy
 
-    def schedule_pushed_and_preloaded_resources(self, node: Node, delay: float):
+    def schedule_pushed_and_preloaded_resources(
+        self, node: Node, delay: float, dry_run=False
+    ) -> Optional[List[Tuple[Node, float]]]:
         """
         Schedule all push and preload resources for a given node with the given delay.
 
         :param node: The node to push resources for
         :param delay: The delay to schedule each pushed resource with
+        :param dry_run: Only return the list of resources to push with their delay
         """
 
         push_resources = self.policy.push_set_for_resource(node.resource) if self.policy else []
         preload_resources = self.policy.preload_set_for_resource(node.resource) if self.policy else []
+        dry_run_list = []
 
         if push_resources:
             self.log.debug(
@@ -82,16 +86,20 @@ class Simulator:
         for res in push_resources:
             push_node = self.url_to_node_map.get(res.url)
             if push_node and push_node not in self.completed_nodes and push_node not in self.request_queue:
-                self.pq.put((push_node.priority, push_node))
-                self.request_queue.add_with_delay(push_node, delay + push_node.resource.time_to_first_byte_ms)
-                self.pushed_nodes[push_node] = True
-                self.log.debug(
-                    "push resource",
-                    time=self.total_time_ms,
-                    delay=delay + push_node.resource.time_to_first_byte_ms,
-                    source=node.resource.url,
-                    push=res.url,
-                )
+                push_delay = delay + push_node.resource.time_to_first_byte_ms
+                if dry_run:
+                    dry_run_list.append((push_node, push_delay))
+                else:
+                    self.pq.put((push_node.priority, push_node))
+                    self.request_queue.add_with_delay(push_node, push_delay)
+                    self.pushed_nodes[push_node] = True
+                    self.log.debug(
+                        "push resource",
+                        time=self.total_time_ms,
+                        delay=push_delay,
+                        source=node.resource.url,
+                        push=res.url,
+                    )
 
         if preload_resources:
             self.log.debug(
@@ -102,21 +110,24 @@ class Simulator:
         for res in preload_resources:
             preload_node = self.url_to_node_map.get(res.url)
             if preload_node and preload_node not in self.completed_nodes and preload_node not in self.request_queue:
-                self.pq.put((preload_node.priority, preload_node))
-                # Same delay as parent, but adds an extra RTT because
-                # the browser needs to explicitly make a request for it
-                self.request_queue.add_with_delay(
-                    preload_node,
-                    delay + preload_node.resource.time_to_first_byte_ms + self.request_queue.rtt_latency_ms,
-                )
-                self.pushed_nodes[preload_node] = True
-                self.log.debug(
-                    "push resource",
-                    time=self.total_time_ms,
-                    delay=delay + preload_node.resource.time_to_first_byte_ms,
-                    source=node.resource.url,
-                    push=res.url,
-                )
+                # Same delay as parent, but adds an extra RTT because the browser needs
+                # to explicitly make a request for it
+                preload_delay = delay + preload_node.resource.time_to_first_byte_ms + self.request_queue.rtt_latency_ms
+                if dry_run:
+                    dry_run_list.append((preload_node, preload_delay))
+                else:
+                    self.pq.put((preload_node.priority, preload_node))
+                    self.request_queue.add_with_delay(preload_node, preload_delay)
+                    self.pushed_nodes[preload_node] = True
+                    self.log.debug(
+                        "push resource",
+                        time=self.total_time_ms,
+                        delay=delay + preload_node.resource.time_to_first_byte_ms,
+                        source=node.resource.url,
+                        push=res.url,
+                    )
+
+        return dry_run_list if dry_run else None
 
     def step_request_queue(self):
         """
@@ -140,16 +151,18 @@ class Simulator:
         if not completed_this_step or not all(node in self.pushed_nodes for node in completed_this_step):
             self.total_time_ms += time_ms_this_step
 
-    def schedule_child_requests(self, parent: Node):
+    def schedule_child_requests(self, parent: Node, dry_run=False) -> Optional[List[Tuple[Node, float]]]:
         """
         Schedules all children for the given node
 
         :param parent: The node to schedule children for
+        :param dry_run: Only return the list of nodes and delays instead of actually scheduling them
         """
 
         fetch_delay_correction = 0
         execution_delay = 0
         last_execution_delay = 0
+        dry_run_list = []
 
         for child in parent.children:
             # Server processing delay
@@ -167,9 +180,20 @@ class Simulator:
             # If it was pushed, calculate its delay as the difference between
             # when it was scheduled and how much time has passed since then
             if self.pushed_nodes.get(child):
-                # get the time that the pushed resource would be complete
+                # get the time that the pushed resource has already spent downloading
                 time_already_downloaded = self.request_queue.time_spent_downloading(child)
-                time_remaining_to_download = self.request_queue.estimated_completion_time(child)
+
+                # collect the requests for the whole level, schedule them, and estimate remaining download time
+                if not dry_run:
+                    nodes_to_schedule = self.schedule_child_requests(parent, dry_run=True)
+                    rq = self.request_queue.copy()
+                    for (node, delay) in nodes_to_schedule:
+                        if node not in rq and node not in self.completed_nodes:
+                            rq.add_with_delay(node, delay)
+                    time_remaining_to_download = rq.estimated_completion_time(child)
+                else:
+                    time_remaining_to_download = self.request_queue.estimated_completion_time(child)
+
                 remaining_delay_before_download = self.request_queue.remaining_delay(child)
                 normal_time_spent_downloading = self.no_push.request_queue.time_spent_downloading(child)
 
@@ -201,7 +225,8 @@ class Simulator:
                         child_fetch_delay_correction=child_fetch_delay_correction,
                         total_fetch_delay_correction=fetch_delay_correction,
                     )
-                self.pushed_nodes[child] = False
+                if not dry_run:
+                    self.pushed_nodes[child] = False
 
             if child.resource.type == ResourceType.SCRIPT:
                 execution_delay += child.resource.execution_ms
@@ -217,9 +242,21 @@ class Simulator:
                     execution=child.resource.execution_ms,
                     total_time=self.total_time_ms,
                 )
-                self.pq.put((child.priority, child))
-                self.request_queue.add_with_delay(child, child_delay)
-                self.schedule_pushed_and_preloaded_resources(child, child_delay - child.resource.time_to_first_byte_ms)
+                if dry_run:
+                    dry_run_list.append((child, child_delay))
+                    dry_run_list.extend(
+                        self.schedule_pushed_and_preloaded_resources(
+                            child, child_delay - child.resource.time_to_first_byte_ms, dry_run=True
+                        )
+                    )
+                else:
+                    self.pq.put((child.priority, child))
+                    self.request_queue.add_with_delay(child, child_delay)
+                    self.schedule_pushed_and_preloaded_resources(
+                        child, child_delay - child.resource.time_to_first_byte_ms
+                    )
+
+        return dry_run_list if dry_run else None
 
     def simulate_load_time(self, client_env: ClientEnvironment, policy: Optional[Policy] = None) -> float:
         """
