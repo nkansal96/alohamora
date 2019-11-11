@@ -144,7 +144,7 @@ def get_push_groups() -> List[PushGroup]:
                     order=2,
                     group_id=3,
                     source_id=0,
-                    initiator=4,
+                    initiator=1,
                     type=ResourceType.SCRIPT,
                 ),
                 Resource(
@@ -153,7 +153,7 @@ def get_push_groups() -> List[PushGroup]:
                     order=3,
                     group_id=3,
                     source_id=1,
-                    initiator=10,
+                    initiator=2,
                     type=ResourceType.FONT,
                 ),
                 Resource(

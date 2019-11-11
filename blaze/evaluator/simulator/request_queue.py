@@ -136,7 +136,7 @@ class RequestQueue:
         """
 
         if node not in self:
-            return 0
+            return 0, 0
         rq = self.copy()
         total_time = 0
         completed_nodes, step_ms = [], 0

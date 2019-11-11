@@ -314,7 +314,7 @@ class Simulator:
         """
 
         # create a map of Nodes, mapping their order (basically their ID) to a Node for that resource
-        res_list = env_config.har_resources
+        res_list = sorted(env_config.har_resources, key=lambda r: r.order)
         self.node_map = {
             res.order: Node(resource=res, priority=res.order, children=[]) for res in res_list if res.order == 0
         }
