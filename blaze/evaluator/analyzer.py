@@ -32,6 +32,7 @@ class Analyzer:
         self.config = config
         self.client_environment = client_environment
         self.simulator = simulator.Simulator(config.env_config)
+        self.last_plt = 0
         self.log = logger.with_namespace("analyzer")
 
     def reset(self, client_environment: Optional[client.ClientEnvironment] = None):
@@ -45,5 +46,7 @@ class Analyzer:
         resulting speed index returned from Lighthouse
         """
         plt = self.simulator.simulate_load_time(self.client_environment, policy)
-        self.log.debug("got page load time", plt=plt, reward=-plt)
-        return -plt
+        reward = self.last_plt - plt
+        self.log.debug("got page load time", last_plt=self.last_plt, this_plt=plt, reward=reward)
+        self.last_plt = plt
+        return reward

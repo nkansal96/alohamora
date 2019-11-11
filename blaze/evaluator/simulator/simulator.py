@@ -36,6 +36,7 @@ class Simulator:
         self.request_queue: Optional[RequestQueue] = None
         self.completed_nodes = {}
         self.pushed_nodes = {}
+        self.parent_times = {}
         self.total_time_ms = 0
 
         self.no_push: Optional[Simulator] = None
@@ -54,6 +55,7 @@ class Simulator:
         self.request_queue = RequestQueue(client_env.bandwidth, client_env.latency)
         self.completed_nodes = {}
         self.pushed_nodes = {}
+        self.parent_times = {}
         self.total_time_ms = 0
 
         self.no_push = None
@@ -124,7 +126,12 @@ class Simulator:
         completed_this_step, time_ms_this_step = self.request_queue.step()
 
         for node in completed_this_step:
-            self.completed_nodes[node] = self.total_time_ms + time_ms_this_step + node.resource.execution_ms
+            if node not in self.parent_times:
+                self.parent_times[node] = self.total_time_ms + time_ms_this_step + node.resource.execution_ms
+            if node.parent in self.parent_times:
+                self.parent_times[node.parent] += time_ms_this_step
+            parent_time = self.parent_times.get(node.parent, self.total_time_ms)
+            self.completed_nodes[node] = parent_time + time_ms_this_step + node.resource.execution_ms
             self.log.debug("resource completed", resource=node.resource.url, time=self.completed_nodes[node])
             self.schedule_child_requests(node)
 
@@ -273,8 +280,9 @@ class Simulator:
 
         # create a map of Nodes, mapping their order (basically their ID) to a Node for that resource
         res_list = env_config.har_resources
-        self.node_map = {res.order: Node(resource=res, priority=res.order, children=[]) for res in res_list}
-        self.url_to_node_map = {node.resource.url: node for node in self.node_map.values()}
+        self.node_map = {
+            res.order: Node(resource=res, priority=res.order, children=[]) for res in res_list if res.order == 0
+        }
 
         # The root is the node corresponding to the 0th order
         self.root = self.node_map.get(0)
@@ -282,9 +290,13 @@ class Simulator:
         # for each resource, unless it's the start resource, add it as a child of its initiator
         for res in res_list:
             if res != self.root.resource:
+                self.node_map[res.order] = Node(
+                    resource=res, priority=res.order, children=[], parent=self.node_map.get(res.initiator, None)
+                )
                 self.node_map[res.initiator].children.append(self.node_map[res.order])
 
         # sort each child list by its order
+        self.url_to_node_map = {node.resource.url: node for node in self.node_map.values()}
         for node in self.node_map.values():
             node.children.sort(key=lambda n: n.resource.order)
 

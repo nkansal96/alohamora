@@ -5,7 +5,7 @@ It also defines the RequestQueue, which simulates the network link.
 
 import copy
 from collections import defaultdict
-from typing import DefaultDict, Dict, List, NamedTuple, Set, Tuple
+from typing import DefaultDict, Dict, List, NamedTuple, Optional, Set, Tuple
 
 from blaze.config.environment import Resource
 from blaze.preprocess.url import Url
@@ -19,6 +19,7 @@ class Node(NamedTuple):
     resource: Resource
     priority: int
     children: List["Node"] = []
+    parent: Optional["Node"] = None
 
     def __hash__(self):
         return id(self)
