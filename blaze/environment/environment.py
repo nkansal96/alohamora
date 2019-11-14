@@ -82,7 +82,7 @@ class Environment(gym.Env):
         self.action_space.use_action(decoded_action)
 
         reward = NOOP_ACTION_REWARD
-        if not action_applied:
+        if action_applied:
             reward = self.analyzer.get_reward(self.policy)
             log.info("got reward", action=repr(decoded_action), reward=reward)
 

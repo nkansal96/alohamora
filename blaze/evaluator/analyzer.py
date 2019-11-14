@@ -37,6 +37,7 @@ class Analyzer:
 
     def reset(self, client_environment: Optional[client.ClientEnvironment] = None):
         """ Resets the analyzer's state and optionally changes the client environment """
+        self.last_plt = 0
         self.client_environment = client_environment or self.client_environment
 
     def get_reward(self, policy: Policy):
@@ -46,7 +47,10 @@ class Analyzer:
         resulting speed index returned from Lighthouse
         """
         plt = self.simulator.simulate_load_time(self.client_environment, policy)
-        reward = self.last_plt - plt
+        if self.last_plt == 0:
+            reward = 1000000.0 * (1.0 / plt)
+        else:
+            reward = 1000000.0 * (1.0 / plt - 1.0 / self.last_plt)
         self.log.debug("got page load time", last_plt=self.last_plt, this_plt=plt, reward=reward)
         self.last_plt = plt
         return reward

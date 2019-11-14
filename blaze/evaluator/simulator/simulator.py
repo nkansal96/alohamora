@@ -76,7 +76,7 @@ class Simulator:
         dry_run_list = []
 
         if push_resources and not dry_run:
-            self.log.debug(
+            self.log.verbose(
                 "push resources for resource",
                 resource=node.resource.url,
                 push_resources=[res.url for res in push_resources],
@@ -91,7 +91,7 @@ class Simulator:
                     self.pq.put((push_node.priority, push_node))
                     self.request_queue.add_with_delay(push_node, push_delay)
                     self.pushed_nodes[push_node] = True
-                    self.log.debug(
+                    self.log.verbose(
                         "push resource",
                         time=self.total_time_ms,
                         delay=push_delay,
@@ -100,7 +100,7 @@ class Simulator:
                     )
 
         if preload_resources and not dry_run:
-            self.log.debug(
+            self.log.verbose(
                 "preload resources for resource",
                 resource=node.resource.url,
                 preload_resources=[res.url for res in preload_resources],
@@ -117,7 +117,7 @@ class Simulator:
                     self.pq.put((preload_node.priority, preload_node))
                     self.request_queue.add_with_delay(preload_node, preload_delay)
                     self.pushed_nodes[preload_node] = True
-                    self.log.debug(
+                    self.log.verbose(
                         "push resource",
                         time=self.total_time_ms,
                         delay=delay + preload_node.resource.time_to_first_byte_ms,
@@ -137,7 +137,7 @@ class Simulator:
 
         for node in completed_this_step:
             self.completed_nodes[node] = self.total_time_ms + node.resource.execution_ms
-            self.log.debug("resource completed", resource=node.resource.url, time=self.completed_nodes[node])
+            self.log.verbose("resource completed", resource=node.resource.url, time=self.completed_nodes[node])
 
     def schedule_child_requests(self, parent: Node, dry_run=False) -> Optional[List[Tuple[Node, float]]]:
         """
@@ -208,7 +208,7 @@ class Simulator:
                 if child.resource.type in {ResourceType.SCRIPT, ResourceType.CSS}:
                     fetch_delay_correction += child_fetch_delay_correction
                     if not dry_run:
-                        self.log.debug(
+                        self.log.verbose(
                             "correcting fetch delay",
                             parent=parent.resource.url,
                             resource=child.resource.url,
@@ -236,7 +236,7 @@ class Simulator:
                         )
                     )
                 else:
-                    self.log.debug(
+                    self.log.verbose(
                         "scheduled resource",
                         resource=child.resource.url,
                         parent=parent.resource.url,
@@ -265,7 +265,7 @@ class Simulator:
         :param policy: The push/preload policy to simulate
         :return: The predicted page load time in milliseconds
         """
-        self.log.debug("simulating page load with client environment", **client_env._asdict())
+        self.log.verbose("simulating page load with client environment", **client_env._asdict())
         self.reset_simulation(client_env, policy)
 
         if policy:
@@ -274,8 +274,8 @@ class Simulator:
             self.no_push.log.set_silence(True)
             self.no_push.simulate_load_time(client_env)
 
-            self.log.debug("simulating page load with policy:")
-            self.log.debug(json.dumps(policy.as_dict, indent=4))
+            self.log.verbose("simulating page load with policy:")
+            self.log.verbose(json.dumps(policy.as_dict, indent=4))
 
         # start the initial item
         self.pq.put((self.root.priority, self.root))

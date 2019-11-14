@@ -71,7 +71,7 @@ def get_observation(client_environment: ClientEnvironment, push_groups: List[Pus
         for res in group.resources:
             # for some reason, sometimes res.type is in int instead of a ResourceType
             res_type = res.type.value if isinstance(res.type, ResourceType) else res.type
-            res_size_kb = res.size // 1000
+            res_size_kb = min(MAX_KBYTES - 1, res.size // 1000)
             encoded_resources[str(res.order)] = np.array(
                 [1, group.id, res.source_id, res.order + 1, res_type, res_size_kb, 0, 0]
             )
@@ -92,7 +92,7 @@ def get_observation(client_environment: ClientEnvironment, push_groups: List[Pus
             "network_type": client_environment.network_type.value,
             "device_speed": client_environment.device_speed.value,
             "bandwidth_mbps": client_environment.bandwidth // 1000,
-            "latency_ms": 10 * client_environment.latency // 10,
+            "latency_ms": 10 * (client_environment.latency // 10),
         },
         "resources": encoded_resources,
     }
