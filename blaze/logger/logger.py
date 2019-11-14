@@ -58,6 +58,10 @@ class Logger:
             context={**self.context, **context},
         )
 
+    def verbose(self, message, **context):
+        """ Logs the given message with the verbose level """
+        self.log(level=Level.VERBOSE, message=message, **context)
+
     def debug(self, message, **context):
         """ Logs the given message with the debug level """
         self.log(level=Level.DEBUG, message=message, **context)
