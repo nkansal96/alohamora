@@ -22,9 +22,7 @@ class PolicyService(policy_service_pb2_grpc.PolicyServiceServicer):
         self.policies: Dict[str, policy_service_pb2.Policy] = {}
 
     def GetPolicy(self, request: policy_service_pb2.Page, context: grpc.ServicerContext) -> policy_service_pb2.Policy:
-        if request.url not in self.policies:
-            self.policies[request.url] = self.create_policy(request)
-        return self.policies[request.url]
+        return self.create_policy(request)
 
     def create_policy(self, page: policy_service_pb2.Page) -> policy_service_pb2.Policy:
         """ Creates and formats a push policy for the given page """
