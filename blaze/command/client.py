@@ -4,8 +4,11 @@ import json
 import grpc
 
 from blaze.config.client import get_client_environment_from_parameters
+from blaze.config.config import get_config
 from blaze.config.environment import EnvironmentConfig
+from blaze.evaluator.simulator import Simulator
 from blaze.logger import logger as log
+from blaze.preprocess.record import get_page_load_time_in_mahimahi
 from blaze.serve.client import Client
 
 from . import command
@@ -60,15 +63,23 @@ def query(args):
     default=1,
 )
 @command.argument("--verbose", "-v", help="Output more information in the JSON output", action="store_true")
+@command.argument(
+    "--run_simulator", help="Run the outputted policy through the simulator (implies -v)", action="store_true"
+)
+@command.argument(
+    "--run_replay_server", help="Run the outputted policy through the replay server (implies -v)", action="store_true"
+)
 @command.command
 def evaluate(args):
     """
     Instantiate the given model and checkpoint and query it for the policy corresponding to the given
-    client and network conditions.
+    client and network conditions. Also allows running the generated policy through the simulator and
+    replay server to get the PLTs and compare them under different conditions.
     """
     log.info("evaluating model...", model=args.model, location=args.location, manifest=args.manifest)
     client_env = get_client_environment_from_parameters(args.bandwidth, args.latency, args.cpu_slowdown)
     manifest = EnvironmentConfig.load_file(args.manifest)
+    config = get_config(manifest, client_env)
 
     if args.model == "A3C":
         from blaze.model import a3c as model
@@ -79,19 +90,26 @@ def evaluate(args):
 
     saved_model = model.get_model(args.location)
     instance = saved_model.instantiate(manifest, client_env)
-    policy = instance.policy.as_dict
+    policy = instance.policy
+    data = policy.as_dict
 
-    if args.verbose:
-        print(
-            json.dumps(
-                {
-                    "manifest": args.manifest,
-                    "location": args.location,
-                    "client_env": client_env._asdict(),
-                    "policy": policy,
-                },
-                indent=4,
-            )
-        )
-    else:
-        print(json.dumps(policy, indent=4))
+    if args.verbose or args.run_simulator or args.run_replay_server:
+        data = {
+            "manifest": args.manifest,
+            "location": args.location,
+            "client_env": client_env._asdict(),
+            "policy": policy.as_dict,
+        }
+
+    if args.run_simulator:
+        sim = Simulator(manifest)
+        sim_plt = sim.simulate_load_time(client_env)
+        push_plt = sim.simulate_load_time(client_env, policy)
+        data["simulator"] = {"without_policy": sim_plt, "with_policy": push_plt}
+
+    if args.run_replay_server:
+        *_, plts = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config)
+        *_, push_plts = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config, policy)
+        data["replay_server"] = {"without_policy": plts, "with_policy": push_plts}
+
+    print(json.dumps(data, indent=4))

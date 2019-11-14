@@ -244,7 +244,9 @@ def _get_results_in_replay_server(
     capture_default: bool = False,
 ):
     log.debug("capturing median PLT in mahimahi with given environment")
-    orig_plt, res_list, push_groups = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config)
+    orig_plt, res_list, push_groups, *_ = get_page_load_time_in_mahimahi(
+        config.env_config.request_url, client_env, config
+    )
 
     # If the user passed in a custom environment, we want to use the PLT from that environment
     # but we want to use the HAR from the default page load to run in the simulator. This is to

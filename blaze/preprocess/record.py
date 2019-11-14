@@ -148,8 +148,9 @@ def get_page_load_time_in_mahimahi(
         log.debug("captured page execution", page_load_time=har.page_load_time_ms)
 
     hars.sort(key=lambda h: h.page_load_time_ms)
-    log.debug("recorded execution times", plt_ms=[h.page_load_time_ms for h in hars])
+    plt_ms = [h.page_load_time_ms for h in hars]
+    log.debug("recorded execution times", plt_ms=plt_ms)
     median_har = hars[len(hars) // 2]
     har_res_list = har_entries_to_resources(median_har)
     har_push_groups = resource_list_to_push_groups(har_res_list)
-    return median_har.page_load_time_ms, har_res_list, har_push_groups
+    return median_har.page_load_time_ms, har_res_list, har_push_groups, plt_ms
