@@ -25,47 +25,36 @@ def stop_condition():
 
     log = logger.with_namespace("stop_condition")
     num_iters = 0
-    episode_max_rewards = deque()
-    episode_min_rewards = deque()
-    episode_mean_rewards = deque()
+    past_rewards = deque()
 
     def stopper(trial_id, result):
-        nonlocal num_iters, episode_max_rewards, episode_min_rewards, episode_mean_rewards
+        nonlocal num_iters, past_rewards
 
         num_iters += 1
         if "episode_reward_max" in result and "episode_reward_min" in result and "episode_reward_mean" in result:
-            log.debug("recording trial result", trial_id=trial_id, num_iters=num_iters)
-            episode_max_rewards.append(result["episode_reward_max"])
-            episode_min_rewards.append(result["episode_reward_min"])
-            episode_mean_rewards.append(result["episode_reward_mean"])
+            rewards = (result["episode_reward_min"], result["episode_reward_mean"], result["episode_reward_max"])
+            log.debug("recording trial result", trial_id=trial_id, num_iters=num_iters, rewards=rewards)
+            past_rewards.append(rewards)
         else:
             log.warn("unable to record episode result", result=result, trial_id=trial_id)
             return False
 
         # truncate the rewards list to past `WINDOW_SIZE` iterations only
-        if len(episode_max_rewards) > WINDOW_SIZE:
-            episode_max_rewards.popleft()
-        if len(episode_min_rewards) > WINDOW_SIZE:
-            episode_min_rewards.popleft()
-        if len(episode_mean_rewards) > WINDOW_SIZE:
-            episode_mean_rewards.popleft()
+        if len(past_rewards) > WINDOW_SIZE:
+            past_rewards.popleft()
 
         if num_iters > MIN_ITERATIONS:
-            log.debug(
-                "reward stats",
-                stdev_max=stdev(episode_max_rewards),
-                stdev_min=stdev(episode_min_rewards),
-                stdev_mean=stdev(episode_mean_rewards),
-            )
-            relative_stdev_based_stop = stdev(episode_mean_rewards) <= 0.01 * abs(episode_mean_rewards[-1])
+            stdev_min, stdev_mean, stdev_max = tuple(map(stdev, zip(*past_rewards)))
+            log.debug("reward stats", stdev_min=stdev_min, stdev_mean=stdev_mean, stdev_max=stdev_max)
+            relative_stdev_based_stop = stdev_mean <= 0.01 * abs(past_rewards[-1][1])
+
             if num_iters > MAX_ITERATIONS or relative_stdev_based_stop:
                 log.info("auto stopping", iters=num_iters)
                 return True
+
         return False
 
-    stopper.episode_max_rewards = episode_max_rewards
-    stopper.episode_min_rewards = episode_min_rewards
-    stopper.episode_mean_rewards = episode_mean_rewards
+    stopper.past_rewards = past_rewards
     return stopper
 
 

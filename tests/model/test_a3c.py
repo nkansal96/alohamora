@@ -54,14 +54,10 @@ class TestStopCondition:
     def test_call_records_episode_result(self):
         sc = a3c.stop_condition()
         assert not sc(0, {"episode_reward_mean": 1, "episode_reward_min": 0, "episode_reward_max": 2})
-        assert list(sc.episode_mean_rewards) == [1]
-        assert list(sc.episode_min_rewards) == [0]
-        assert list(sc.episode_max_rewards) == [2]
+        assert list(sc.past_rewards) == [(0, 1, 2)]
 
         assert not sc(0, {"episode_reward_mean": 2, "episode_reward_min": 1, "episode_reward_max": 3})
-        assert list(sc.episode_mean_rewards) == [1, 2]
-        assert list(sc.episode_min_rewards) == [0, 1]
-        assert list(sc.episode_max_rewards) == [2, 3]
+        assert list(sc.past_rewards) == [(0, 1, 2), (1, 2, 3)]
 
     def test_window_size_remains_less_than_min_iters(self):
         sc = a3c.stop_condition()
@@ -69,9 +65,7 @@ class TestStopCondition:
 
         for _ in range(total_iters):
             assert not sc(0, get_episode_result())
-            assert len(sc.episode_max_rewards) <= a3c.WINDOW_SIZE
-            assert len(sc.episode_min_rewards) <= a3c.WINDOW_SIZE
-            assert len(sc.episode_mean_rewards) <= a3c.WINDOW_SIZE
+            assert len(sc.past_rewards) <= a3c.WINDOW_SIZE
 
     def test_stops_after_max_iters(self):
         sc = a3c.stop_condition()
