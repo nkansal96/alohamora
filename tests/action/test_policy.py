@@ -9,7 +9,7 @@ from tests.mocks.config import get_push_groups
 
 def get_action_space():
     action_space = ActionSpace(get_push_groups())
-    action_space.seed(2048)
+    action_space.seed(4096)
     return action_space
 
 

@@ -79,10 +79,18 @@ class PushActionSpace(gym.spaces.Tuple):
 
     def decode_action_id(self, action_id: PushActionIDType) -> Action:
         """ Returns the Action object corresponding to the encoded action ID """
-        if action_id == NOOP_PUSH_ACTION_ID or not self.contains(action_id):
+        if action_id == NOOP_PUSH_ACTION_ID:
             return Action()
 
         g, s, p = action_id
+        if g not in self.group_id_to_source_id:
+            return Action()
+
+        p = p % (max(self.group_id_to_resource_map[g].keys()) + 1)
+        if p == 0:
+            return Action()
+        s = s % p
+
         return Action(
             action_id=action_id,
             is_push=True,
@@ -152,7 +160,11 @@ class PreloadActionSpace(gym.spaces.Tuple):
     def decode_action_id(self, action_id: PreloadActionIDType) -> Action:
         """ Returns the Action object corresponding to the encoded action ID """
         source, preload = action_id
-        if action_id == NOOP_PRELOAD_ACTION_ID or not self.contains(action_id):
+        if preload == 0 or action_id == NOOP_PRELOAD_ACTION_ID:
+            return Action()
+
+        source = source % preload
+        if not self.contains((source, preload)):
             return Action()
 
         return Action(
@@ -194,9 +206,8 @@ class ActionSpace(gym.spaces.Tuple):
         self.disable_push = disable_push
         self.disable_preload = disable_preload
 
-        self.num_action_types = 2 if disable_push or disable_preload else 3
-        self.action_types = list(range(self.num_action_types))
-        self.action_type_space = gym.spaces.Discrete(self.num_action_types)
+        self.num_action_types = 1 if disable_push or disable_preload else 2
+        self.action_type_space = gym.spaces.Discrete(1 + self.num_action_types * 4)
 
         self.push_space = PushActionSpace(push_groups)
         self.preload_space = PreloadActionSpace(push_groups)
@@ -210,22 +221,22 @@ class ActionSpace(gym.spaces.Tuple):
         super().seed(seed)
 
     def sample(self):
-        action_weights = [0.04] + ([(0.96 / (self.num_action_types - 1))] * (self.num_action_types - 1))
-        action_type = self.np_random.choice(self.num_action_types, size=1, p=action_weights)[0]
+        action_type = self.np_random.randint(0, self.action_type_space.n)
+        action_type_id = 0 if action_type == 0 else ((action_type // 5) + 1)
 
         # Case: do nothing
-        if action_type == 0:
+        if action_type_id == 0:
             return NOOP_ACTION_ID
 
         # Push if action_type is 1 and push is not disabled
-        if action_type == 1 and not self.disable_push:
+        if action_type_id == 1 and not self.disable_push:
             push_action = self.push_space.sample()
             if push_action == NOOP_PUSH_ACTION_ID:
                 return NOOP_ACTION_ID
             return (action_type, *push_action, *NOOP_PRELOAD_ACTION_ID)
 
         # Preload if action type is 2 or action_type is 1 and push is disabled
-        if action_type == 2 or self.disable_push:
+        if action_type_id == 2 or self.disable_push:
             preload_action = self.preload_space.sample()
             if preload_action == NOOP_PRELOAD_ACTION_ID:
                 return NOOP_ACTION_ID
@@ -241,10 +252,11 @@ class ActionSpace(gym.spaces.Tuple):
             action = (action[0], tuple(action[1:4]), tuple(action[4:]))
 
         (action_type, push_id, preload_id) = action
-        if action_type == 0:
+        action_type_id = 0 if action_type == 0 else ((action_type // 5) + 1)
+        if action_type_id == 0:
             return Action()
 
-        is_push = action_type == 1 and not self.disable_push
+        is_push = action_type_id == 1 and not self.disable_push
         if is_push:
             return self.push_space.decode_action_id(push_id)
         return self.preload_space.decode_action_id(preload_id)

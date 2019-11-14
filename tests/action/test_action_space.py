@@ -107,21 +107,28 @@ class TestPushActionSpace:
 
     def test_decode_fails_for_action_not_in_action_space(self):
         assert self.action_space.decode_action_id(NOOP_PUSH_ACTION_ID).is_noop
-        assert self.action_space.decode_action_id((0, 1, 1)).is_noop
-        assert self.action_space.decode_action_id((0, 2, 1)).is_noop
-        assert self.action_space.decode_action_id((0, 20, 21)).is_noop
+        # These are commented because we changed the action space to use % to roll around the source
+        # assert self.action_space.decode_action_id((0, 1, 1)).is_noop
+        # assert self.action_space.decode_action_id((0, 2, 1)).is_noop
+        # assert self.action_space.decode_action_id((0, 20, 21)).is_noop
+        assert not self.action_space.decode_action_id((0, 1, 1)).is_noop
+        assert not self.action_space.decode_action_id((0, 2, 1)).is_noop
+        assert not self.action_space.decode_action_id((0, 20, 21)).is_noop
 
     def test_decode_returns_correct_action_for_each_valid_action_id(self):
         for group in self.push_groups:
-            for source in group.resources:
-                for push in group.resources:
+            for i, source in enumerate(group.resources):
+                for j, push in enumerate(group.resources):
                     action_id = (group.id, source.source_id, push.source_id)
                     action = self.action_space.decode_action_id(action_id)
-                    if source.source_id < push.source_id:
+                    # These are commented because we changed the action space to use % to roll around the source
+                    # if source.source_id < push.source_id:
+                    if action_id != NOOP_PUSH_ACTION_ID and push.source_id != 0:
                         assert not action.is_noop
                         assert action.is_push
                         assert action.push == push
-                        assert action.source == source
+                        # assert action.source == source
+                        assert action.source == group.resources[i % j]
                     else:
                         assert action.is_noop
 
@@ -230,22 +237,29 @@ class TestPreloadActionSpace:
 
     def test_decode_fails_for_action_not_in_action_space(self):
         assert self.action_space.decode_action_id(NOOP_PRELOAD_ACTION_ID).is_noop
-        assert self.action_space.decode_action_id((1, 1)).is_noop
-        assert self.action_space.decode_action_id((2, 1)).is_noop
+        # These are commented because we changed the action space to use % to roll around the source
+        # assert self.action_space.decode_action_id((1, 1)).is_noop
+        # assert self.action_space.decode_action_id((2, 1)).is_noop
         assert self.action_space.decode_action_id((20, 21)).is_noop
+        assert not self.action_space.decode_action_id((1, 1)).is_noop
+        assert not self.action_space.decode_action_id((2, 1)).is_noop
 
     def test_decode_returns_correct_action_for_each_valid_action_id(self):
-        for source in self.all_resources:
-            for preload in self.all_resources:
+        res_list = sorted(self.all_resources, key=lambda r: r.order)
+        for i, source in enumerate(res_list):
+            for j, preload in enumerate(res_list):
                 action_id = (source.order, preload.order)
                 action = self.action_space.decode_action_id(action_id)
-                if source.order < preload.order:
+                # These are commented because we changed the action space to use % to roll around the source
+                # if source.order < preload.order:
+                if action_id != NOOP_PRELOAD_ACTION_ID and preload.order != 0:
                     assert not action.is_noop
                     assert not action.is_push
                     assert action.push == preload
-                    assert action.source == source
-                else:
-                    assert action.is_noop
+                    # assert action.source == source
+                    assert action.source == res_list[i % j]
+                # else:
+                #     assert action.is_noop
 
 
 class TestActionSpace:
@@ -261,11 +275,10 @@ class TestActionSpace:
         assert action_space.disable_push
         assert not action_space.disable_preload
 
-        assert action_space.num_action_types == 2
-        assert action_space.action_types == [0, 1]
+        assert action_space.num_action_types == 1
 
         assert len(action_space.spaces) == 6
-        assert action_space.spaces[0].n == 2
+        assert action_space.spaces[0].n == 5
         assert action_space.spaces[1].n == action_space.push_space.spaces[0].n
         assert action_space.spaces[2].n == action_space.push_space.spaces[1].n
         assert action_space.spaces[3].n == action_space.push_space.spaces[2].n
@@ -277,11 +290,10 @@ class TestActionSpace:
         assert not action_space.disable_push
         assert action_space.disable_preload
 
-        assert action_space.num_action_types == 2
-        assert action_space.action_types == [0, 1]
+        assert action_space.num_action_types == 1
 
         assert len(action_space.spaces) == 6
-        assert action_space.spaces[0].n == 2
+        assert action_space.spaces[0].n == 5
         assert action_space.spaces[1].n == action_space.push_space.spaces[0].n
         assert action_space.spaces[2].n == action_space.push_space.spaces[1].n
         assert action_space.spaces[3].n == action_space.push_space.spaces[2].n
@@ -290,7 +302,7 @@ class TestActionSpace:
 
     def test_sample_returns_infinitely_when_actions_not_used(self):
         action_space = ActionSpace(self.push_groups)
-        action_space.seed(10000)
+        action_space.seed(20000)
         all_actions = []
         num_iters = 300
 
@@ -300,27 +312,29 @@ class TestActionSpace:
 
             if action_type == 0:
                 assert action_id == NOOP_ACTION_ID, "should be a noop"
-            if action_type == 1:
+                all_actions.append((0,))
+            if 1 <= action_type <= 4:
                 assert push_action != NOOP_PUSH_ACTION_ID, "push should not be a noop"
                 assert preload_action == NOOP_PRELOAD_ACTION_ID, "preload should be noop"
                 assert action_space.push_space.contains(push_action)
-            if action_type == 2:
+                all_actions.append((1,))
+            if 5 <= action_type <= 8:
                 assert push_action == NOOP_PUSH_ACTION_ID, "preload should not be noop"
                 assert preload_action != NOOP_PRELOAD_ACTION_ID, "push should be a noop"
                 assert action_space.preload_space.contains(preload_action)
+                all_actions.append((2,))
 
-            all_actions.append(action_id)
-
-        # Should return approximately 4-48-48 proportion of each type of action
+        # Should return approximately 10-45-45 proportion of each type of action
         action_types = Counter(a for (a, *_) in all_actions)
-        assert (num_iters * 0.04 * 0.90) <= action_types[0] <= (num_iters * 0.04 * 1.1)
-        assert (num_iters * 0.48 * 0.95) <= action_types[1] <= (num_iters * 0.48 * 1.05)
-        assert (num_iters * 0.48 * 0.95) <= action_types[2] <= (num_iters * 0.48 * 1.05)
+        print(action_types)
+        assert (num_iters * 0.11 * 0.90) <= action_types[0] <= (num_iters * 0.11 * 1.1)
+        assert (num_iters * 0.45 * 0.90) <= action_types[1] <= (num_iters * 0.45 * 1.1)
+        assert (num_iters * 0.45 * 0.90) <= action_types[2] <= (num_iters * 0.45 * 1.1)
         assert sum(action_types.values()) == num_iters == len(all_actions)
 
     def test_sample_only_push(self):
         action_space = ActionSpace(self.push_groups, disable_preload=True)
-        action_space.seed(10000)
+        action_space.seed(20000)
         all_actions = []
         num_iters = 150
 
@@ -330,19 +344,19 @@ class TestActionSpace:
 
             if action_type == 0:
                 assert action_id == NOOP_ACTION_ID, "should be a noop"
-            if action_type == 1:
+                all_actions.append((0,))
+            if 1 <= action_type <= 4:
                 assert push_action != NOOP_PUSH_ACTION_ID, "push should not be a noop"
                 assert preload_action == NOOP_PRELOAD_ACTION_ID, "preload should be noop"
                 assert action_space.push_space.contains(push_action)
-            if action_type == 2:
+                all_actions.append((1,))
+            if 5 <= action_type <= 8:
                 assert False, "action_type == 2 should not be possible"
 
-            all_actions.append(action_id)
-
-        # Should return approximately 4-96 proportion of each type of action
+        # Should return approximately 10-40 proportion of each type of action
         action_types = Counter(a for (a, *_) in all_actions)
-        assert (num_iters * 0.04 * 0.8) <= action_types[0] <= (num_iters * 0.04 * 1.2)
-        assert (num_iters * 0.96 * 0.95) <= action_types[1] <= (num_iters * 0.96 * 1.05)
+        assert (num_iters * 0.2 * 0.8) <= action_types[0] <= (num_iters * 0.2 * 1.2)
+        assert (num_iters * 0.8 * 0.9) <= action_types[1] <= (num_iters * 0.8 * 1.1)
         assert sum(action_types.values()) == num_iters == len(all_actions)
 
     def test_sample_only_preload(self):
@@ -357,19 +371,19 @@ class TestActionSpace:
 
             if action_type == 0:
                 assert action_id == NOOP_ACTION_ID, "should be a noop"
-            if action_type == 1:
+                all_actions.append((0,))
+            if 1 <= action_type <= 4:
                 assert push_action == NOOP_PUSH_ACTION_ID, "push should be a noop"
                 assert preload_action != NOOP_PRELOAD_ACTION_ID, "preload should not be noop"
                 assert action_space.push_space.contains(push_action)
-            if action_type == 2:
+                all_actions.append((1,))
+            if 5 <= action_type <= 8:
                 assert False, "action_type == 2 should not be possible"
 
-            all_actions.append(action_id)
-
-        # Should return approximately 4-96 proportion of each type of action
+        # Should return approximately 10-40 proportion of each type of action
         action_types = Counter(a for (a, *_) in all_actions)
-        assert (num_iters * 0.04 * 0.8) <= action_types[0] <= (num_iters * 0.04 * 1.2)
-        assert (num_iters * 0.96 * 0.95) <= action_types[1] <= (num_iters * 0.96 * 1.05)
+        assert (num_iters * 0.2 * 0.8) <= action_types[0] <= (num_iters * 0.2 * 1.2)
+        assert (num_iters * 0.8 * 0.9) <= action_types[1] <= (num_iters * 0.8 * 1.1)
         assert sum(action_types.values()) == num_iters == len(all_actions)
 
     def test_sample_returns_all_actions_uniquely_when_used(self):
@@ -377,6 +391,7 @@ class TestActionSpace:
         action_space.seed(10000)
         all_actions = []
         num_iters = 150
+        num_non_noop = 0
 
         assert not action_space.empty()
 
@@ -388,12 +403,14 @@ class TestActionSpace:
             if action_type == 0 and action_space.empty():
                 break
 
-            assert action_id not in all_actions
-            all_actions.add(action_id)
-            action_space.use_action(action_space.decode_action(action_id))
+            if action_type != 0:
+                assert action_id not in all_actions
+                num_non_noop += 1
+                all_actions.add(action_id)
+                action_space.use_action(action_space.decode_action(action_id))
         else:
             # If there was no break, sample did not stop
             assert False, "sample returned too many items"
 
-        assert i == len(all_actions)
+        assert len(all_actions) == num_non_noop
         assert action_space.empty()

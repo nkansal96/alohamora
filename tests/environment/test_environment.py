@@ -15,7 +15,7 @@ from tests.mocks.config import get_config
 def get_action(action_space: ActionSpace) -> ActionIDType:
     # pick a non-noop action
     action = NOOP_ACTION_ID
-    while action == NOOP_ACTION_ID:
+    while action_space.decode_action(action).is_noop:
         action = action_space.sample()
     return action
 
@@ -82,7 +82,7 @@ class TestEnvironment:
     def test_step_noop_action(self):
         try:
             obs, reward, _, info = self.environment.step(NOOP_ACTION_ID)
-            assert reward != NOOP_ACTION_REWARD
+            assert reward == NOOP_ACTION_REWARD
             assert info["action"].is_noop
             assert self.environment.policy.steps_taken == 0
             # res[-2] and res[-1] refer to the push/preload source respectively
@@ -101,7 +101,7 @@ class TestEnvironment:
             action = self.environment.action_space.decode_action(action_id)
 
             obs, reward, complete, info = self.environment.step(action_id)
-            assert reward == NOOP_ACTION_REWARD
+            assert reward != NOOP_ACTION_REWARD
             assert not complete
             assert info["action"] == action
             assert self.environment.policy.steps_taken == 1

@@ -33,16 +33,18 @@ class TestPolicyService:
         policy = ps.GetPolicy(self.page, MockGRPCServicerContext())
         assert policy
         assert isinstance(policy, policy_service_pb2.Policy)
-        assert len(ps.policies) == 1
-        assert ps.policies[self.page.url] is policy
+        # Temporarily disable caching policies
+        # assert len(ps.policies) == 1
+        # assert ps.policies[self.page.url] is policy
 
     def test_get_policy_returns_cached(self):
         ps = PolicyService(self.saved_model)
         first_policy = ps.GetPolicy(self.page, MockGRPCServicerContext())
         second_policy = ps.GetPolicy(self.page, MockGRPCServicerContext())
-        assert first_policy is second_policy
-        assert len(ps.policies) == 1
-        assert ps.policies[self.page.url] is first_policy
+        # assert first_policy is second_policy
+        # Temporarily disable caching policies
+        # assert len(ps.policies) == 1
+        # assert ps.policies[self.page.url] is first_policy
 
     def test_create_push_policy(self):
         ps = PolicyService(self.saved_model)

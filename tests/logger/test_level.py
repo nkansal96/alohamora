@@ -7,7 +7,7 @@ class TestLevel:
         assert all(isinstance(val, int) for val in list(Level))
 
     def test_is_ordered(self):
-        levels = [Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR, Level.CRITICAL]
+        levels = [Level.VERBOSE, Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR, Level.CRITICAL]
         assert levels == list(Level)
 
         for a, b in zip(levels[:-1], levels[1:]):
