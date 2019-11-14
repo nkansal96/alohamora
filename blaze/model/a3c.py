@@ -12,8 +12,8 @@ from .model import SavedModel
 
 
 WINDOW_SIZE = 50
-MAX_ITERATIONS = 400
-MIN_ITERATIONS = 100
+MAX_ITERATIONS = 500
+MIN_ITERATIONS = 50
 
 
 def stop_condition():
@@ -57,7 +57,7 @@ def stop_condition():
                 stdev_min=stdev(episode_min_rewards),
                 stdev_mean=stdev(episode_mean_rewards),
             )
-            relative_stdev_based_stop = stdev(episode_mean_rewards) < 0.01 * episode_mean_rewards[-1]
+            relative_stdev_based_stop = stdev(episode_mean_rewards) <= 0.01 * abs(episode_mean_rewards[-1])
             if num_iters > MAX_ITERATIONS or relative_stdev_based_stop:
                 log.info("auto stopping", iters=num_iters)
                 return True
