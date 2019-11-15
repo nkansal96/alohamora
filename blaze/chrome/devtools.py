@@ -2,6 +2,7 @@
 import json
 import os
 import subprocess
+import sys
 import tempfile
 from typing import Optional
 
@@ -76,7 +77,7 @@ def capture_har_in_mahimahi(
 
         # spawn the HAR capturer process
         log.debug("spawning har capturer", url=url, cmd=cmd)
-        har_capture_proc = subprocess.run(cmd)
+        har_capture_proc = subprocess.run(cmd, stdout=sys.stderr, stderr=sys.stderr)
         har_capture_proc.check_returncode()
 
         with open(output_file, "r") as f:

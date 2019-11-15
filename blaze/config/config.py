@@ -31,6 +31,8 @@ class Config(NamedTuple):
     nghttpx_bin: str
     http2push_image: str
     chrome_bin: str
+
+    # Training/Evaluation parameters
     env_config: Optional[EnvironmentConfig] = None
     client_env: Optional[ClientEnvironment] = None
 

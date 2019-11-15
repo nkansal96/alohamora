@@ -88,6 +88,10 @@ def evaluate(args):
     if args.model == "PPO":
         from blaze.model import ppo as model
 
+    import ray
+
+    ray.init(num_cpus=70, log_to_driver=False)
+
     saved_model = model.get_model(args.location)
     instance = saved_model.instantiate(manifest, client_env)
     policy = instance.policy
