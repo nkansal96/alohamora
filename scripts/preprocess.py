@@ -79,7 +79,8 @@ def preprocess_website(train_dir_location, website_dir):
         [
             "blaze",
             "preprocess",
-            "--train_domain_globs", "*",
+            "--train_domain_globs",
+            "*",
             "--record_dir",
             os.path.join(train_dir_location, website_dir),
             "--output",
@@ -116,6 +117,5 @@ def main(args):
         print("Finished processing", len([p.result() for p in f]), "websites")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(get_args())
-
