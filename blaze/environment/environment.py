@@ -1,4 +1,5 @@
 """ Defines the environment that the training of the agent occurs in """
+import os
 from typing import Optional, Union
 
 import gym
@@ -12,6 +13,7 @@ from blaze.logger import logger as log
 from .observation import get_observation, get_observation_space
 
 NOOP_ACTION_REWARD = 0
+REWARD_FUNC = int(os.environ.get("REWARD_FUNC", 0))
 
 
 class Environment(gym.Env):
@@ -34,7 +36,7 @@ class Environment(gym.Env):
         )
 
         self.observation_space = get_observation_space()
-        self.analyzer = Analyzer(self.config)
+        self.analyzer = Analyzer(self.config, REWARD_FUNC)
 
         self.client_environment: Optional[ClientEnvironment] = None
         self.action_space: Optional[ActionSpace] = None

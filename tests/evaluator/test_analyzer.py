@@ -1,6 +1,8 @@
 import glob
 import json
 import tempfile
+
+import pytest
 from unittest import mock
 
 from blaze.action import ActionSpace, Policy
@@ -17,12 +19,26 @@ class TestAnalyzer:
         self.policy = Policy(ActionSpace(self.config.env_config.push_groups))
         self.client_environment = get_random_client_environment()
 
-    def get_analyzer(self):
-        return Analyzer(get_config(), self.client_environment)
+    def get_analyzer(self, reward_func: int = 0):
+        return Analyzer(get_config(), reward_func, self.client_environment)
 
     def test_init(self):
         analyzer = self.get_analyzer()
         assert isinstance(analyzer, Analyzer)
+        assert analyzer.reward_func == analyzer._reward_0
+
+    def test_init_reward_function(self):
+        analyzer = self.get_analyzer(0)
+        assert analyzer.reward_func == analyzer._reward_0
+        analyzer = self.get_analyzer(1)
+        assert analyzer.reward_func == analyzer._reward_1
+        analyzer = self.get_analyzer(2)
+        assert analyzer.reward_func == analyzer._reward_2
+        analyzer = self.get_analyzer(3)
+        assert analyzer.reward_func == analyzer._reward_3
+
+        with pytest.raises(KeyError):
+            self.get_analyzer(4)
 
     # TODO: REWRITE THESE TESTS
 
