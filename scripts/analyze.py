@@ -34,7 +34,7 @@ for env, results in results_by_env.items():
     pct_diff = sorted(
         [get_best_pct_diff(a["replay_server"]["without_policy"], a["replay_server"]["with_policy"]) for a in results]
     )
-    without_policy, with_policy = list(
+    replay_without_policy, replay_with_policy = list(
         map(
             sorted,
             zip(
@@ -45,6 +45,16 @@ for env, results in results_by_env.items():
             ),
         )
     )
-    results_map[env] = {"pct_diff": pct_diff, "without_policy": without_policy, "with_policy": with_policy}
+    simulator_without_policy, simulator_with_policy = list(
+        map(
+            sorted,
+            zip(*[get_best_val_pair(a["simulator"]["without_policy"], a["simulator"]["with_policy"]) for a in results]),
+        )
+    )
+    results_map[env] = {
+        "pct_diff": pct_diff,
+        "replay_server": {"without_policy": replay_without_policy, "with_policy": replay_with_policy},
+        "simulator": {"without_policy": simulator_without_policy, "with_policy": simulator_with_policy},
+    }
 
 print(json.dumps(results_map, indent=4))
