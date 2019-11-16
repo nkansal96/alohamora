@@ -45,12 +45,8 @@ for env, results in results_by_env.items():
             ),
         )
     )
-    simulator_without_policy, simulator_with_policy = list(
-        map(
-            sorted,
-            zip(*[get_best_val_pair(a["simulator"]["without_policy"], a["simulator"]["with_policy"]) for a in results]),
-        )
-    )
+    simulator_without_policy = sorted([a["simulator"]["without_policy"] for a in results])
+    simulator_with_policy = sorted([a["simulator"]["with_policy"] for a in results])
     results_map[env] = {
         "pct_diff": pct_diff,
         "replay_server": {"without_policy": replay_without_policy, "with_policy": replay_with_policy},
