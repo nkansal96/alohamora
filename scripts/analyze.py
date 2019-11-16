@@ -8,7 +8,7 @@ import sys
 
 
 def pct_diff(a, b):
-    return (a - b) / a
+    return (a - b) / b
 
 
 def get_best_pct_diff(a, b):
@@ -50,7 +50,7 @@ for env, results in results_by_env.items():
         )
     )
     simulator_pct_diff = sorted(
-        [pct_diff(a["simulator"]["with_policy"], a["simulator"]["without_policy"]) for a in results]
+        [100*pct_diff(a["simulator"]["with_policy"], a["simulator"]["without_policy"]) for a in results]
     )
     simulator_without_policy = sorted([a["simulator"]["without_policy"] for a in results])
     simulator_with_policy = sorted([a["simulator"]["with_policy"] for a in results])
