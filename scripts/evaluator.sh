@@ -14,7 +14,7 @@ function run_eval() {
 
 	if [[ ! -f "$output_file" ]]; then
 		echo ${checkpoint} ${exp_name}
-		blaze evaluate \
+		timeout --foreground 600 blaze evaluate \
 			--model A3C \
 			--location "${checkpoint}}" \
 			--manifest "${manifest}" \
