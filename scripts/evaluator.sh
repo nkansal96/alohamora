@@ -2,6 +2,7 @@
 
 TRAIN_DIR=/home/nikhil/push-policy/training
 OUTPUT_DIR=/home/nikhil/push-policy/results/$1
+REWARD_FUNC=1
 
 function run_eval() {
 	checkpoint="$1"
@@ -18,6 +19,7 @@ function run_eval() {
 			--model A3C \
 			--location "${checkpoint}}" \
 			--manifest "${manifest}" \
+			--reward_func "${REWARD_FUNC}" \
 			--bandwidth "${bandwidth}" \
 			--latency "${latency}" \
 			--cpu_slowdown "${cpu_slowdown}" \
