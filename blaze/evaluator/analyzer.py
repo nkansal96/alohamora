@@ -70,8 +70,8 @@ def reward_3(simulator: Simulator, client_environment: ClientEnvironment) -> Cal
     """
     Returns a reward function that returns the original 3-part reward
     """
-    min_plt = simulator.simulate_load_time(client_environment)
-    last_plt = min_plt
+    min_plt = simulator.simulate_load_time(client_environment) if client_environment else MIN_PAGE_LOAD_TIME
+    last_plt = min_plt if min_plt < MIN_PAGE_LOAD_TIME else 0
 
     def _reward(policy: Policy) -> float:
         nonlocal min_plt, last_plt
