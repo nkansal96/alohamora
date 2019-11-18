@@ -6,9 +6,7 @@ from ray.rllib.agents import Agent
 from ray.rllib.evaluation.episode import _flatten_action
 
 from blaze.action import Policy
-from blaze.config.config import get_config, Config
-from blaze.config.environment import EnvironmentConfig
-from blaze.config.client import ClientEnvironment
+from blaze.config.config import Config
 from blaze.environment.environment import Environment
 
 
@@ -58,9 +56,8 @@ class SavedModel(NamedTuple):
     location: str
     common_config: dict
 
-    def instantiate(self, env_config: EnvironmentConfig, client_env: ClientEnvironment) -> ModelInstance:
+    def instantiate(self, config: Config) -> ModelInstance:
         """ Instantiates the saved model and returns a ModelInstance for the given environment """
-        config = get_config(env_config, client_env)
         agent = self.cls(env=self.env, config={**self.common_config, "env_config": config})
         agent.restore(self.location)
         return ModelInstance(agent, config)

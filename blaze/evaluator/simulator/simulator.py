@@ -19,7 +19,7 @@ class Simulator:
     """
     The main class that simulates a web page load. It is initialized using an EnvironmentConfig,
     which specifies the har_resources (a flat, ordered list of resources recorded from
-    blaze.chrome.devtools.capture_har or blaze.chrome.devtools.capture_har_in_mahimahi that
+    blaze.chrome.devtools.capture_har or blaze.chrome.devtools.capture_har_in_replay_server that
     includes timing information about each request).
     """
 

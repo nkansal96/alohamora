@@ -12,7 +12,7 @@ from .model import SavedModel
 
 
 WINDOW_SIZE = 50
-MAX_ITERATIONS = 500
+MAX_ITERATIONS = 250
 MIN_ITERATIONS = 50
 
 
@@ -46,7 +46,7 @@ def stop_condition():
         if num_iters > MIN_ITERATIONS:
             stdev_min, stdev_mean, stdev_max = tuple(map(stdev, zip(*past_rewards)))
             log.debug("reward stats", stdev_min=stdev_min, stdev_mean=stdev_mean, stdev_max=stdev_max)
-            relative_stdev_based_stop = stdev_mean <= 0.01 * abs(past_rewards[-1][1])
+            relative_stdev_based_stop = stdev_mean <= 0.05 * abs(past_rewards[-1][1])
 
             if num_iters > MAX_ITERATIONS or relative_stdev_based_stop:
                 log.info("auto stopping", iters=num_iters)
@@ -74,7 +74,7 @@ def train(train_config: TrainConfig, config: Config):
     import ray
     from ray.tune import run_experiments
 
-    ray.init(num_cpus=train_config.num_cpus, log_to_driver=False)
+    ray.init(num_cpus=train_config.num_workers + 1, log_to_driver=False)
 
     name = train_config.experiment_name
     run_experiments(
@@ -85,10 +85,10 @@ def train(train_config: TrainConfig, config: Config):
                 "stop": ray.tune.function(stop_condition()),
                 "checkpoint_at_end": True,
                 "checkpoint_freq": 10,
-                "max_failures": 1000,
+                "max_failures": 3,
                 "config": {
                     **COMMON_CONFIG,
-                    "num_workers": train_config.num_cpus // 2,
+                    "num_workers": train_config.num_workers,
                     "env_config": config,
                     # "model": {"custom_action_dist": action_distribution_creator},
                 },

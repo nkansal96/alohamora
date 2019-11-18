@@ -16,7 +16,7 @@ from blaze.config.config import get_config, Config
 from blaze.config.environment import EnvironmentConfig, PushGroup, ResourceType
 from blaze.evaluator.simulator import Simulator
 from blaze.logger import logger as log
-from blaze.preprocess.record import capture_har_in_mahimahi, record_webpage, get_page_load_time_in_mahimahi
+from blaze.preprocess.record import capture_har_in_replay_server, record_webpage, get_page_load_time_in_replay_server
 from blaze.preprocess.har import har_entries_to_resources
 from blaze.preprocess.resource import resource_list_to_push_groups
 from . import command
@@ -244,7 +244,7 @@ def _get_results_in_replay_server(
     capture_default: bool = False,
 ):
     log.debug("capturing median PLT in mahimahi with given environment")
-    orig_plt, res_list, push_groups, *_ = get_page_load_time_in_mahimahi(
+    orig_plt, res_list, push_groups, *_ = get_page_load_time_in_replay_server(
         config.env_config.request_url, client_env, config
     )
 
@@ -255,7 +255,7 @@ def _get_results_in_replay_server(
     if capture_default:
         default_client_env = get_default_client_environment()
         log.debug("capturing HAR in mahimahi for simulator in default environment")
-        default_har = capture_har_in_mahimahi(config.env_config.request_url, config, default_client_env)
+        default_har = capture_har_in_replay_server(config.env_config.request_url, config, default_client_env)
         res_list = har_entries_to_resources(default_har)
         push_groups = resource_list_to_push_groups(res_list)
 
@@ -268,7 +268,7 @@ def _get_results_in_replay_server(
 
         log.debug("getting HAR in mahimahi with policy:")
         log.debug(json.dumps(policy.as_dict, indent=4))
-        plt, *_ = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config, policy)
+        plt, *_ = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, policy)
         plts.append(plt)
 
     return orig_plt, res_list, push_groups, plts, policies

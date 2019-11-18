@@ -2,7 +2,7 @@
 This module contains the main class representing an action that an agent can
 take when exploring push policies
 """
-from typing import List
+from typing import Dict, List
 
 import gym
 
@@ -19,6 +19,16 @@ from .action import (
 )
 
 
+def get_pushable_groups(push_groups: List[PushGroup]) -> Dict[int, PushGroup]:
+    """ Returns a sublist of push_groups that only has groups that are pushable """
+    return {
+        i: g
+        for (i, g) in enumerate(
+            sorted([group for group in push_groups if len(group.resources) > 1], key=lambda g: g.id)
+        )
+    }
+
+
 class PushActionSpace(gym.spaces.Tuple):
     """
     PushActionSpace defines the valid set of possible push actions and faciliates the
@@ -28,10 +38,11 @@ class PushActionSpace(gym.spaces.Tuple):
     """
 
     def __init__(self, push_groups: List[PushGroup]):
-        self.max_group_id = max(group.id for group in push_groups)
-        self.max_source_id = max(r.source_id for group in push_groups for r in group.resources)
-        self.group_id_to_source_id = {group.id: [r.source_id for r in group.resources] for group in push_groups}
-        self.group_id_to_resource_map = {group.id: {r.source_id: r for r in group.resources} for group in push_groups}
+        push_groups = get_pushable_groups(push_groups)
+        self.max_group_id = max(push_groups.keys())
+        self.max_source_id = max(r.source_id for group in push_groups.values() for r in group.resources)
+        self.group_id_to_source_id = {i: set(r.source_id for r in g.resources) for (i, g) in push_groups.items()}
+        self.group_id_to_resource_map = {i: {r.source_id: r for r in g.resources} for (i, g) in push_groups.items()}
 
         super().__init__(
             (
@@ -50,14 +61,13 @@ class PushActionSpace(gym.spaces.Tuple):
             return NOOP_PUSH_ACTION_ID
 
         # Choose a push group
-        g = -1
-        while g not in self.group_id_to_source_id or len(self.group_id_to_source_id[g]) <= 1:
-            g = self.np_random.choice(list(self.group_id_to_source_id.keys()))
+        g = self.np_random.choice(list(self.group_id_to_source_id.keys()))
 
         # Choose a push URL
         p = 0
+        valid_push = list(self.group_id_to_source_id[g])
         while p == 0:
-            p = self.np_random.choice(self.group_id_to_source_id[g])
+            p = self.np_random.choice(valid_push)
 
         # Choose a source URL
         valid_sources = [r for r in self.group_id_to_source_id[g] if r < p]
@@ -83,7 +93,10 @@ class PushActionSpace(gym.spaces.Tuple):
             return Action()
 
         g, s, p = action_id
-        if g not in self.group_id_to_source_id:
+        while g not in self.group_id_to_source_id and g >= 0:
+            g -= 1
+
+        if g < 0:
             return Action()
 
         p = p % (max(self.group_id_to_resource_map[g].keys()) + 1)
@@ -92,7 +105,7 @@ class PushActionSpace(gym.spaces.Tuple):
         s = s % p
 
         return Action(
-            action_id=action_id,
+            action_id=(g, s, p),
             is_push=True,
             source=self.group_id_to_resource_map[g][s],
             push=self.group_id_to_resource_map[g][p],
@@ -103,7 +116,7 @@ class PushActionSpace(gym.spaces.Tuple):
         return len(self) == 0
 
     def __len__(self):
-        return sum(max(0, len(v) - 1) for v in self.group_id_to_source_id.values())
+        return sum(map(len, self.group_id_to_source_id.values()))
 
     def use_action(self, action: Action):
         """
@@ -113,9 +126,21 @@ class PushActionSpace(gym.spaces.Tuple):
         """
         if action.is_noop:
             return
-        g = action.push.group_id
-        p = action.push.source_id
-        self.group_id_to_source_id[g] = [r for r in self.group_id_to_source_id[g] if r != p]
+        if action.is_push:
+            g, s, p = action.action_id
+        else:
+            g = 0
+            s, p = action.action_id
+            for gi, resources in self.group_id_to_resource_map.items():
+                for res in resources.values():
+                    if res.order == p:
+                        g = gi
+                        break
+
+        if g in self.group_id_to_source_id:
+            self.group_id_to_source_id[g] -= {p}
+            if len(self.group_id_to_source_id[g]) == 1:
+                del self.group_id_to_source_id[g]
 
 
 class PreloadActionSpace(gym.spaces.Tuple):
@@ -206,8 +231,8 @@ class ActionSpace(gym.spaces.Tuple):
         self.disable_push = disable_push
         self.disable_preload = disable_preload
 
-        self.num_action_types = 1 if disable_push or disable_preload else 2
-        self.action_type_space = gym.spaces.Discrete(1 + self.num_action_types * 4)
+        self.num_action_types = 5 if disable_push or disable_preload else 6
+        self.action_type_space = gym.spaces.Discrete(self.num_action_types)
 
         self.push_space = PushActionSpace(push_groups)
         self.preload_space = PreloadActionSpace(push_groups)
@@ -274,4 +299,4 @@ class ActionSpace(gym.spaces.Tuple):
 
     def empty(self):
         """ Returns true if there are no more valid actions in the action space """
-        return self.push_space.empty() and self.preload_space.empty()
+        return (self.disable_push or self.push_space.empty()) and (self.disable_preload or self.preload_space.empty())

@@ -8,12 +8,7 @@ from blaze.util.cmd import run
 from .client import ClientEnvironment
 from .environment import EnvironmentConfig
 
-ABSPATH = lambda path: os.path.abspath(os.path.join(os.path.dirname(__file__), path))
 
-DEFAULT_MAHIMAHI_CERT_DIR = ABSPATH("../../mahimahi/src/frontend/certs")
-DEFAULT_CHROME_HAR_CAPTURER_BIN = ABSPATH("../../tools/capture_har/capturer/run.js")
-DEFAULT_PWMETRICS_BIN = ABSPATH("../../tools/capture_har/node_modules/.bin/pwmetrics")
-DEFAULT_NGHTTPX_BIN = run(["which", "nghttpx"])
 DEFAULT_HTTP2PUSH_IMAGE = "http2push"
 DEFAULT_CHROME_BIN = (
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -25,36 +20,42 @@ DEFAULT_CHROME_BIN = (
 class Config(NamedTuple):
     """ Config defines the parameters required to run blaze """
 
-    mahimahi_cert_dir: str
-    chrome_har_capturer_bin: str
-    pwmetrics_bin: str
-    nghttpx_bin: str
     http2push_image: str
     chrome_bin: str
 
     # Training/Evaluation parameters
     env_config: Optional[EnvironmentConfig] = None
     client_env: Optional[ClientEnvironment] = None
+    reward_func: Optional[int] = None
 
     def items(self):
         """ Return the dictionary items() method for this object """
         return self._asdict().items()  # pylint: disable=no-member
 
+    def with_mutations(self, **kwargs) -> "Config":
+        """ Returns a new Config object with the modified properties """
+        return Config(
+            http2push_image=kwargs.get("http2push_image", self.http2push_image),
+            chrome_bin=kwargs.get("chrome_bin", self.chrome_bin),
+            env_config=kwargs.get("env_config", self.env_config),
+            client_env=kwargs.get("client_env", self.client_env),
+            reward_func=kwargs.get("reward_func", self.reward_func),
+        )
+
 
 def get_config(
-    env_config: Optional[EnvironmentConfig] = None, client_env: Optional[ClientEnvironment] = None
+    env_config: Optional[EnvironmentConfig] = None,
+    client_env: Optional[ClientEnvironment] = None,
+    reward_func: Optional[int] = None,
 ) -> Config:
     """
     get_config returns the runtime configuration, taking values from environment variables
     when available to override the defaults
     """
     return Config(
-        mahimahi_cert_dir=os.environ.get("MAHIMAHI_CERT_DIR", DEFAULT_MAHIMAHI_CERT_DIR),
-        chrome_har_capturer_bin=os.environ.get("CHROME_HAR_CAPTURER_BIN", DEFAULT_CHROME_HAR_CAPTURER_BIN),
-        pwmetrics_bin=os.environ.get("PWMETRICS_BIN", DEFAULT_PWMETRICS_BIN),
-        nghttpx_bin=os.environ.get("NGHTTPX_BIN", DEFAULT_NGHTTPX_BIN),
         http2push_image=os.environ.get("HTTP2PUSH_IMAGE", DEFAULT_HTTP2PUSH_IMAGE),
         chrome_bin=os.environ.get("CHROME_BIN", DEFAULT_CHROME_BIN),
         env_config=env_config,
         client_env=client_env,
+        reward_func=reward_func,
     )

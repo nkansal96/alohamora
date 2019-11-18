@@ -23,7 +23,7 @@ def train(train_config: TrainConfig, config: Config):
     import ray
     from ray.tune import run_experiments
 
-    ray.init(num_cpus=train_config.num_cpus)
+    ray.init(num_cpus=train_config.num_workers + 1)
 
     name = train_config.experiment_name
     run_experiments(
@@ -31,11 +31,11 @@ def train(train_config: TrainConfig, config: Config):
             name: {
                 "run": "PPO",
                 "env": Environment,
-                "stop": {"timesteps_total": train_config.max_timesteps},
+                "stop": {"timesteps_total": 1000000},
                 "checkpoint_at_end": True,
                 "checkpoint_freq": 10,
-                "max_failures": 1000,
-                "config": {**COMMON_CONFIG, "num_workers": train_config.num_cpus // 2, "env_config": config},
+                "max_failures": 3,
+                "config": {**COMMON_CONFIG, "num_workers": train_config.num_workers, "env_config": config},
             }
         },
         resume=train_config.resume,

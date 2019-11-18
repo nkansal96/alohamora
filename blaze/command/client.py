@@ -6,9 +6,10 @@ import grpc
 from blaze.config.client import get_client_environment_from_parameters
 from blaze.config.config import get_config
 from blaze.config.environment import EnvironmentConfig
+from blaze.evaluator.analyzer import get_num_rewards
 from blaze.evaluator.simulator import Simulator
 from blaze.logger import logger as log
-from blaze.preprocess.record import get_page_load_time_in_mahimahi
+from blaze.preprocess.record import get_page_load_time_in_replay_server
 from blaze.serve.client import Client
 
 from . import command
@@ -62,6 +63,7 @@ def query(args):
     choices=[1, 2, 4],
     default=1,
 )
+@command.argument("--reward_func", help="Reward function to use", default=1, choices=list(range(get_num_rewards())))
 @command.argument("--verbose", "-v", help="Output more information in the JSON output", action="store_true")
 @command.argument(
     "--run_simulator", help="Run the outputted policy through the simulator (implies -v)", action="store_true"
@@ -79,7 +81,7 @@ def evaluate(args):
     log.info("evaluating model...", model=args.model, location=args.location, manifest=args.manifest)
     client_env = get_client_environment_from_parameters(args.bandwidth, args.latency, args.cpu_slowdown)
     manifest = EnvironmentConfig.load_file(args.manifest)
-    config = get_config(manifest, client_env)
+    config = get_config(manifest, client_env, args.reward_func)
 
     if args.model == "A3C":
         from blaze.model import a3c as model
@@ -93,7 +95,7 @@ def evaluate(args):
     ray.init(num_cpus=70, log_to_driver=False)
 
     saved_model = model.get_model(args.location)
-    instance = saved_model.instantiate(manifest, client_env)
+    instance = saved_model.instantiate(config)
     policy = instance.policy
     data = policy.as_dict
 
@@ -112,8 +114,8 @@ def evaluate(args):
         data["simulator"] = {"without_policy": sim_plt, "with_policy": push_plt}
 
     if args.run_replay_server:
-        *_, plts = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config)
-        *_, push_plts = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config, policy)
+        *_, plts = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config)
+        *_, push_plts = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, policy)
         data["replay_server"] = {"without_policy": plts, "with_policy": push_plts}
 
     print(json.dumps(data, indent=4))
