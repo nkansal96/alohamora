@@ -8,20 +8,28 @@ import org.json.*;
 
 public class InputParser implements eu.mihosoft.ext.apted.parser.InputParser<NodeData> {
     /**
-     * Converts the input tree passed as string (e.g., bracket notation, XML)
+     * Converts the input tree passed as string (as a JSON)
      * into the tree structure.
      *
-     * @param s input tree as string.
+     * @param s input tree as JSON.
      * @return tree structure.
      */
     @Override
     public Node<NodeData> fromString(String s) {
         JSONObject inputNode = new JSONObject(s);
-        for (String key : inputNode.keySet()) {
-            System.out.println("Key is " + key);
+        NodeData newNodeData = null;
+        NodeData root = null;
+        if (inputNode.keySet().contains("length")) {
+            int length = inputNode.getInt("length");
+            for(int i = 0; i < length; i++) {
+                JSONObject currentObject = inputNode.getJSONObject(Integer.toString(i));
+                newNodeData = new NodeData(currentObject.getInt("size"), currentObject.getString("type"));
+            }
+            if (root == null) {
+                root = newNodeData;
+            }
         }
-        System.out.println("Parsed string " + s);
-        System.out.println("Input json is " + inputNode.toString());
-        return null;
+
+        return new Node<NodeData>(root);
     }
 }
