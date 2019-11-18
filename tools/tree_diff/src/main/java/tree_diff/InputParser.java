@@ -16,6 +16,7 @@ public class InputParser implements eu.mihosoft.ext.apted.parser.InputParser<Nod
      */
     @Override
     public Node<NodeData> fromString(String s) {
+        // TODO: this function parses incorrectly. parent-child relationship is completely ignored amongst other things. needs rewrite.
         JSONObject inputNode = new JSONObject(s);
         NodeData newNodeData = null;
         NodeData root = null;
