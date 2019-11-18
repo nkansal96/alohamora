@@ -51,12 +51,13 @@ class TestSavedModel:
     def test_instantiate_creates_model_with_given_environment(self):
         env_config = get_env_config()
         client_env = get_random_client_environment()
+        config = get_config(env_config, client_env)
 
         saved_model = SavedModel(MockAgent, Environment, "/tmp/model_location", {})
-        model_instance = saved_model.instantiate(env_config, client_env)
+        model_instance = saved_model.instantiate(config)
         assert isinstance(model_instance, ModelInstance)
         assert isinstance(model_instance.agent, MockAgent)
         assert model_instance.agent.kwargs["env"] == Environment
-        assert model_instance.agent.kwargs["config"] == {"env_config": get_config(env_config, client_env)}
+        assert model_instance.agent.kwargs["config"] == {"env_config": config}
         assert model_instance.agent.file_path == saved_model.location
-        assert model_instance.config == get_config(env_config, client_env)
+        assert model_instance.config == config

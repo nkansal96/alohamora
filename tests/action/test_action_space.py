@@ -5,7 +5,7 @@ import pytest
 
 from blaze.action import Action
 from blaze.action.action import NOOP_ACTION_ID, NOOP_PUSH_ACTION_ID, NOOP_PRELOAD_ACTION_ID
-from blaze.action.action_space import ActionSpace, PreloadActionSpace, PushActionSpace
+from blaze.action.action_space import ActionSpace, PreloadActionSpace, PushActionSpace, get_pushable_groups
 
 from tests.mocks.config import get_push_groups, convert_push_groups_to_push_pairs
 
@@ -13,6 +13,7 @@ from tests.mocks.config import get_push_groups, convert_push_groups_to_push_pair
 class TestPushActionSpace:
     def setup(self):
         self.push_groups = [group for group in get_push_groups() if group.trainable]
+        self.pushable_groups = get_pushable_groups(self.push_groups).values()
         self.action_space = PushActionSpace(self.push_groups)
         self.action_space.seed(2048)  # for deterministic output
 
@@ -21,11 +22,11 @@ class TestPushActionSpace:
         assert len(self.action_space.spaces) == 3
         assert all(isinstance(space, gym.spaces.Discrete) for space in self.action_space.spaces)
 
-        max_group_id = max(g.id for g in self.push_groups)
+        max_group_id = max(get_pushable_groups(self.push_groups).keys())
         assert self.action_space.max_group_id == max_group_id
         assert self.action_space.spaces[0].n == 1 + max_group_id
 
-        max_source_id = max(r.source_id for g in self.push_groups for r in g.resources)
+        max_source_id = max(r.source_id for g in self.pushable_groups for r in g.resources)
         assert self.action_space.max_source_id == max_source_id
         assert self.action_space.spaces[1].n == 1 + max_source_id
         assert self.action_space.spaces[2].n == 1 + max_source_id
@@ -33,8 +34,8 @@ class TestPushActionSpace:
         all_source_id = set([r for g, v in self.action_space.group_id_to_source_id.items() for r in v])
         all_resources = set([r for g, v in self.action_space.group_id_to_resource_map.items() for r in v.values()])
 
-        assert all_source_id == set(r.source_id for g in self.push_groups for r in g.resources)
-        assert all_resources == set(r for g in self.push_groups for r in g.resources)
+        assert all_source_id == set(r.source_id for g in self.pushable_groups for r in g.resources)
+        assert all_resources == set(r for g in self.pushable_groups for r in g.resources)
 
     def test_sample_returns_infinitely_when_actions_not_used(self):
         action_space = PushActionSpace(self.push_groups)
@@ -94,10 +95,10 @@ class TestPushActionSpace:
         assert self.action_space.contains(NOOP_PUSH_ACTION_ID)
 
         # Contains all valid push combiniations
-        for group in self.push_groups:
+        for i, group in enumerate(self.pushable_groups):
             for source in group.resources:
                 for push in group.resources:
-                    action_id = (group.id, source.source_id, push.source_id)
+                    action_id = (i, source.source_id, push.source_id)
                     if action_id == NOOP_PUSH_ACTION_ID:
                         continue
                     if source.source_id < push.source_id:
@@ -116,10 +117,10 @@ class TestPushActionSpace:
         assert not self.action_space.decode_action_id((0, 20, 21)).is_noop
 
     def test_decode_returns_correct_action_for_each_valid_action_id(self):
-        for group in self.push_groups:
+        for k, group in enumerate(self.pushable_groups):
             for i, source in enumerate(group.resources):
                 for j, push in enumerate(group.resources):
-                    action_id = (group.id, source.source_id, push.source_id)
+                    action_id = (k, source.source_id, push.source_id)
                     action = self.action_space.decode_action_id(action_id)
                     # These are commented because we changed the action space to use % to roll around the source
                     # if source.source_id < push.source_id:
@@ -133,7 +134,7 @@ class TestPushActionSpace:
                         assert action.is_noop
 
     def test_use_action_noop(self):
-        original_push = {k: list(v) for k, v in self.action_space.group_id_to_source_id.items()}
+        original_push = {k: set(v) for k, v in self.action_space.group_id_to_source_id.items()}
         self.action_space.use_action(Action())
         assert self.action_space.group_id_to_source_id == original_push
 
@@ -275,7 +276,7 @@ class TestActionSpace:
         assert action_space.disable_push
         assert not action_space.disable_preload
 
-        assert action_space.num_action_types == 1
+        assert action_space.num_action_types == 5
 
         assert len(action_space.spaces) == 6
         assert action_space.spaces[0].n == 5
@@ -290,7 +291,7 @@ class TestActionSpace:
         assert not action_space.disable_push
         assert action_space.disable_preload
 
-        assert action_space.num_action_types == 1
+        assert action_space.num_action_types == 5
 
         assert len(action_space.spaces) == 6
         assert action_space.spaces[0].n == 5
@@ -318,18 +319,17 @@ class TestActionSpace:
                 assert preload_action == NOOP_PRELOAD_ACTION_ID, "preload should be noop"
                 assert action_space.push_space.contains(push_action)
                 all_actions.append((1,))
-            if 5 <= action_type <= 8:
+            if 5 <= action_type <= 6:
                 assert push_action == NOOP_PUSH_ACTION_ID, "preload should not be noop"
                 assert preload_action != NOOP_PRELOAD_ACTION_ID, "push should be a noop"
                 assert action_space.preload_space.contains(preload_action)
                 all_actions.append((2,))
 
-        # Should return approximately 10-45-45 proportion of each type of action
+        # Should return approximately 1-4-1 proportion of each type of action
         action_types = Counter(a for (a, *_) in all_actions)
-        print(action_types)
-        assert (num_iters * 0.11 * 0.90) <= action_types[0] <= (num_iters * 0.11 * 1.1)
-        assert (num_iters * 0.45 * 0.90) <= action_types[1] <= (num_iters * 0.45 * 1.1)
-        assert (num_iters * 0.45 * 0.90) <= action_types[2] <= (num_iters * 0.45 * 1.1)
+        assert (num_iters * (1.0 / 6.0) * 0.75) <= action_types[0] <= (num_iters * (1.0 / 6.0) * 1.25)
+        assert (num_iters * (4.0 / 6.0) * 0.75) <= action_types[1] <= (num_iters * (4.0 / 6.0) * 1.25)
+        assert (num_iters * (1.0 / 6.0) * 0.75) <= action_types[2] <= (num_iters * (1.0 / 6.0) * 1.25)
         assert sum(action_types.values()) == num_iters == len(all_actions)
 
     def test_sample_only_push(self):
@@ -387,9 +387,8 @@ class TestActionSpace:
         assert sum(action_types.values()) == num_iters == len(all_actions)
 
     def test_sample_returns_all_actions_uniquely_when_used(self):
-        action_space = ActionSpace(self.push_groups, disable_push=True)
+        action_space = ActionSpace(self.push_groups)
         action_space.seed(10000)
-        all_actions = []
         num_iters = 150
         num_non_noop = 0
 
@@ -410,6 +409,7 @@ class TestActionSpace:
                 action_space.use_action(action_space.decode_action(action_id))
         else:
             # If there was no break, sample did not stop
+            print(len(all_actions))
             assert False, "sample returned too many items"
 
         assert len(all_actions) == num_non_noop

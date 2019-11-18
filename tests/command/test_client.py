@@ -4,7 +4,7 @@ import tempfile
 
 from blaze.action import ActionSpace
 from blaze.command.client import query
-from blaze.config.environment import EnvironmentConfig
+from blaze.config.config import get_config
 from blaze.environment import Environment
 from blaze.model.model import SavedModel
 from blaze.serve.server import Server

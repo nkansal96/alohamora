@@ -189,7 +189,7 @@ def get_env_config() -> EnvironmentConfig:
 
 
 def get_train_config() -> TrainConfig:
-    return TrainConfig(experiment_name="test", model_dir="/tmp/test", num_cpus=4, max_timesteps=10)
+    return TrainConfig(experiment_name="test", num_workers=4)
 
 
 def get_serve_config() -> ServeConfig:

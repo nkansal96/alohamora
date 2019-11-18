@@ -1,9 +1,5 @@
-import copy
 import random
-from types import SimpleNamespace
-from unittest import mock
 
-from blaze.chrome.devtools import capture_har
 from blaze.chrome.har import har_from_json, Har, HarLog, HarEntry, Request, Response
 from blaze.config.environment import ResourceType
 from blaze.preprocess.har import get_har_entry_type, har_entries_to_resources

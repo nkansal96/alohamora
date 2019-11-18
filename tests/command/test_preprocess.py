@@ -29,14 +29,14 @@ class TestPreprocess:
         with pytest.raises(SystemExit):
             preprocess([])
 
-    @mock.patch("blaze.command.preprocess.capture_har_in_mahimahi")
+    @mock.patch("blaze.command.preprocess.capture_har_in_replay_server")
     def test_runs_successfully(self, mock_capture_har_in_mahimahi):
         hars = [generate_har() for _ in range(STABLE_SET_NUM_RUNS + 1)]
         har_resources = har_entries_to_resources(hars[0])
         mock_capture_har_in_mahimahi.return_value = hars[0]
         with tempfile.NamedTemporaryFile() as output_file:
             with tempfile.TemporaryDirectory() as output_dir:
-                with mock.patch("blaze.preprocess.record.capture_har_in_mahimahi", new=HarReturner(hars)):
+                with mock.patch("blaze.preprocess.record.capture_har_in_replay_server", new=HarReturner(hars)):
                     preprocess(["https://cs.ucla.edu", "--output", output_file.name, "--record_dir", output_dir])
 
                 config = EnvironmentConfig.load_file(output_file.name)
@@ -53,14 +53,14 @@ class TestPreprocess:
         mock_capture_har_in_mahimahi.assert_called_once()
         mock_capture_har_in_mahimahi.assert_called_with("https://cs.ucla.edu", config, client_env)
 
-    @mock.patch("blaze.command.preprocess.capture_har_in_mahimahi")
+    @mock.patch("blaze.command.preprocess.capture_har_in_replay_server")
     def test_runs_successfully_with_train_domain_suffix(self, mock_capture_har_in_mahimahi):
         hars = [generate_har() for _ in range(STABLE_SET_NUM_RUNS + 1)]
         har_resources = har_entries_to_resources(hars[0])
         mock_capture_har_in_mahimahi.return_value = hars[0]
         with tempfile.NamedTemporaryFile() as output_file:
             with tempfile.TemporaryDirectory() as output_dir:
-                with mock.patch("blaze.preprocess.record.capture_har_in_mahimahi", new=HarReturner(hars)):
+                with mock.patch("blaze.preprocess.record.capture_har_in_replay_server", new=HarReturner(hars)):
                     preprocess(
                         [
                             "https://cs.ucla.edu",

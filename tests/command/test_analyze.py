@@ -18,7 +18,7 @@ class TestPageLoadTime:
     # TODO: redo these tests
     # @mock.patch("os.rmdir")
     # @mock.patch("blaze.command.analyze.record_webpage")
-    # @mock.patch("blaze.command.analyze.capture_har_in_mahimahi")
+    # @mock.patch("blaze.command.analyze.capture_har_in_replay_server")
     # def test_page_load_time(self, mock_capture_har_in_mahimahi, mock_record_webpage, mock_rmdir):
     #     mock_capture_har_in_mahimahi.return_value = har_from_json(get_har_json())
     #     url = "https://www.reddit.com/"

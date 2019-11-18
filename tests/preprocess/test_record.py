@@ -49,20 +49,26 @@ class TestFindUrlStableSet:
 
     def test_handles_all_missing_har_files(self):
         hars = [empty_har() for _ in range(STABLE_SET_NUM_RUNS)]
-        with mock.patch("blaze.preprocess.record.capture_har_in_mahimahi", new=HarReturner(hars)) as mock_capture_har:
+        with mock.patch(
+            "blaze.preprocess.record.capture_har_in_replay_server", new=HarReturner(hars)
+        ) as mock_capture_har:
             stable_set = find_url_stable_set("http://cs.ucla.edu", self.config)
         assert not stable_set
 
     def test_handles_some_missing_har_files(self):
         hars = [random.choice([generate_har(), empty_har()]) for _ in range(STABLE_SET_NUM_RUNS)]
-        with mock.patch("blaze.preprocess.record.capture_har_in_mahimahi", new=HarReturner(hars)) as mock_capture_har:
+        with mock.patch(
+            "blaze.preprocess.record.capture_har_in_replay_server", new=HarReturner(hars)
+        ) as mock_capture_har:
             stable_set = find_url_stable_set("http://cs.ucla.edu", self.config)
         assert stable_set
 
     def test_find_url_stable_set(self):
         hars = [generate_har() for _ in range(STABLE_SET_NUM_RUNS)]
         har_urls = [[e.request.url for e in har.log.entries] for har in hars]
-        with mock.patch("blaze.preprocess.record.capture_har_in_mahimahi", new=HarReturner(hars)) as mock_capture_har:
+        with mock.patch(
+            "blaze.preprocess.record.capture_har_in_replay_server", new=HarReturner(hars)
+        ) as mock_capture_har:
             stable_set = find_url_stable_set("http://cs.ucla.edu", self.config)
         # Ensure that all HARs were consumed
         assert mock_capture_har.i == STABLE_SET_NUM_RUNS

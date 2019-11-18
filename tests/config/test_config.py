@@ -8,56 +8,52 @@ from tests.mocks.config import get_random_client_environment
 
 class TestConfig:
     def test_create(self):
-        conf = config.Config(
-            mahimahi_cert_dir="",
-            chrome_har_capturer_bin="",
-            pwmetrics_bin="",
-            nghttpx_bin="",
-            http2push_image="",
-            chrome_bin="",
-        )
+        conf = config.Config(http2push_image="", chrome_bin="")
         assert isinstance(conf, config.Config)
         assert conf.env_config is None
+        assert conf.client_env is None
+        assert conf.reward_func is None
 
     def test_items(self):
         conf = config.get_config()
         items = conf.items()
         assert all(len(v) == 2 for v in items)
-        assert len(items) == 8
+        assert len(items) == 5
+
+    def test_with_mutations(self):
+        conf = config.Config(http2push_image="", chrome_bin="")
+        conf2 = conf.with_mutations()
+        assert conf == conf2
+        conf2 = conf.with_mutations(reward_func=1)
+        assert conf.reward_func is None
+        assert conf2.reward_func == 1
 
 
 class TestGetConfig:
     def test_get_default_config(self):
         conf = config.get_config()
         assert isinstance(conf, config.Config)
-        assert conf.mahimahi_cert_dir == config.DEFAULT_MAHIMAHI_CERT_DIR
-        assert conf.chrome_har_capturer_bin == config.DEFAULT_CHROME_HAR_CAPTURER_BIN
-        assert conf.pwmetrics_bin == config.DEFAULT_PWMETRICS_BIN
-        assert conf.nghttpx_bin == config.DEFAULT_NGHTTPX_BIN
         assert conf.http2push_image == config.DEFAULT_HTTP2PUSH_IMAGE
         assert conf.chrome_bin == config.DEFAULT_CHROME_BIN
         assert conf.env_config is None
+        assert conf.client_env is None
+        assert conf.reward_func is None
 
     def test_get_config_with_env_config(self):
         conf = config.get_config(get_env_config())
         assert conf.env_config == get_env_config()
 
-    def test_get_config_with_client_env(self):
+    def test_get_config_with_other_properties(self):
         client_env = get_random_client_environment()
-        conf = config.get_config(get_env_config(), client_env)
+        conf = config.get_config(get_env_config(), client_env, 0)
         assert conf.env_config == get_env_config()
         assert conf.client_env == client_env
+        assert conf.reward_func == 0
 
-    @mock.patch.dict(
-        os.environ, {"CHROME_BIN": "test_chrome", "MAHIMAHI_CERT_DIR": "test_mm_dir", "HTTP2PUSH_IMAGE": "test_image"}
-    )
+    @mock.patch.dict(os.environ, {"CHROME_BIN": "test_chrome", "HTTP2PUSH_IMAGE": "test_image"})
     def test_get_config_with_override(self):
         conf = config.get_config()
         assert isinstance(conf, config.Config)
-        assert conf.mahimahi_cert_dir == "test_mm_dir"
-        assert conf.chrome_har_capturer_bin == config.DEFAULT_CHROME_HAR_CAPTURER_BIN
-        assert conf.pwmetrics_bin == config.DEFAULT_PWMETRICS_BIN
-        assert conf.nghttpx_bin == config.DEFAULT_NGHTTPX_BIN
         assert conf.http2push_image == "test_image"
         assert conf.chrome_bin == "test_chrome"
         assert conf.env_config is None
