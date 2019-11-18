@@ -3,7 +3,7 @@ package tree_diff;
 import eu.mihosoft.ext.apted.costmodel.*;
 import eu.mihosoft.ext.apted.node.*;
 
-public class CostModel implements eu.mihosoft.ext.apted.costmodel.CostModel {
+public class CostModel implements eu.mihosoft.ext.apted.costmodel.CostModel<NodeData> {
 
     /**
      * Calculates the cost of deleting a node.
@@ -12,7 +12,7 @@ public class CostModel implements eu.mihosoft.ext.apted.costmodel.CostModel {
      * @return the cost of deleting node n.
      */
     @Override
-    public float del(Node n) {
+    public float del(Node<NodeData> n) {
         return 0;
     }
 
@@ -23,7 +23,7 @@ public class CostModel implements eu.mihosoft.ext.apted.costmodel.CostModel {
      * @return the cost of inserting node n.
      */
     @Override
-    public float ins(Node n) {
+    public float ins(Node<NodeData> n) {
         return 0;
     }
 
@@ -35,7 +35,7 @@ public class CostModel implements eu.mihosoft.ext.apted.costmodel.CostModel {
      * @return the cost of renaming (mapping) node n1 to n2.
      */
     @Override
-    public float ren(Node n1, Node n2) {
+    public float ren(Node<NodeData> n1, Node<NodeData> n2) {
         return 0;
     }
 }
