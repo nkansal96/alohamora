@@ -50,7 +50,7 @@ for env, results in results_by_env.items():
         )
     )
     simulator_pct_diff = sorted(
-        [100*pct_diff(a["simulator"]["with_policy"], a["simulator"]["without_policy"]) for a in results]
+        [100 * pct_diff(a["simulator"]["with_policy"], a["simulator"]["without_policy"]) for a in results]
     )
     simulator_without_policy = sorted([a["simulator"]["without_policy"] for a in results])
     simulator_with_policy = sorted([a["simulator"]["with_policy"] for a in results])
