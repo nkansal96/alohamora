@@ -1,9 +1,9 @@
 package tree_diff;
 
 import eu.mihosoft.ext.apted.costmodel.*;
-import eu.mihosoft.ext.apted.node.Node;
+import eu.mihosoft.ext.apted.node.*;
 
-public class CostModel implements eu.mihosoft.ext.apted.costmodel.CostModel{
+public class CostModel implements eu.mihosoft.ext.apted.costmodel.CostModel {
 
     /**
      * Calculates the cost of deleting a node.
