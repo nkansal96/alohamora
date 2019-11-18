@@ -1,12 +1,11 @@
 """ Defines a test client that queries the gRPC server to get a policy """
 import json
-from typing import List
 
 import grpc
 
 from blaze.action import Policy
-from blaze.config.client import NetworkType, DeviceSpeed
-from blaze.config.environment import Resource
+from blaze.config.client import ClientEnvironment
+from blaze.config.environment import EnvironmentConfig
 from blaze.proto import policy_service_pb2
 from blaze.proto import policy_service_pb2_grpc
 
@@ -20,24 +19,14 @@ class Client:
         self.channel = channel
         self.stub = policy_service_pb2_grpc.PolicyServiceStub(channel)
 
-    def get_policy(
-        self,
-        url: str,
-        network_type: NetworkType,
-        device_speed: DeviceSpeed,
-        resources: List[Resource],
-        train_domain_globs: List[str],
-    ) -> Policy:
+    def get_policy(self, url: str, client_env: ClientEnvironment, manifest: EnvironmentConfig) -> Policy:
         """ Queries the policy service for a push policy for the given configuration """
         page = policy_service_pb2.Page(
             url=url,
-            network_type=network_type.value,
-            device_speed=device_speed.value,
-            train_domain_globs=train_domain_globs,
-            resources=[
-                policy_service_pb2.Resource(url=res.url, size=res.size, type=res.type.value, timestamp=res.order)
-                for res in resources
-            ],
+            bandwidth_kbps=client_env.bandwidth,
+            latency_ms=client_env.latency,
+            cpu_slowdown=client_env.cpu_slowdown,
+            manifest=manifest.serialize(),
         )
 
         policy_res = self.stub.GetPolicy(page)

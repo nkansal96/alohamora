@@ -3,9 +3,18 @@ This module contains the main class representing an action that an agent can
 take when exploring push policies
 """
 
-from typing import Optional
+from typing import Optional, Tuple, Union
 
 from blaze.config.environment import Resource
+
+
+PushActionIDType = Tuple[int, int, int]
+PreloadActionIDType = Tuple[int, int]
+ActionIDType = Tuple[int, int, int, int, int, int]
+
+NOOP_PUSH_ACTION_ID = (0, 0, 0)
+NOOP_PRELOAD_ACTION_ID = (0, 0)
+NOOP_ACTION_ID = (0, *NOOP_PUSH_ACTION_ID, *NOOP_PRELOAD_ACTION_ID)
 
 
 class Action:
@@ -17,7 +26,7 @@ class Action:
 
     def __init__(
         self,
-        action_id: int = 0,
+        action_id: Optional[Union[PushActionIDType, PreloadActionIDType]] = None,
         *,
         is_push: Optional[bool] = None,
         source: Optional[Resource] = None,
@@ -36,7 +45,7 @@ class Action:
     @property
     def is_noop(self):
         """ Returns true if this action is a no-op """
-        return self.action_id == 0
+        return self.action_id is None
 
     def __repr__(self):
         if self.is_noop:

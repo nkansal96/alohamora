@@ -1,41 +1,11 @@
 syntax = "proto3";
 
-enum NetworkType {
-    WIRED = 0;
-    WIFI = 1;
-    LTE = 2;
-    UMTS = 3;
-}
-
-enum DeviceSpeed {
-    DESKTOP	= 0;
-    FAST_MOBILE = 1;
-    SLOW_MOBILE = 2;
-}
-
-enum ResourceType {
-    NONE = 0;
-    HTML = 1;
-    SCRIPT = 2;
-    CSS = 3;
-    IMAGE = 4;
-    FONT = 5;
-    OTHER = 6;
-}
-
-message Resource {
-    string url = 1;
-    int32 size = 2;
-    ResourceType type = 3;
-    int32 timestamp = 4;
-}
-
 message Page {
     string url = 1;
-    NetworkType network_type = 2;
-    DeviceSpeed device_speed = 3;
-    repeated Resource resources = 4;
-    repeated string train_domain_globs = 5;
+    int32 bandwidth_kbps = 2;
+    int32 latency_ms = 3;
+    int32 cpu_slowdown = 4;
+    bytes manifest = 5;
 }
 
 message Policy {

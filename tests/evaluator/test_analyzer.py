@@ -1,12 +1,8 @@
-import glob
-import json
-import tempfile
-from unittest import mock
+import pytest
 
 from blaze.action import ActionSpace, Policy
 from blaze.config.client import get_random_client_environment
-from blaze.evaluator import Analyzer, Result
-from blaze.evaluator.analyzer import BEST_REWARD_COEFF, PROGRESSION_REWARD_COEFF, REGRESSION_REWARD_COEFF
+from blaze.evaluator import Analyzer
 
 from tests.mocks.config import get_config
 
@@ -17,12 +13,26 @@ class TestAnalyzer:
         self.policy = Policy(ActionSpace(self.config.env_config.push_groups))
         self.client_environment = get_random_client_environment()
 
-    def get_analyzer(self):
-        return Analyzer(get_config(), self.client_environment)
+    def get_analyzer(self, reward_func: int = 0):
+        return Analyzer(get_config(), reward_func, self.client_environment)
 
     def test_init(self):
-        analyzer = self.get_analyzer()
-        assert isinstance(analyzer, Analyzer)
+        a = self.get_analyzer()
+        assert isinstance(a, Analyzer)
+        assert a.reward_func_num == 0
+
+    def test_init_reward_function(self):
+        a0 = self.get_analyzer(0)
+        assert a0.reward_func_num == 0
+        a1 = self.get_analyzer(1)
+        assert a1.reward_func_num == 1
+        a2 = self.get_analyzer(2)
+        assert a2.reward_func_num == 2
+        a3 = self.get_analyzer(3)
+        assert a3.reward_func_num == 3
+
+        with pytest.raises(IndexError):
+            self.get_analyzer(4)
 
     # TODO: REWRITE THESE TESTS
 

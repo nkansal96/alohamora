@@ -144,7 +144,7 @@ def get_push_groups() -> List[PushGroup]:
                     order=2,
                     group_id=3,
                     source_id=0,
-                    initiator=4,
+                    initiator=1,
                     type=ResourceType.SCRIPT,
                 ),
                 Resource(
@@ -153,7 +153,7 @@ def get_push_groups() -> List[PushGroup]:
                     order=3,
                     group_id=3,
                     source_id=1,
-                    initiator=10,
+                    initiator=2,
                     type=ResourceType.FONT,
                 ),
                 Resource(
@@ -189,7 +189,7 @@ def get_env_config() -> EnvironmentConfig:
 
 
 def get_train_config() -> TrainConfig:
-    return TrainConfig(experiment_name="test", model_dir="/tmp/test", num_cpus=4, max_timesteps=10)
+    return TrainConfig(experiment_name="test", num_workers=4)
 
 
 def get_serve_config() -> ServeConfig:

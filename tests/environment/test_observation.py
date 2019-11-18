@@ -1,10 +1,11 @@
 import random
 
 import gym
+import numpy as np
 
 from blaze.action import ActionSpace, Policy
 from blaze.config.client import get_random_client_environment
-from blaze.environment.observation import get_observation, get_observation_space
+from blaze.environment.observation import get_observation, get_observation_space, MAX_RESOURCES
 
 from tests.mocks.config import get_push_groups
 
@@ -34,16 +35,32 @@ class TestGetObservation:
         assert obs["client"]["device_speed"] == self.client_environment.device_speed.value
 
         # assert that all resources are not pushed initially
-        assert all(res[3] == 0 for res in obs["resources"].values())
+        assert all(res[-2] == 0 for res in obs["resources"].values())
         # assert that all resources are not preloaded initially
-        assert all(res[4] == 0 for res in obs["resources"].values())
+        assert all(res[-1] == 0 for res in obs["resources"].values())
 
         # assert that the push_groups are encoded correctly
         for group in self.push_groups:
             for res in group.resources:
-                assert obs["resources"][str(res.order)][0] == 1
-                assert obs["resources"][str(res.order)][1] == res.type.value
-                assert obs["resources"][str(res.order)][2] == res.size // 1000  # encoded in KB
+                assert np.array_equal(
+                    obs["resources"][str(res.order)],
+                    np.array(
+                        (
+                            1,  # resource is enabled
+                            group.id,  # the resource's domain id
+                            res.source_id,  # the resource's relative offset from its domain top
+                            res.order + 1,  # the resource's absolute offset from the start of the page load
+                            res.type.value,  # resource type
+                            res.size // 1000,  # resource size in KB
+                            0,  # not pushed
+                            0,  # not preloaded
+                        )
+                    ),
+                )
+
+        max_order = max(r.order for group in self.push_groups for r in group.resources)
+        for i in range(max_order + 1, MAX_RESOURCES):
+            assert np.array_equal(obs["resources"][str(i)], np.array([0, 0, 0, 0, 0, 0, 0, 0]))
 
     def test_observation_with_nonempty_policy(self):
         action_space = ActionSpace(self.push_groups)
@@ -63,19 +80,19 @@ class TestGetObservation:
             for (source, push) in policy.push:
                 for push_res in push:
                     # +1 since we have defined it that way
-                    assert obs["resources"][str(push_res.order)][3] == source.order + 1
+                    assert obs["resources"][str(push_res.order)][-2] == source.source_id + 1
 
             # make sure the push sources are recorded correctly
             for (source, preload) in policy.preload:
                 for push_res in preload:
                     # +1 since we have defined it that way
-                    assert obs["resources"][str(push_res.order)][4] == source.order + 1
+                    assert obs["resources"][str(push_res.order)][-1] == source.order + 1
 
             # check that all other resources are not pushed
             pushed_res = set(push_res.order for (source, push) in policy.push for push_res in push)
             preloaded_res = set(push_res.order for (source, push) in policy.preload for push_res in push)
-            assert all(res[3] == 0 for order, res in obs["resources"].items() if int(order) not in pushed_res)
-            assert all(res[4] == 0 for order, res in obs["resources"].items() if int(order) not in preloaded_res)
+            assert all(res[-2] == 0 for order, res in obs["resources"].items() if int(order) not in pushed_res)
+            assert all(res[-1] == 0 for order, res in obs["resources"].items() if int(order) not in preloaded_res)
 
     def test_observation_with_nonempty_policy_with_default_actions(self):
         # use all push groups except the chosen default group
@@ -106,16 +123,16 @@ class TestGetObservation:
             for (source, push) in policy.observable_push:
                 for push_res in push:
                     # +1 since we have defined it that way
-                    assert obs["resources"][str(push_res.order)][3] == source.order + 1
+                    assert obs["resources"][str(push_res.order)][-2] == source.source_id + 1
 
             # make sure the push sources are recorded correctly
             for (source, preload) in policy.observable_preload:
                 for push_res in preload:
                     # +1 since we have defined it that way
-                    assert obs["resources"][str(push_res.order)][4] == source.order + 1
+                    assert obs["resources"][str(push_res.order)][-1] == source.order + 1
 
             # check that all other resources are not pushed
             pushed_res = set(push_res.order for (source, push) in policy.observable_push for push_res in push)
             preloaded_res = set(push_res.order for (source, push) in policy.observable_preload for push_res in push)
-            assert all(res[3] == 0 for order, res in obs["resources"].items() if int(order) not in pushed_res)
-            assert all(res[4] == 0 for order, res in obs["resources"].items() if int(order) not in preloaded_res)
+            assert all(res[-2] == 0 for order, res in obs["resources"].items() if int(order) not in pushed_res)
+            assert all(res[-1] == 0 for order, res in obs["resources"].items() if int(order) not in preloaded_res)

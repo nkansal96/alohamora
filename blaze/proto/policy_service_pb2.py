@@ -3,7 +3,6 @@
 
 import sys
 _b=sys.version_info[0]<3 and (lambda x:x) or (lambda x:x.encode('latin1'))
-from google.protobuf.internal import enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
@@ -20,177 +19,10 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x14policy_service.proto\"U\n\x08Resource\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x0c\n\x04size\x18\x02 \x01(\x05\x12\x1b\n\x04type\x18\x03 \x01(\x0e\x32\r.ResourceType\x12\x11\n\ttimestamp\x18\x04 \x01(\x05\"\x95\x01\n\x04Page\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\"\n\x0cnetwork_type\x18\x02 \x01(\x0e\x32\x0c.NetworkType\x12\"\n\x0c\x64\x65vice_speed\x18\x03 \x01(\x0e\x32\x0c.DeviceSpeed\x12\x1c\n\tresources\x18\x04 \x03(\x0b\x32\t.Resource\x12\x1a\n\x12train_domain_globs\x18\x05 \x03(\t\"\x18\n\x06Policy\x12\x0e\n\x06policy\x18\x01 \x01(\t*5\n\x0bNetworkType\x12\t\n\x05WIRED\x10\x00\x12\x08\n\x04WIFI\x10\x01\x12\x07\n\x03LTE\x10\x02\x12\x08\n\x04UMTS\x10\x03*<\n\x0b\x44\x65viceSpeed\x12\x0b\n\x07\x44\x45SKTOP\x10\x00\x12\x0f\n\x0b\x46\x41ST_MOBILE\x10\x01\x12\x0f\n\x0bSLOW_MOBILE\x10\x02*W\n\x0cResourceType\x12\x08\n\x04NONE\x10\x00\x12\x08\n\x04HTML\x10\x01\x12\n\n\x06SCRIPT\x10\x02\x12\x07\n\x03\x43SS\x10\x03\x12\t\n\x05IMAGE\x10\x04\x12\x08\n\x04\x46ONT\x10\x05\x12\t\n\x05OTHER\x10\x06\x32,\n\rPolicyService\x12\x1b\n\tGetPolicy\x12\x05.Page\x1a\x07.Policyb\x06proto3')
+  serialized_pb=_b('\n\x14policy_service.proto\"g\n\x04Page\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x16\n\x0e\x62\x61ndwidth_kbps\x18\x02 \x01(\x05\x12\x12\n\nlatency_ms\x18\x03 \x01(\x05\x12\x14\n\x0c\x63pu_slowdown\x18\x04 \x01(\x05\x12\x10\n\x08manifest\x18\x05 \x01(\x0c\"\x18\n\x06Policy\x12\x0e\n\x06policy\x18\x01 \x01(\t2,\n\rPolicyService\x12\x1b\n\tGetPolicy\x12\x05.Page\x1a\x07.Policyb\x06proto3')
 )
 
-_NETWORKTYPE = _descriptor.EnumDescriptor(
-  name='NetworkType',
-  full_name='NetworkType',
-  filename=None,
-  file=DESCRIPTOR,
-  values=[
-    _descriptor.EnumValueDescriptor(
-      name='WIRED', index=0, number=0,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='WIFI', index=1, number=1,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='LTE', index=2, number=2,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='UMTS', index=3, number=3,
-      serialized_options=None,
-      type=None),
-  ],
-  containing_type=None,
-  serialized_options=None,
-  serialized_start=289,
-  serialized_end=342,
-)
-_sym_db.RegisterEnumDescriptor(_NETWORKTYPE)
 
-NetworkType = enum_type_wrapper.EnumTypeWrapper(_NETWORKTYPE)
-_DEVICESPEED = _descriptor.EnumDescriptor(
-  name='DeviceSpeed',
-  full_name='DeviceSpeed',
-  filename=None,
-  file=DESCRIPTOR,
-  values=[
-    _descriptor.EnumValueDescriptor(
-      name='DESKTOP', index=0, number=0,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='FAST_MOBILE', index=1, number=1,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='SLOW_MOBILE', index=2, number=2,
-      serialized_options=None,
-      type=None),
-  ],
-  containing_type=None,
-  serialized_options=None,
-  serialized_start=344,
-  serialized_end=404,
-)
-_sym_db.RegisterEnumDescriptor(_DEVICESPEED)
-
-DeviceSpeed = enum_type_wrapper.EnumTypeWrapper(_DEVICESPEED)
-_RESOURCETYPE = _descriptor.EnumDescriptor(
-  name='ResourceType',
-  full_name='ResourceType',
-  filename=None,
-  file=DESCRIPTOR,
-  values=[
-    _descriptor.EnumValueDescriptor(
-      name='NONE', index=0, number=0,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='HTML', index=1, number=1,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='SCRIPT', index=2, number=2,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='CSS', index=3, number=3,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='IMAGE', index=4, number=4,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='FONT', index=5, number=5,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='OTHER', index=6, number=6,
-      serialized_options=None,
-      type=None),
-  ],
-  containing_type=None,
-  serialized_options=None,
-  serialized_start=406,
-  serialized_end=493,
-)
-_sym_db.RegisterEnumDescriptor(_RESOURCETYPE)
-
-ResourceType = enum_type_wrapper.EnumTypeWrapper(_RESOURCETYPE)
-WIRED = 0
-WIFI = 1
-LTE = 2
-UMTS = 3
-DESKTOP = 0
-FAST_MOBILE = 1
-SLOW_MOBILE = 2
-NONE = 0
-HTML = 1
-SCRIPT = 2
-CSS = 3
-IMAGE = 4
-FONT = 5
-OTHER = 6
-
-
-
-_RESOURCE = _descriptor.Descriptor(
-  name='Resource',
-  full_name='Resource',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='url', full_name='Resource.url', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='size', full_name='Resource.size', index=1,
-      number=2, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='type', full_name='Resource.type', index=2,
-      number=3, type=14, cpp_type=8, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='timestamp', full_name='Resource.timestamp', index=3,
-      number=4, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=24,
-  serialized_end=109,
-)
 
 
 _PAGE = _descriptor.Descriptor(
@@ -208,30 +40,30 @@ _PAGE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='network_type', full_name='Page.network_type', index=1,
-      number=2, type=14, cpp_type=8, label=1,
+      name='bandwidth_kbps', full_name='Page.bandwidth_kbps', index=1,
+      number=2, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='device_speed', full_name='Page.device_speed', index=2,
-      number=3, type=14, cpp_type=8, label=1,
+      name='latency_ms', full_name='Page.latency_ms', index=2,
+      number=3, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='resources', full_name='Page.resources', index=3,
-      number=4, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
+      name='cpu_slowdown', full_name='Page.cpu_slowdown', index=3,
+      number=4, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='train_domain_globs', full_name='Page.train_domain_globs', index=4,
-      number=5, type=9, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
+      name='manifest', full_name='Page.manifest', index=4,
+      number=5, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
@@ -247,8 +79,8 @@ _PAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=112,
-  serialized_end=261,
+  serialized_start=24,
+  serialized_end=127,
 )
 
 
@@ -278,28 +110,13 @@ _POLICY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=263,
-  serialized_end=287,
+  serialized_start=129,
+  serialized_end=153,
 )
 
-_RESOURCE.fields_by_name['type'].enum_type = _RESOURCETYPE
-_PAGE.fields_by_name['network_type'].enum_type = _NETWORKTYPE
-_PAGE.fields_by_name['device_speed'].enum_type = _DEVICESPEED
-_PAGE.fields_by_name['resources'].message_type = _RESOURCE
-DESCRIPTOR.message_types_by_name['Resource'] = _RESOURCE
 DESCRIPTOR.message_types_by_name['Page'] = _PAGE
 DESCRIPTOR.message_types_by_name['Policy'] = _POLICY
-DESCRIPTOR.enum_types_by_name['NetworkType'] = _NETWORKTYPE
-DESCRIPTOR.enum_types_by_name['DeviceSpeed'] = _DEVICESPEED
-DESCRIPTOR.enum_types_by_name['ResourceType'] = _RESOURCETYPE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
-
-Resource = _reflection.GeneratedProtocolMessageType('Resource', (_message.Message,), dict(
-  DESCRIPTOR = _RESOURCE,
-  __module__ = 'policy_service_pb2'
-  # @@protoc_insertion_point(class_scope:Resource)
-  ))
-_sym_db.RegisterMessage(Resource)
 
 Page = _reflection.GeneratedProtocolMessageType('Page', (_message.Message,), dict(
   DESCRIPTOR = _PAGE,
@@ -323,8 +140,8 @@ _POLICYSERVICE = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=495,
-  serialized_end=539,
+  serialized_start=155,
+  serialized_end=199,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetPolicy',

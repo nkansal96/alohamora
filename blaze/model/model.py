@@ -3,12 +3,11 @@ from typing import NamedTuple, Optional, Type
 
 import gym
 from ray.rllib.agents import Agent
+from ray.rllib.evaluation.episode import _flatten_action
 
-from blaze.action import Action, ActionSpace, Policy
-from blaze.config.config import get_config
-from blaze.config.environment import EnvironmentConfig
-from blaze.config.client import ClientEnvironment
-from blaze.environment.observation import get_observation
+from blaze.action import Policy
+from blaze.config.config import Config
+from blaze.environment.environment import Environment
 
 
 class ModelInstance:
@@ -17,11 +16,10 @@ class ModelInstance:
     an environment and client configuration
     """
 
-    def __init__(self, agent: Agent, env_config: EnvironmentConfig, client_environment: ClientEnvironment):
+    def __init__(self, agent: Agent, config: Config):
         self.agent = agent
-        self.client_environment = client_environment
-        self.env_config = env_config
-        self._policy = None
+        self.config = config
+        self._policy: Optional[Policy] = None
 
     @property
     def policy(self) -> Policy:
@@ -32,22 +30,18 @@ class ModelInstance:
         # check if the policy has been cached
         if self._policy is not None:
             return self._policy
-        # create ActionSpace and Policy objects to record the actions taken by the agent
-        action_space = ActionSpace(self.env_config.trainable_push_groups)
-        self._policy = Policy(action_space)
-        # create the initial observation from the environment that gets passed to the agent
-        observation = get_observation(self.client_environment, self.env_config.push_groups, self._policy)
-        last_action: Optional[Action] = None
+        # create the environment that the agent acts in
+        env = Environment(self.config)
         # keep querying the agent until the policy is complete
-        while not self.policy.completed or (last_action and last_action.is_noop):
+        obs, action, reward, completed = env.observation, None, None, False
+        while not completed:
             # query the agent for an action
-            action = self.agent.compute_action(observation)
-            last_action = action_space.decode_action_id(action)
-            # apply the action to the policy
-            self.policy.apply_action(action)
-            # update the observation based on the action
-            observation = get_observation(self.client_environment, self.env_config.push_groups, self.policy)
-        return self.policy
+            action = self.agent.compute_action(obs, prev_action=action, prev_reward=reward)
+            action = _flatten_action(action)
+            # deflate and apply the action
+            obs, reward, completed, _ = env.step(action)
+        self._policy = env.policy
+        return self._policy
 
 
 class SavedModel(NamedTuple):
@@ -60,10 +54,10 @@ class SavedModel(NamedTuple):
     cls: Type[Agent]
     env: Type[gym.Env]
     location: str
+    common_config: dict
 
-    def instantiate(self, env_config: EnvironmentConfig, client_environment: ClientEnvironment) -> ModelInstance:
+    def instantiate(self, config: Config) -> ModelInstance:
         """ Instantiates the saved model and returns a ModelInstance for the given environment """
-        agent = self.cls(env=self.env, config={"env_config": get_config(env_config)})
+        agent = self.cls(env=self.env, config={**self.common_config, "env_config": config})
         agent.restore(self.location)
-        model_instance = ModelInstance(agent, env_config, client_environment)
-        return model_instance
+        return ModelInstance(agent, config)

@@ -3,22 +3,16 @@ import grpc
 from blaze.config.client import get_random_client_environment
 from blaze.proto import policy_service_pb2
 
-from tests.mocks.config import get_push_groups
+from tests.mocks.config import get_env_config
 
 
 def get_page(url: str, client_environment=get_random_client_environment()) -> policy_service_pb2.Page:
-    push_groups = get_push_groups()
-    resources = [res for group in push_groups for res in group.resources]
-    page_resources = [
-        policy_service_pb2.Resource(url=res.url, size=res.size, type=res.type.value, timestamp=res.order)
-        for res in resources
-    ]
     return policy_service_pb2.Page(
         url=url,
-        network_type=client_environment.network_type.value,
-        device_speed=client_environment.device_speed.value,
-        resources=page_resources,
-        train_domain_globs=[group.name for group in push_groups if group.trainable],
+        bandwidth_kbps=client_environment.bandwidth,
+        latency_ms=client_environment.latency,
+        cpu_slowdown=client_environment.cpu_slowdown,
+        manifest=get_env_config().serialize(),
     )
 
 

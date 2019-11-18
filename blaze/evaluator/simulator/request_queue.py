@@ -5,7 +5,7 @@ It also defines the RequestQueue, which simulates the network link.
 
 import copy
 from collections import defaultdict
-from typing import DefaultDict, Dict, List, NamedTuple, Set, Tuple
+from typing import DefaultDict, Dict, List, NamedTuple, Optional, Set, Tuple
 
 from blaze.config.environment import Resource
 from blaze.preprocess.url import Url
@@ -19,9 +19,10 @@ class Node(NamedTuple):
     resource: Resource
     priority: int
     children: List["Node"] = []
+    parent: Optional["Node"] = None
 
     def __hash__(self):
-        return id(self)
+        return hash(self.resource.url)
 
     def __eq__(self, other: "Node"):
         return self.resource == other.resource
@@ -72,7 +73,11 @@ class RequestQueue:
         rq = RequestQueue(self.bandwidth_kbps, self.rtt_latency_ms)
         rq.queue = [copy.copy(qi) for qi in self.queue]
         rq.delayed = [copy.copy(qi) for qi in self.delayed]
-        rq.node_to_queue_item_map = {node: copy.copy(qi) for (node, qi) in self.node_to_queue_item_map.items()}
+        rq.node_to_queue_item_map = {
+            **{node: copy.copy(qi) for (node, qi) in self.node_to_queue_item_map.items()},
+            **{qi.node: qi for qi in rq.queue},
+            **{qi.node: qi for qi in rq.delayed},
+        }
         rq.connected_origins = set(self.connected_origins)
         rq.tcp_state = copy.deepcopy(self.tcp_state)
         return rq
@@ -120,7 +125,7 @@ class RequestQueue:
             self.delayed.append(queue_item)
         self.node_to_queue_item_map[node] = queue_item
 
-    def estimated_completion_time(self, node: Node) -> float:
+    def estimated_completion_time(self, node: Node) -> Tuple[float, float]:
         """
         Runs through a copy of the request queue and returns the relative time offset
         at which the given node would have completed.
@@ -131,14 +136,14 @@ class RequestQueue:
         """
 
         if node not in self:
-            return 0
+            return 0, 0
         rq = self.copy()
         total_time = 0
         completed_nodes, step_ms = [], 0
         while rq and node not in completed_nodes:
             completed_nodes, step_ms = rq.step()
             total_time += step_ms
-        return total_time
+        return total_time, rq.time_spent_downloading(node)
 
     def time_spent_downloading(self, node: Node) -> float:
         """

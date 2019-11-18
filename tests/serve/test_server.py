@@ -21,7 +21,7 @@ class TestServer:
         self.serve_config = get_serve_config()
         self.action_space = ActionSpace(self.trainable_push_groups)
         self.mock_agent = mock_agent_with_action_space(self.action_space)
-        self.saved_model = SavedModel(self.mock_agent, Environment, "/tmp/model_location")
+        self.saved_model = SavedModel(self.mock_agent, Environment, "/tmp/model_location", {})
 
     def test_init(self):
         server = Server(self.serve_config)

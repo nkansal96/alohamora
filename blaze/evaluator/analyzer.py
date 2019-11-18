@@ -4,19 +4,98 @@ under the specified circumstances and returns a metric indicating the policy
 quality
 """
 
-from typing import Optional
+from typing import Callable, List, Optional
 
 from blaze.action import Policy
-from blaze.config import client, Config
-from blaze.evaluator import simulator
+from blaze.config import Config
+from blaze.config.client import ClientEnvironment
+from blaze.evaluator.simulator import Simulator
 from blaze.logger import logger
 
-# from blaze.mahimahi import mahimahi
+# Define the call signature of a reward function
+# (simulator) => ((policy) => float)
+RewardFunction = Callable[[Simulator, ClientEnvironment], Callable[[Policy], float]]
 
 MIN_PAGE_LOAD_TIME = 1000000.0
 BEST_REWARD_COEFF = 200000.0
-REGRESSION_REWARD_COEFF = -2.0
-PROGRESSION_REWARD_COEFF = 4.0
+REGRESSION_REWARD_COEFF = -5.0
+PROGRESSION_REWARD_COEFF = 10.0
+
+
+def reward_0(simulator: Simulator, client_environment: ClientEnvironment) -> Callable[[Policy], float]:
+    """
+    Returns a reward function that returns the difference in 1/plt and 1/last_plt
+    """
+    last_plt = 0
+
+    def _reward(policy: Policy) -> float:
+        nonlocal last_plt
+
+        plt = simulator.simulate_load_time(client_environment, policy)
+        if last_plt == 0:
+            reward = 1000000.0 * (1.0 / plt)
+        else:
+            reward = 1000000.0 * (1.0 / plt - 1.0 / last_plt)
+        last_plt = plt
+        return reward
+
+    return _reward
+
+
+def reward_1(simulator: Simulator, client_environment: ClientEnvironment) -> Callable[[Policy], float]:
+    """
+    Returns a reward function that returns 1/plt
+    """
+
+    def _reward(policy: Policy) -> float:
+        plt = simulator.simulate_load_time(client_environment, policy)
+        return 1000000.0 / plt
+
+    return _reward
+
+
+def reward_2(simulator: Simulator, client_environment: ClientEnvironment) -> Callable[[Policy], float]:
+    """
+    Returns a reward function that returns -plt
+    """
+
+    def _reward(policy: Policy) -> float:
+        plt = simulator.simulate_load_time(client_environment, policy)
+        return -plt
+
+    return _reward
+
+
+def reward_3(simulator: Simulator, client_environment: ClientEnvironment) -> Callable[[Policy], float]:
+    """
+    Returns a reward function that returns the original 3-part reward
+    """
+    min_plt = simulator.simulate_load_time(client_environment) if client_environment else MIN_PAGE_LOAD_TIME
+    last_plt = min_plt if min_plt < MIN_PAGE_LOAD_TIME else 0
+
+    def _reward(policy: Policy) -> float:
+        nonlocal min_plt, last_plt
+
+        plt = simulator.simulate_load_time(client_environment, policy)
+        if plt < min_plt:
+            reward = BEST_REWARD_COEFF / plt
+        else:
+            a, b = sorted([plt, last_plt])
+            coeff = REGRESSION_REWARD_COEFF if plt > last_plt else PROGRESSION_REWARD_COEFF
+            reward = coeff * (b / a)
+        min_plt = min(min_plt, plt)
+        last_plt = plt
+        return reward
+
+    return _reward
+
+
+REWARD_FUNCTIONS: List[RewardFunction] = [reward_0, reward_1, reward_2, reward_3]
+
+
+def get_num_rewards():
+    """ Returns the number of reward functions """
+    return len(REWARD_FUNCTIONS)
 
 
 class Analyzer:
@@ -28,37 +107,24 @@ class Analyzer:
     previous policy
     """
 
-    def __init__(self, config: Config, client_environment: Optional[client.ClientEnvironment] = None):
+    def __init__(
+        self, config: Config, reward_func_num: int = 0, client_environment: Optional[ClientEnvironment] = None
+    ):
         self.config = config
         self.client_environment = client_environment
-        self.min_plt = MIN_PAGE_LOAD_TIME
-        self.last_plt = None
-        self.simulator = simulator.Simulator(config.env_config)
+        self.simulator = Simulator(config.env_config)
+        self.reward_func_num = reward_func_num
+        self.reward_func = REWARD_FUNCTIONS[self.reward_func_num](self.simulator, self.client_environment)
         self.log = logger.with_namespace("analyzer")
 
-    def reset(self, client_environment: Optional[client.ClientEnvironment] = None):
+    def reset(self, client_environment: Optional[ClientEnvironment] = None):
         """ Resets the analyzer's state and optionally changes the client environment """
         self.client_environment = client_environment or self.client_environment
-        self.min_plt = MIN_PAGE_LOAD_TIME
-        self.last_plt = None
+        self.reward_func = REWARD_FUNCTIONS[self.reward_func_num](self.simulator, self.client_environment)
 
-    def get_reward(self, policy: Policy):
+    def get_reward(self, policy: Policy) -> float:
         """
         Evaluates the given push policy by instantiating a Mahimahi environment simulating
-        the client environment and the page load. It calculates the reward based on the
-        resulting speed index returned from Lighthouse
+        the client environment and the page load.
         """
-        self.log.debug("analyzing web page...")
-        plt = self.simulator.simulate_load_time(self.client_environment, policy)
-        reward = 0
-        if plt < self.min_plt:
-            self.log.debug("received best page load time", plt=plt)
-            reward = BEST_REWARD_COEFF / plt
-        else:
-            a, b = sorted([plt, self.last_plt])
-            coeff = REGRESSION_REWARD_COEFF if plt > self.last_plt else PROGRESSION_REWARD_COEFF
-            self.log.debug("received {} page load time".format("better" if coeff > 0 else "worse"), plt=plt)
-            reward = coeff * (b / a)
-        self.min_plt = min(self.min_plt, plt)
-        self.last_plt = plt
-        return reward
+        return self.reward_func(policy)

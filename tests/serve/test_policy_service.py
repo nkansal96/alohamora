@@ -19,7 +19,7 @@ class TestPolicyService:
         self.push_groups = get_push_groups()
         self.trainable_push_groups = [group for group in self.push_groups if group.trainable]
         self.action_space = ActionSpace(self.trainable_push_groups)
-        self.saved_model = SavedModel(mock_agent_with_action_space(self.action_space), Environment, "")
+        self.saved_model = SavedModel(mock_agent_with_action_space(self.action_space), Environment, "", {})
 
     def test_init(self):
         ps = PolicyService(self.saved_model)
@@ -33,16 +33,18 @@ class TestPolicyService:
         policy = ps.GetPolicy(self.page, MockGRPCServicerContext())
         assert policy
         assert isinstance(policy, policy_service_pb2.Policy)
-        assert len(ps.policies) == 1
-        assert ps.policies[self.page.url] is policy
+        # Temporarily disable caching policies
+        # assert len(ps.policies) == 1
+        # assert ps.policies[self.page.url] is policy
 
     def test_get_policy_returns_cached(self):
         ps = PolicyService(self.saved_model)
         first_policy = ps.GetPolicy(self.page, MockGRPCServicerContext())
         second_policy = ps.GetPolicy(self.page, MockGRPCServicerContext())
-        assert first_policy is second_policy
-        assert len(ps.policies) == 1
-        assert ps.policies[self.page.url] is first_policy
+        # assert first_policy is second_policy
+        # Temporarily disable caching policies
+        # assert len(ps.policies) == 1
+        # assert ps.policies[self.page.url] is first_policy
 
     def test_create_push_policy(self):
         ps = PolicyService(self.saved_model)
@@ -61,6 +63,6 @@ class TestPolicyService:
         model_instance = ps.create_model_instance(self.page)
         assert isinstance(model_instance, ModelInstance)
         assert isinstance(model_instance.agent, MockAgent)
-        assert model_instance.client_environment.network_type == self.client_environment.network_type
-        assert model_instance.client_environment.device_speed == self.client_environment.device_speed
-        assert model_instance.env_config.push_groups == self.push_groups
+        assert model_instance.config.client_env.bandwidth == self.client_environment.bandwidth
+        assert model_instance.config.client_env.latency == self.client_environment.latency
+        assert model_instance.config.env_config.push_groups == self.push_groups

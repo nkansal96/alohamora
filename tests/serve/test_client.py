@@ -10,17 +10,18 @@ from blaze.serve.server import Server
 from blaze.serve.policy_service import PolicyService
 
 from tests.mocks.agent import mock_agent_with_action_space
-from tests.mocks.config import get_push_groups, get_serve_config
+from tests.mocks.config import get_env_config, get_serve_config
 
 
 class TestClient:
     def setup(self):
-        self.push_groups = get_push_groups()
-        self.trainable_push_groups = [group for group in self.push_groups if group.trainable]
+        self.env_config = get_env_config()
+        self.trainable_push_groups = self.env_config.trainable_push_groups
         self.serve_config = get_serve_config()
         self.action_space = ActionSpace(self.trainable_push_groups)
+        self.action_space.seed(2048)
         self.mock_agent = mock_agent_with_action_space(self.action_space)
-        self.saved_model = SavedModel(self.mock_agent, Environment, "/tmp/model_location")
+        self.saved_model = SavedModel(self.mock_agent, Environment, "/tmp/model_location", {})
 
     def test_get_policy(self):
         server = Server(self.serve_config)
@@ -35,12 +36,11 @@ class TestClient:
             client_stub = Client(channel)
             policy = client_stub.get_policy(
                 url="https://www.example.com",
-                network_type=client.NetworkType.LTE,
-                device_speed=client.DeviceSpeed.FAST_MOBILE,
-                resources=[res for group in self.push_groups for res in group.resources],
-                train_domain_globs=[group.name for group in self.trainable_push_groups],
+                client_env=client.get_random_client_environment(),
+                manifest=self.env_config,
             )
 
-            assert policy
+            assert policy is not None
+            assert len(list(policy.push)) + len(list(policy.preload)) > 0
         finally:
             server.stop()

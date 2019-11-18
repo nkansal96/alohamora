@@ -1,10 +1,10 @@
 """ Defines the environment that the training of the agent occurs in """
-import random
+
 from typing import Optional, Union
 
 import gym
 
-from blaze.action import ActionSpace, Policy
+from blaze.action import ActionIDType, ActionSpace, Policy
 from blaze.config import client, Config
 from blaze.config.client import ClientEnvironment
 from blaze.evaluator import Analyzer
@@ -35,12 +35,12 @@ class Environment(gym.Env):
         )
 
         self.observation_space = get_observation_space()
-        self.analyzer = Analyzer(self.config)
+        self.analyzer = Analyzer(self.config, config.reward_func or 0)
 
         self.client_environment: Optional[ClientEnvironment] = None
         self.action_space: Optional[ActionSpace] = None
         self.policy: Optional[Policy] = None
-        self.initialize_environment(client.get_random_fast_lte_client_environment())
+        self.initialize_environment(self.config.client_env or client.get_random_fast_lte_client_environment())
 
     def reset(self):
         self.initialize_environment(client.get_random_fast_lte_client_environment())
@@ -56,40 +56,40 @@ class Environment(gym.Env):
             bandwidth=client_environment.bandwidth,
             latency=client_environment.latency,
             cpu_slowdown=client_environment.cpu_slowdown,
+            reward_func=self.analyzer.reward_func_num,
         )
         self.client_environment = client_environment
         self.analyzer.reset(self.client_environment)
 
-        self.action_space = ActionSpace(self.env_config.trainable_push_groups)
+        self.action_space = ActionSpace(self.env_config.push_groups)
         self.policy = Policy(self.action_space)
 
         # choose a random non-trainable push group to simulate as if it's already pushed
-        candidate_push_groups = [
-            group for group in self.env_config.push_groups if len(group.resources) > 2 and not group.trainable
-        ]
-        if candidate_push_groups:
-            default_group = random.choice(candidate_push_groups)
-            for push in default_group.resources[1:]:
-                self.policy.add_default_push_action(default_group.resources[0], push)
-            log.info("chose group to auto push", group=default_group.name, rules_added=len(default_group.resources) - 1)
+        # candidate_push_groups = [
+        #     group for group in self.env_config.push_groups if len(group.resources) > 2 and not group.trainable
+        # ]
+        # if candidate_push_groups:
+        #     default_group = random.choice(candidate_push_groups)
+        #     for push in default_group.resources[1:]:
+        #         self.policy.add_default_push_action(default_group.resources[0], push)
+        #     log.info("chose group to auto push", group=default_group.name, rules_added=len(default_group.resources))
 
-    def step(self, action):
-        decoded_action = self.action_space.decode_action_id(action)
-        action_applied = self.policy.apply_action(action)
-        log.info(
-            "trying action",
-            action=repr(decoded_action),
-            steps_taken=self.policy.steps_taken,
-            steps_remaining=self.policy.steps_remaining,
-        )
+    def step(self, action: ActionIDType):
+        # decode the action and apply it to the policy
+        decoded_action = self.action_space.decode_action(action)
+        action_applied = self.policy.apply_action(decoded_action)
+
+        # make sure the action isn't used again
+        log.info("trying action", action_id=action, action=repr(decoded_action), steps_taken=self.policy.steps_taken)
+        self.action_space.use_action(decoded_action)
 
         reward = NOOP_ACTION_REWARD
         if action_applied:
-            reward = self.analyzer.get_reward(self.policy) or NOOP_ACTION_REWARD
-        log.info("got reward", action=repr(decoded_action), reward=reward)
+            reward = self.analyzer.get_reward(self.policy)
+            log.info("got reward", action=repr(decoded_action), reward=reward)
 
         info = {"action": decoded_action, "policy": self.policy.as_dict}
-        return self.observation, reward, self.policy.completed or decoded_action.is_noop, info
+        return self.observation, reward, not action_applied, info
 
     def render(self, mode="human"):
         return super(Environment, self).render(mode=mode)

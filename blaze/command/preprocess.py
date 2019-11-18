@@ -1,5 +1,5 @@
 """ Implements the commands for preprocessing webpages before training """
-from blaze.chrome.devtools import capture_har_in_mahimahi
+from blaze.chrome.devtools import capture_har_in_replay_server
 from blaze.config.client import get_default_client_environment
 from blaze.config.config import get_config
 from blaze.config.environment import EnvironmentConfig
@@ -55,7 +55,7 @@ def preprocess(args):
 
     log.info("capturing execution")
     client_env = get_default_client_environment()
-    har = capture_har_in_mahimahi(args.website, config, client_env)
+    har = capture_har_in_replay_server(args.website, config, client_env)
     har_resources = har_entries_to_resources(har)
 
     log.info("finding dependency stable set...")

@@ -2,7 +2,9 @@
 import time
 import os
 
+from blaze.config.config import get_config
 from blaze.config.serve import ServeConfig
+from blaze.evaluator.analyzer import get_num_rewards
 from blaze.logger import logger as log
 
 from . import command
@@ -18,6 +20,7 @@ from . import command
 @command.argument("--host", help="The host to bind the gRPC server to", default="0.0.0.0")
 @command.argument("--port", help="The port to bind the gRPC server to", default=24450, type=int)
 @command.argument("--max_workers", help="The maximum number of RPC workers", default=4, type=int)
+@command.argument("--reward_func", help="Reward function to use", default=1, choices=list(range(get_num_rewards())))
 @command.command
 def serve(args):
     """
@@ -31,6 +34,7 @@ def serve(args):
         host=args.host,
         port=args.port,
         max_workers=args.max_workers,
+        reward_func=args.reward_func,
     )
 
     # check that the passed model location exists
@@ -55,7 +59,7 @@ def serve(args):
     serve_config = ServeConfig(host=args.host, port=args.port, max_workers=args.max_workers)
     saved_model = model.get_model(args.location)
     server = Server(serve_config)
-    server.set_policy_service(PolicyService(saved_model))
+    server.set_policy_service(PolicyService(saved_model, config=get_config(reward_func=args.reward_func)))
     server.start()
     log.info("started server successfully")
 

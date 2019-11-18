@@ -10,7 +10,7 @@ from blaze.config.config import get_config
 from blaze.config.environment import EnvironmentConfig
 from blaze.evaluator.simulator import Simulator
 from blaze.logger import logger as log
-from blaze.preprocess.record import record_webpage, get_page_load_time_in_mahimahi
+from blaze.preprocess.record import record_webpage, get_page_load_time_in_replay_server
 
 from . import command
 
@@ -72,7 +72,7 @@ def page_load_time(args):
         log.info("calculating page load time", manifest=args.from_manifest, url=env_config.request_url)
         if not args.only_simulator:
             log.debug("using pre-recorded webpage", record_dir=config.env_config.replay_dir)
-            plt, *_ = get_page_load_time_in_mahimahi(config.env_config.request_url, client_env, config, policy)
+            plt, *_ = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, policy)
 
     else:
         log.info("calculating page load time", url=args.url)
@@ -86,7 +86,7 @@ def page_load_time(args):
             log.debug("recording webpage in Mahimahi", record_dir=record_dir)
             record_webpage(args.url, record_dir, config)
             log.debug("capturing median PLT in mahimahi with given environment")
-            plt, res_list, push_groups = get_page_load_time_in_mahimahi(
+            plt, res_list, push_groups, _ = get_page_load_time_in_replay_server(
                 config.env_config.request_url, client_env, config, policy
             )
 
@@ -96,7 +96,7 @@ def page_load_time(args):
             # and to prevent conflating environments
             if args.bandwidth or args.latency or args.cpu_slowdown:
                 log.debug("capturing median HAR in mahimahi for simulator in default environment")
-                _, res_list, push_groups = get_page_load_time_in_mahimahi(
+                _, res_list, push_groups, _ = get_page_load_time_in_replay_server(
                     config.env_config.request_url, default_client_env, config
                 )
             env_config = EnvironmentConfig(

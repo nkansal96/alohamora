@@ -14,7 +14,7 @@ from blaze.config import Config
 from blaze.config.client import ClientEnvironment, get_default_client_environment
 from blaze.config.environment import Resource
 from blaze.chrome.config import get_chrome_command, get_chrome_flags
-from blaze.chrome.devtools import capture_har_in_mahimahi
+from blaze.chrome.devtools import capture_har_in_replay_server
 from blaze.logger import logger
 from blaze.mahimahi import MahiMahiConfig
 from blaze.util.seq import ordered_uniq
@@ -59,7 +59,7 @@ def find_url_stable_set(url: str, config: Config) -> List[Resource]:
     pos_dict = collections.defaultdict(lambda: collections.defaultdict(int))
     for n in range(STABLE_SET_NUM_RUNS):
         log.debug("capturing HAR...", run=n + 1, url=url)
-        har = capture_har_in_mahimahi(url, config, get_default_client_environment())
+        har = capture_har_in_replay_server(url, config, get_default_client_environment())
         resource_list = har_entries_to_resources(har)
         if not resource_list:
             log.warn("no response received", run=n + 1)
@@ -131,25 +131,26 @@ def get_page_links(url: str, max_depth: int = 1) -> List[str]:
     return ordered_uniq(links)
 
 
-def get_page_load_time_in_mahimahi(
+def get_page_load_time_in_replay_server(
     request_url: str, client_env: ClientEnvironment, config: Config, policy: Optional[Policy] = None
 ):
     """
     Return the page load time, the HAR resources captured, and the push groups detected
     by loading the page in the given mahimahi record directory
     """
-    log = logger.with_namespace("get_page_load_time_in_mahimahi")
+    log = logger.with_namespace("get_page_load_time_in_replay_server")
     log.debug("using client environment", **client_env._asdict())
     hars = []
     for i in range(EXECUTION_CAPTURE_RUNS):
         log.debug("recording page execution in Mahimahi", run=(i + 1), total_runs=EXECUTION_CAPTURE_RUNS)
-        har = capture_har_in_mahimahi(request_url, config, client_env, policy)
+        har = capture_har_in_replay_server(request_url, config, client_env, policy)
         hars.append(har)
         log.debug("captured page execution", page_load_time=har.page_load_time_ms)
 
     hars.sort(key=lambda h: h.page_load_time_ms)
-    log.debug("recorded execution times", plt_ms=[h.page_load_time_ms for h in hars])
+    plt_ms = [h.page_load_time_ms for h in hars]
+    log.debug("recorded execution times", plt_ms=plt_ms)
     median_har = hars[len(hars) // 2]
     har_res_list = har_entries_to_resources(median_har)
     har_push_groups = resource_list_to_push_groups(har_res_list)
-    return median_har.page_load_time_ms, har_res_list, har_push_groups
+    return median_har.page_load_time_ms, har_res_list, har_push_groups, plt_ms
