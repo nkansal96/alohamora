@@ -127,14 +127,14 @@ class PushActionSpace(gym.spaces.Tuple):
         if action.is_noop:
             return
         if action.is_push:
-            g, s, p = action.action_id
+            g, _, p = action.action_id
         else:
             g = 0
-            s, p = action.action_id
-            for gi, resources in self.group_id_to_resource_map.items():
+            _, p = action.action_id
+            for group_id, resources in self.group_id_to_resource_map.items():
                 for res in resources.values():
                     if res.order == p:
-                        g = gi
+                        g = group_id
                         break
 
         if g in self.group_id_to_source_id:
