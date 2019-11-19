@@ -4,7 +4,7 @@ import glob
 import json
 
 from blaze.config.environment import EnvironmentConfig
-from blaze.evaluator.cluster import Cluster
+from blaze.evaluator.cluster import AffinityCluster
 from blaze.evaluator.cluster.distance import create_apted_distance_function
 from blaze.logger import logger
 
@@ -24,6 +24,6 @@ def cluster(args):
 
     files = list(map(read_file, glob.iglob(f"{args.folder}/*")))
     distance_func = create_apted_distance_function(24451)
-    c = Cluster(distance_func)
+    c = AffinityCluster(distance_func)
     mapping = c.cluster(files)
     print(json.dumps({f.request_url: i for f, i in zip(files, mapping)}, indent=4))
