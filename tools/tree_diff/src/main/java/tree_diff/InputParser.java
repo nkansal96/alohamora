@@ -29,7 +29,6 @@ public class InputParser implements eu.mihosoft.ext.apted.parser.InputParser<Nod
             int length = inputNode.getInt("length");
             for(int i = 0; i < length; i++) {
                 JSONObject currentObject = inputNode.getJSONObject(Integer.toString(i));
-                System.out.println("got object " + currentObject.getInt("size"));
                 newNodeData = new NodeData(currentObject.getInt("size"), currentObject.getString("type"));
                 indexToNodeMapping.put(i, new Node<NodeData>(newNodeData));
                 if (!parentToChildrenMapping.keySet().contains(i)) {
