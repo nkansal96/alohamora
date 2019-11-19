@@ -14,6 +14,7 @@ from .model import SavedModel
 WINDOW_SIZE = 50
 MAX_ITERATIONS = 250
 MIN_ITERATIONS = 50
+MAX_TIME_SECONDS = 2 * 60 * 60  # 2 hours
 
 
 def stop_condition():
@@ -29,8 +30,12 @@ def stop_condition():
 
     def stopper(trial_id, result):
         nonlocal num_iters, past_rewards
-
         num_iters += 1
+
+        if "time_since_restore" in result and result["time_since_restore"] >= MAX_TIME_SECONDS:
+            log.info("auto stopping", time_seconds=result["time_since_restore"], iters=num_iters)
+            return True
+
         if "episode_reward_max" in result and "episode_reward_min" in result and "episode_reward_mean" in result:
             rewards = (result["episode_reward_min"], result["episode_reward_mean"], result["episode_reward_max"])
             log.debug("recording trial result", trial_id=trial_id, num_iters=num_iters, rewards=rewards)
@@ -46,10 +51,10 @@ def stop_condition():
         if num_iters > MIN_ITERATIONS:
             stdev_min, stdev_mean, stdev_max = tuple(map(stdev, zip(*past_rewards)))
             log.debug("reward stats", stdev_min=stdev_min, stdev_mean=stdev_mean, stdev_max=stdev_max)
-            relative_stdev_based_stop = stdev_mean <= 0.05 * abs(past_rewards[-1][1])
+            relative_stdev_based_stop = stdev_mean <= 0.075 * abs(past_rewards[-1][1])
 
             if num_iters > MAX_ITERATIONS or relative_stdev_based_stop:
-                log.info("auto stopping", iters=num_iters)
+                log.info("auto stopping", time_seconds=result.get("time_since_restore", 0), iters=num_iters)
                 return True
 
         return False

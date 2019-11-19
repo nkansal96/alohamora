@@ -51,6 +51,11 @@ class TestStopCondition:
         assert not sc(0, {})
         assert not sc(0, {"episode_reward_mean": 10})
 
+    def test_stops_after_max_time(self):
+        sc = a3c.stop_condition()
+        assert not sc(0, {"episode_reward_mean": 1, "episode_reward_min": 0, "episode_reward_max": 2})
+        assert sc(0, {"time_since_restore": a3c.MAX_TIME_SECONDS + 1})
+
     def test_call_records_episode_result(self):
         sc = a3c.stop_condition()
         assert not sc(0, {"episode_reward_mean": 1, "episode_reward_min": 0, "episode_reward_max": 2})
