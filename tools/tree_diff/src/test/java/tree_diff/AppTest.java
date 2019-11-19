@@ -9,7 +9,10 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class AppTest {
-    
+    /**
+     * Tests if equal strings have zero edit distance
+     * string is JSON representation of a tree
+     */
     @Test public void equalTreesHaveZeroEditDistance() {
         App classUnderTest = new App();
         InputParser parser = new InputParser();

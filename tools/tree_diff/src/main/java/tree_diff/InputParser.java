@@ -4,6 +4,10 @@ import eu.mihosoft.ext.apted.node.Node;
 import eu.mihosoft.ext.apted.parser.*;
 
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 import org.json.*;
 
 public class InputParser implements eu.mihosoft.ext.apted.parser.InputParser<NodeData> {
@@ -16,21 +20,34 @@ public class InputParser implements eu.mihosoft.ext.apted.parser.InputParser<Nod
      */
     @Override
     public Node<NodeData> fromString(String s) {
-        // TODO: this function parses incorrectly. parent-child relationship is completely ignored amongst other things. needs rewrite.
         JSONObject inputNode = new JSONObject(s);
+        HashMap<Integer, Node<NodeData>> indexToNodeMapping= new HashMap<>();
+        HashMap<Integer, List<Integer>> parentToChildrenMapping = new HashMap<>();
         NodeData newNodeData = null;
         NodeData root = null;
         if (inputNode.keySet().contains("length")) {
             int length = inputNode.getInt("length");
             for(int i = 0; i < length; i++) {
                 JSONObject currentObject = inputNode.getJSONObject(Integer.toString(i));
+                System.out.println("got object " + currentObject.getInt("size"));
                 newNodeData = new NodeData(currentObject.getInt("size"), currentObject.getString("type"));
+                indexToNodeMapping.put(i, new Node<NodeData>(newNodeData));
+                if (!parentToChildrenMapping.keySet().contains(i)) {
+                    parentToChildrenMapping.put(i, new ArrayList<>());
+                }
+                for(Object child : currentObject.getJSONArray("children")) {
+                    parentToChildrenMapping.get(i).add((int)child);
+                }
             }
-            if (root == null) {
-                root = newNodeData;
-            }
-        }
 
-        return new Node<NodeData>(root);
+            for(int key : parentToChildrenMapping.keySet()) {
+                for(int child : parentToChildrenMapping.get(key)) {
+                    indexToNodeMapping.get(key).addChild(indexToNodeMapping.get(child));
+                }
+            }
+            return indexToNodeMapping.get(0);
+        } else {
+            return null;
+        }
     }
 }
