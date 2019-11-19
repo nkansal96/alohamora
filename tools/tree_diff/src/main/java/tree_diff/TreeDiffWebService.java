@@ -39,7 +39,6 @@ public class TreeDiffWebService {
                     System.out.println(t2.getNodeData());
                     APTED<CostModel, NodeData> apted = new APTED<>(new CostModel());
                     float result = apted.computeEditDistance(t1, t2);
-                    System.out.println("edit distance is " + result);
                     jsonOutput.put("status", "success");
                     jsonOutput.put("message", "none");
                     jsonOutput.put("editDistance", result);
