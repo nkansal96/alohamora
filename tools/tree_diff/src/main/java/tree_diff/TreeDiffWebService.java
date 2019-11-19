@@ -1,5 +1,6 @@
 package tree_diff;
 
+import com.sun.source.tree.Tree;
 import eu.mihosoft.ext.apted.distance.APTED;
 import eu.mihosoft.ext.apted.node.Node;
 import org.json.JSONException;
@@ -15,9 +16,21 @@ public class TreeDiffWebService {
         Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1,2],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"2\":{\"children\":[],\"size\":50,\"type\":\"text/css\"},\"length\":3}");
     }
 
+    public String getDiffBetweenStrings(String treeData1, String treeData2) {
+        InputParser parser = new InputParser();
+        Node<NodeData> t1 = parser.fromString(treeData1);
+        Node<NodeData> t2 = parser.fromString(treeData2);
+        APTED<CostModel, NodeData> apted = new APTED<>(new CostModel());
+        float result = apted.computeEditDistance(t1, t2);
+        JSONObject jsonOutput = new JSONObject();
+        jsonOutput.put("status", "success");
+        jsonOutput.put("message", "none");
+        jsonOutput.put("editDistance", result);
+        return jsonOutput.toString();
+    }
+
     public static void runServer(int serverPort) {
-        System.out.println("Running server on port " + serverPort);
-        System.setProperty("org.slf4j.simpleLogger.logFile", "System.out");
+        TreeDiffWebService t = new TreeDiffWebService();
         port(serverPort);
         get("/getTreeDiff", (request, response) -> {
             JSONObject jsonOutput = new JSONObject();
@@ -30,19 +43,8 @@ public class TreeDiffWebService {
                 jsonOutput.put("message", "Error: query must include tree1 and tree2.");
                 return jsonOutput.toString();
             } else {
-                InputParser parser = new InputParser();
-                System.out.println(treeData1);
                 try {
-                    Node<NodeData> t1 = parser.fromString(treeData1);
-                    Node<NodeData> t2 = parser.fromString(treeData2);
-                    System.out.println(t1.getNodeData());
-                    System.out.println(t2.getNodeData());
-                    APTED<CostModel, NodeData> apted = new APTED<>(new CostModel());
-                    float result = apted.computeEditDistance(t1, t2);
-                    jsonOutput.put("status", "success");
-                    jsonOutput.put("message", "none");
-                    jsonOutput.put("editDistance", result);
-                    return jsonOutput.toString();
+                    return t.getDiffBetweenStrings(treeData1, treeData2);
                 } catch (JSONException e) {
                     response.status(406);
                     jsonOutput.put("status", "error");
