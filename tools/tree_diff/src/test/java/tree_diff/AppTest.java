@@ -3,12 +3,20 @@
  */
 package tree_diff;
 
+import eu.mihosoft.ext.apted.distance.APTED;
+import eu.mihosoft.ext.apted.node.Node;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class AppTest {
-    @Test public void testAppHasAGreeting() {
+    
+    @Test public void equalTreesHaveZeroEditDistance() {
         App classUnderTest = new App();
-        assertTrue(true);
+        InputParser parser = new InputParser();
+        Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1,2],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"2\":{\"children\":[],\"size\":50,\"type\":\"text/css\"},\"length\":3}");
+        Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1,2],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"2\":{\"children\":[],\"size\":50,\"type\":\"text/css\"},\"length\":3}");
+        APTED<CostModel, NodeData> apted = new APTED<>(new CostModel());
+        float result = apted.computeEditDistance(t1, t2);
+        assertEquals(result, 0.0, 0);
     }
 }
