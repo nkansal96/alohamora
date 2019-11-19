@@ -14,6 +14,7 @@ from .model import SavedModel
 WINDOW_SIZE = 50
 MAX_ITERATIONS = 250
 MIN_ITERATIONS = 50
+MAX_TIME_SECONDS = 2 * 60 * 60  # 2 hours
 
 
 def stop_condition():
@@ -29,8 +30,11 @@ def stop_condition():
 
     def stopper(trial_id, result):
         nonlocal num_iters, past_rewards
-
         num_iters += 1
+
+        if "time_since_restore" in result and result["time_since_restore"] >= MAX_TIME_SECONDS:
+            return True
+
         if "episode_reward_max" in result and "episode_reward_min" in result and "episode_reward_mean" in result:
             rewards = (result["episode_reward_min"], result["episode_reward_mean"], result["episode_reward_max"])
             log.debug("recording trial result", trial_id=trial_id, num_iters=num_iters, rewards=rewards)
