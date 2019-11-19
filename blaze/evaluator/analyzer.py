@@ -19,7 +19,7 @@ RewardFunction = Callable[[Simulator, ClientEnvironment], Callable[[Policy], flo
 MIN_PAGE_LOAD_TIME = 1000000.0
 BEST_REWARD_COEFF = 200000.0
 REGRESSION_REWARD_COEFF = -5.0
-PROGRESSION_REWARD_COEFF = 10.0
+PROGRESSION_REWARD_COEFF = 5.0
 
 
 def reward_0(simulator: Simulator, client_environment: ClientEnvironment) -> Callable[[Policy], float]:
