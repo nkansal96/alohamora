@@ -24,5 +24,6 @@ matrix:
           - $HOME/.gradle/caches/
           - $HOME/.gradle/wrapper/
       script:
-        - cd tools/tree_diff && gradle shadowJar
-        - cd tools/tree_diff && gradle test
+        - cd tools/tree_diff
+        - gradle shadowJar
+        - gradle test

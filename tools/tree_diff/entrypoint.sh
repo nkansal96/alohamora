@@ -4,7 +4,7 @@
 if [[ $# -eq 0 ]]; then
   /bin/bash
 
-# Otherwise start server on the specified port
+# Otherwise start tree_diff with specified arguments
 else
   java -jar tree_diff.jar $@
 fi
