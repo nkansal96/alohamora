@@ -54,5 +54,7 @@ class AffinityCluster(_Cluster):
     """ Uses Affinity Propagation to perform clustering """
 
     def cluster(self, x: List[T]) -> List[int]:
+        # NB(nkansal96): The distance matrix is negated because smaller values means less similar
+        #  but positive distance would indiate the opposite
         _, mapping = affinity_propagation(-self.get_distance_matrix(x))
         return mapping
