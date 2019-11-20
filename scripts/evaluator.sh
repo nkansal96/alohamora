@@ -11,13 +11,13 @@ function run_eval() {
 	latency="$4"
 	cpu_slowdown="$5"
 	manifest="${TRAIN_DIR}/${exp_name}.manifest"
-	output_file="${OUTPUT_DIR}/${exp_name}_${bandwidth}kbps_${latency}ms_{$cpu_slowdown}x"
+	output_file="${OUTPUT_DIR}/${exp_name}_${bandwidth}kbps_${latency}ms_${cpu_slowdown}x"
 
 	if [[ ! -f "$output_file" ]]; then
 		echo ${checkpoint} ${exp_name}
 		timeout --foreground 600 blaze evaluate \
 			--model A3C \
-			--location "${checkpoint}}" \
+			--location "${checkpoint}" \
 			--manifest "${manifest}" \
 			--reward_func "${REWARD_FUNC}" \
 			--bandwidth "${bandwidth}" \

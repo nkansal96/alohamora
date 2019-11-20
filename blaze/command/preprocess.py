@@ -5,7 +5,7 @@ from blaze.config.config import get_config
 from blaze.config.environment import EnvironmentConfig
 from blaze.logger import logger as log
 from blaze.preprocess.har import har_entries_to_resources
-from blaze.preprocess.record import record_webpage, find_url_stable_set
+from blaze.preprocess.record import find_url_stable_set, get_page_links as _get_page_links, record_webpage
 from blaze.preprocess.resource import resource_list_to_push_groups
 from blaze.preprocess.url import Url
 
@@ -70,3 +70,13 @@ def preprocess(args):
     )
     env_config.save_file(args.output)
     log.info("successfully prepared website for training", output=args.output)
+
+
+@command.argument("website", help="The URL of the website to find page links for")
+@command.argument("--max_depth", help="The maximum depth to search for links", default=3, type=int)
+@command.argument("--record_dir", help="The directory of the recorded webpage", required=True)
+@command.command
+def get_page_links(args):
+    """ Finds pages links on the given page up to the given depth """
+    log.info("getting page links", website=args.website, max_depth=args.max_depth)
+    print(_get_page_links(args.website, max_depth=args.max_depth))
