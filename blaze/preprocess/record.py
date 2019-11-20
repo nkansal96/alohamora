@@ -4,8 +4,8 @@ import functools
 import subprocess
 import tempfile
 from typing import List, Optional, Set
-from xml.etree import ElementTree
 
+from bs4 import BeautifulSoup
 import requests
 
 from blaze.action import Policy
@@ -105,25 +105,29 @@ def get_page_links(url: str, max_depth: int = 1) -> List[str]:
 
     try:
         log.debug("parsing http response", length=len(page_text))
-        root = ElementTree.fromstring(page_text)
-    except ElementTree.ParseError as err:
+        root = BeautifulSoup(page_text, "html.parser")
+    except err:
+        log.verbose(page_text)
         log.warn("failed to parse response", error=repr(err))
         return []
 
-    parsed_links = root.findall(".//a")
+    parsed_links = root.find_all("a")
     log.info("found links", url=url, n_links=len(parsed_links))
 
     links = []
     domain = Url.parse(url).domain
+    scheme = Url.parse(url).scheme
     for link in parsed_links:
         link_url = link.get("href")
-        if not any(link_url.startswith(prefix) for prefix in {"http", "/"}):
+        if link_url.startswith("http"):
+            link_domain = Url.parse(link_url).domain
+            if link_domain != domain:
+                log.debug("ignoring found link (bad domain)", link=link_url)
+                continue
+        elif link_url.startswith("/"):
+            link_url = f"{scheme}://{domain}{link_url}"
+        else:
             log.debug("ignoring found link (bad prefix)", link=link_url)
-            continue
-
-        link_domain = Url.parse(link_url).domain
-        if link_domain != domain:
-            log.debug("ignoring found link (bad domain)", link=link_url)
             continue
 
         links.append(link_url)
