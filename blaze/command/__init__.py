@@ -6,5 +6,5 @@ from . import manifest
 from . import preprocess
 from . import replay
 from . import serve
-from . import test
+from . import push
 from . import train

@@ -4,7 +4,7 @@ export LOG_LEVEL=warn
 export PUSH_POLICY_DIR=/home/nikhil/push-policy
 
 MODEL=A3C
-WORKERS=70
+WORKERS=72
 REWARD_FUNC=1
 MANIFEST_DIR="${PUSH_POLICY_DIR}/training"
 TRAIN_LOG_FILE="${PUSH_POLICY_DIR}/train.log"

@@ -63,7 +63,9 @@ def query(args):
     choices=[1, 2, 4],
     default=1,
 )
-@command.argument("--reward_func", help="Reward function to use", default=1, choices=list(range(get_num_rewards())))
+@command.argument(
+    "--reward_func", help="Reward function to use", default=1, choices=list(range(get_num_rewards())), type=int
+)
 @command.argument("--verbose", "-v", help="Output more information in the JSON output", action="store_true")
 @command.argument(
     "--run_simulator", help="Run the outputted policy through the simulator (implies -v)", action="store_true"
