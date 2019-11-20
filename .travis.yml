@@ -1,12 +1,28 @@
-dist: xenial
-language: python
-python:
-  - 3.6
-  - 3.7
-cache: pip
-install:
-  - pip install -r requirements.txt
-script:
-  - make lint
-  - make check-format
-  - make test-ci
+dist: bionic
+matrix:
+  include:
+    - language: python
+      python:
+        - 3.6
+        - 3.7
+      cache: pip
+      install:
+        - pip install -r requirements.txt
+      script:
+        - make lint
+        - make check-format
+        - make test-ci
+
+    - language: java
+      jdk:
+        - openjdk11
+      before_cache:
+        - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+        - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      cache:
+        directories:
+          - $HOME/.gradle/caches/
+          - $HOME/.gradle/wrapper/
+      script:
+        - cd tools/tree_diff && gradle shadowJar
+        - cd tools/tree_diff && gradle test
