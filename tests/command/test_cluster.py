@@ -15,10 +15,10 @@ class TestClient:
 
     def test_cluster(self, capsys):
         port = 24451
-        distances = [0.1] * 100
+        distances = [0] * 100
         env_config = get_env_config()
         with tempfile.TemporaryDirectory() as tmp_dir:
-            for i in range(10):
+            for i in range(3):
                 env_config._replace(request_url=env_config.request_url + str(i)).save_file(f"{tmp_dir}/{i}.manifest")
 
             with apted_server(port, distances):
@@ -27,3 +27,5 @@ class TestClient:
             resp = json.loads(capsys.readouterr().out)
             assert resp
             assert len(resp) > 0
+            for url, mapping in resp.items():
+                assert mapping == 0
