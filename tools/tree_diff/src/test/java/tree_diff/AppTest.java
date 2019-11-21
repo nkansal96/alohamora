@@ -22,4 +22,116 @@ public class AppTest {
         float result = apted.computeEditDistance(t1, t2);
         assertEquals(result, 0.0, 0);
     }
+
+    /**
+     * left has one extra element. expect 1.
+     * string is JSON representation of a tree
+     */
+    @Test public void leftHasOneExtra() {
+        App classUnderTest = new App();
+        InputParser parser = new InputParser();
+        Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1,2],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"2\":{\"children\":[],\"size\":50,\"type\":\"text/css\"},\"length\":3}");
+        Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
+        APTED<CostModel, NodeData> apted = new APTED<>(new CostModel());
+        float result = apted.computeEditDistance(t1, t2);
+        assertEquals(result, 1.0, 0);
+    }
+
+    /**
+     * right has one extra element. expect 1.
+     * string is JSON representation of a tree
+     */
+    @Test public void rightHasOneExtra() {
+        App classUnderTest = new App();
+        InputParser parser = new InputParser();
+        Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
+        Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1,2],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"2\":{\"children\":[],\"size\":50,\"type\":\"text/css\"},\"length\":3}");
+        APTED<CostModel, NodeData> apted = new APTED<>(new CostModel());
+        float result = apted.computeEditDistance(t1, t2);
+        assertEquals(result, 1.0, 0);
+    }
+
+    /**
+     * right has one renamed element with one change. expect 0.25.
+     * string is JSON representation of a tree
+     */
+    @Test public void rightHasOneElementWithOneChange() {
+        App classUnderTest = new App();
+        InputParser parser = new InputParser();
+        Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
+        Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1],\"size\":90,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
+        APTED<CostModel, NodeData> apted = new APTED<>(new CostModel());
+        float result = apted.computeEditDistance(t1, t2);
+        assertEquals(result, 0.25, 0);
+    }
+
+    /**
+     * left has one renamed element with one change. expect 0.25.
+     * string is JSON representation of a tree
+     */
+    @Test public void leftHasOneElementWithOneChange() {
+        App classUnderTest = new App();
+        InputParser parser = new InputParser();
+        Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1],\"size\":90,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
+        Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
+        APTED<CostModel, NodeData> apted = new APTED<>(new CostModel());
+        float result = apted.computeEditDistance(t1, t2);
+        assertEquals(result, 0.25, 0);
+    }
+
+    /**
+     * right has one renamed element with two changes. expect 0.5.
+     * string is JSON representation of a tree
+     */
+    @Test public void rightHasOneElementWithTwoChanges() {
+        App classUnderTest = new App();
+        InputParser parser = new InputParser();
+        Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
+        Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1],\"size\":90,\"type\":\"image/png\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
+        APTED<CostModel, NodeData> apted = new APTED<>(new CostModel());
+        float result = apted.computeEditDistance(t1, t2);
+        assertEquals(result, 0.5, 0);
+    }
+
+    /**
+     * left has one renamed element with two changes. expect 0.5.
+     * string is JSON representation of a tree
+     */
+    @Test public void leftHasOneElementWithTwoChanges() {
+        App classUnderTest = new App();
+        InputParser parser = new InputParser();
+        Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1],\"size\":90,\"type\":\"image/png\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
+        Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
+        APTED<CostModel, NodeData> apted = new APTED<>(new CostModel());
+        float result = apted.computeEditDistance(t1, t2);
+        assertEquals(result, 0.5, 0);
+    }
+
+    /**
+     * right has two renamed elements with two changes each. expect 1.
+     * string is JSON representation of a tree
+     */
+    @Test public void rightHasTwoElementsWithTwoChanges() {
+        App classUnderTest = new App();
+        InputParser parser = new InputParser();
+        Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
+        Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1],\"size\":90,\"type\":\"image/png\"},\"1\":{\"children\":[],\"size\":70,\"type\":\"text/css\"},\"length\":2}");
+        APTED<CostModel, NodeData> apted = new APTED<>(new CostModel());
+        float result = apted.computeEditDistance(t1, t2);
+        assertEquals(result, 1, 0);
+    }
+
+    /**
+     * left has two renamed elements with two change each. expect 1.
+     * string is JSON representation of a tree
+     */
+    @Test public void leftHasTwoElementsWithTwoChanges() {
+        App classUnderTest = new App();
+        InputParser parser = new InputParser();
+        Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1],\"size\":90,\"type\":\"image/png\"},\"1\":{\"children\":[],\"size\":70,\"type\":\"text/css\"},\"length\":2}");
+        Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
+        APTED<CostModel, NodeData> apted = new APTED<>(new CostModel());
+        float result = apted.computeEditDistance(t1, t2);
+        assertEquals(result, 1, 0);
+    }
 }
