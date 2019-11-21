@@ -29,7 +29,7 @@ def prepend_javascript_snippet(input_string: str):
     """
     soup = BeautifulSoup(input_string, "html.parser")
     critical_catcher = soup.new_tag('script')
-    critical_catcher.string="alert(1)"
+    critical_catcher.string = "alert(1)"
     soup.html.insert(0, critical_catcher)
     return str(soup)
 
