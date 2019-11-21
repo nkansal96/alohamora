@@ -13,6 +13,7 @@ public class CostModel implements eu.mihosoft.ext.apted.costmodel.CostModel<Node
      */
     @Override
     public float del(Node<NodeData> n) {
+        System.out.println("deleting " + n.getNodeData().toString());
         return 1;
     }
 
@@ -24,6 +25,7 @@ public class CostModel implements eu.mihosoft.ext.apted.costmodel.CostModel<Node
      */
     @Override
     public float ins(Node<NodeData> n) {
+        System.out.println("inserting " + n.getNodeData().toString());
         return 1;
     }
 
@@ -38,10 +40,12 @@ public class CostModel implements eu.mihosoft.ext.apted.costmodel.CostModel<Node
     public float ren(Node<NodeData> n1, Node<NodeData> n2) {
         float result = 0f;
         if (n1.getNodeData().getSize() != n2.getNodeData().getSize()) {
+            System.out.println("size varied " + n1.getNodeData().toString() + " and " + n2.getNodeData().toString());
             result += 0.25;
         }
 
         if(!n1.getNodeData().getType().equalsIgnoreCase(n2.getNodeData().getType())) {
+            System.out.println("type varied " + n1.getNodeData().toString() + " and " + n2.getNodeData().toString());
             result += 0.25;
         }
         return result;

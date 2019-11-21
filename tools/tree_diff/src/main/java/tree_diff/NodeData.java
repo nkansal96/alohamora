@@ -3,19 +3,29 @@ package tree_diff;
 public class NodeData {
     private double size;
     private String type;
+    private int id;
 
     public NodeData() {
         this.size = -1;
         this.type = "none";
     }
 
-    public NodeData(double size, String type) {
+    public NodeData(int id, double size, String type) {
+        this.id = id;
         this.size = size;
         this.type = type;
     }
 
+    public int getId() {
+        return id;
+    }
+
     public double getSize() {
         return size;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public void setSize(double size) {
@@ -32,7 +42,7 @@ public class NodeData {
 
     @Override
     public String toString() {
-        return "type: " + this.type + ", size: " + this.size;
+        return "id: " + this.id + ", type: " + this.type + ", size: " + this.size;
     }
 
 }
