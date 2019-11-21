@@ -32,6 +32,7 @@ class TestAgglomerativeCluster:
         for (name, distance_func, points, labels) in TEST_CASES:
             c = AgglomerativeCluster(distance_func)
             m = c.cluster(points)
+
             assert len(m) == len(points), f"{name}: len(m) != len(points)"
             assert len(set(m)) == len(set(labels)), f"{name}: len(set(m)) != len(set(labels))"
             assert is_one_to_one(labels, m), f"{name}: labels do not match"
