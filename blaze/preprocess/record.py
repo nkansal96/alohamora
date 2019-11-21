@@ -2,6 +2,7 @@
 import collections
 import functools
 import subprocess
+import sys
 import tempfile
 from typing import List, Optional, Set
 
@@ -43,7 +44,7 @@ def record_webpage(url: str, save_dir: str, config: Config):
 
         logger.with_namespace("record_webpage").debug("spawning web recorder", url=url, cmd=cmd)
 
-        proc = subprocess.run(cmd)
+        proc = subprocess.run(cmd, stdout=sys.stderr, stderr=sys.stderr)
         proc.check_returncode()
 
 
