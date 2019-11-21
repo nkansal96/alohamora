@@ -59,6 +59,7 @@ def page_load_time(args):
         args.cpu_slowdown or default_client_env.cpu_slowdown,
     )
 
+    plt = 0
     policy = None
     if args.policy:
         log.debug("reading policy", push_policy=args.policy)
@@ -105,7 +106,6 @@ def page_load_time(args):
 
     log.debug("running simulator...")
     sim = Simulator(env_config)
-    sim.print_execution_map()
     sim_plt = sim.simulate_load_time(client_env, policy)
 
     if not args.only_simulator:
