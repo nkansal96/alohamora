@@ -2,7 +2,10 @@ setup:
 	./scripts/setup.sh
 
 http2push:
-	docker build -t http2push -f tools/Dockerfile .
+	docker build -t http2push -f tools/capture_har/Dockerfile .
+
+tree_diff:
+	docker build -t tree_diff -f tools/tree_diff/Dockerfile .
 
 proto:
 	python -m grpc_tools.protoc \

@@ -1,21 +1,4 @@
-# Use go image to compile go code
-# FROM golang:1.13-buster
-
-# # Copy and compile go code
-# WORKDIR /go/src/http2push
-# COPY tools/http2push/go.* tools/http2push/*.go /go/src/http2push/
-# RUN go mod download
-
-# COPY tools/http2push/proto proto
-# COPY tools/http2push/cmd/server cmd/server
-# RUN go build -o /go/bin/server ./cmd/server/*.go
-
-# COPY tools/http2push/cmd/capture_har cmd/capture_har
-# RUN go build -o /go/bin/capture_har ./cmd/capture_har/*.go
-
-# Use ubuntu for runtime
 FROM ubuntu:18.04
-#COPY sources.list /etc/apt/sources.list
 
 ENV MAHIMAHI_DEPS \
   protobuf-compiler \
@@ -101,7 +84,7 @@ COPY tools/capture_har/*.js /opt/capture_har/
 
 RUN echo "{}" > /opt/empty_policy.json
 RUN mkdir -p /var/log/nginx
-COPY tools/entrypoint.sh /opt/entrypoint.sh
+COPY tools/capture_har/entrypoint.sh /opt/entrypoint.sh
 
 USER user
 ENTRYPOINT ["/opt/entrypoint.sh"]

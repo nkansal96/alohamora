@@ -12,6 +12,9 @@ plugins {
 
     // Apply the application plugin to add support for building a CLI application.
     id 'application'
+
+    // Apply shadow jar plugin to build standalone application
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
 }
 
 repositories {
@@ -22,11 +25,10 @@ repositories {
 }
 
 dependencies {
-    compile 'eu.mihosoft.ext.apted:apted:0.1'
-    compile 'org.json:json:20190722'
-    compile 'com.sparkjava:spark-core:2.8.0'
+    implementation 'eu.mihosoft.ext.apted:apted:0.1'
+    implementation 'org.json:json:20190722'
+    implementation 'com.sparkjava:spark-core:2.8.0'
     testCompile group: 'org.slf4j', name: 'slf4j-simple', version: '1.6.1'
-
 
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:28.0-jre'
@@ -40,13 +42,7 @@ application {
     mainClassName = 'tree_diff.App'
 }
 
-jar {
-    manifest {
-        attributes 'Main-Class': 'tree_diff.App'
-    }
- 
-    from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-    }
+shadowJar {
+    minimize()
 }
 

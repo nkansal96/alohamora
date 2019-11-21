@@ -1,6 +1,7 @@
 """ This module defines a DNS Server that returns the specified DNS-IP mapping """
 
 import subprocess
+import sys
 from typing import Dict
 
 
@@ -26,7 +27,7 @@ class DNSServer:
         for host, ip_addr in self.host_ip_map.items():
             args.extend(["-A", f"/{host}/{ip_addr}"])
 
-        self.proc = subprocess.Popen(["dnsmasq", *args])
+        self.proc = subprocess.Popen(["dnsmasq", *args], stdout=sys.stderr, stderr=sys.stderr)
 
         # If wait lasts for more than 1 second, a TimeoutError will be raised, which is okay since it
         # means that dnsmasq is running successfully. If it finishes sooner, it means it crashed and
