@@ -5,8 +5,12 @@ import os
 import subprocess
 import sys
 import tempfile
+import gzip
 from typing import Optional
 from urllib.parse import urlparse
+from io import BytesIO
+
+from bs4 import BeautifulSoup
 
 from blaze.action import Policy
 from blaze.logger import logger
@@ -15,6 +19,19 @@ from blaze.mahimahi.server.dns import DNSServer
 from blaze.mahimahi.server.filestore import FileStore
 from blaze.mahimahi.server.interfaces import Interfaces
 from blaze.mahimahi.server.nginx_config import Config
+
+def prepend_javascript_snippet(input_string: str):
+    """
+    gets in an html representation of the website
+    converts into a beautifulsoup object
+    adds a javascript tag to fetch critical requests
+    converts back into string and returns
+    """
+    soup = BeautifulSoup(input_string, "html.parser")
+    critical_catcher = soup.new_tag('script')
+    critical_catcher.string="alert(1)"
+    soup.html.insert(0, critical_catcher)
+    return str(soup)
 
 
 @contextlib.contextmanager
@@ -84,6 +101,26 @@ def start_server(
                 else:
                     log.warn("skipping", file_name=file.file_name, method=file.method, uri=file.uri, host=file.host)
                     continue
+
+                # if this is the root html file, then we want to insert our snippet here
+                # to extract critical requests.
+                # TODO: do we need to do for all other HTML pages, not just root?
+                if file.headers.get("content-type", None) == "text/html" and file.uri == '/':
+                    uncompressed_body = file.body
+                    gzipped_file = False
+                    # TODO: what if headers are capitalized?
+                    if 'gzip' in file.headers.get('content-encoding'):
+                        gzipped_file = True
+                        uncompressed_body = gzip.GzipFile(fileobj=BytesIO(uncompressed_body)).read()
+                    uncompressed_body = prepend_javascript_snippet(uncompressed_body)
+                    if gzipped_file:
+                        out = BytesIO()
+                        with gzip.GzipFile(fileobj=out, mode="wb") as f:
+                            f.write(uncompressed_body.encode())
+                        file.body = out.getvalue()
+                    else:
+                        file.body = uncompressed_body
+
 
                 # Save the file's body to file
                 file_path = os.path.join(file_dir, file.file_name)
