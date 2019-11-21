@@ -1,9 +1,10 @@
 """ Main clustering logic """
 import abc
+import collections
 from typing import Generic, List
 
 import numpy as np
-from sklearn.cluster import affinity_propagation, dbscan
+from sklearn.cluster import AgglomerativeClustering, dbscan
 
 from .types import T, DistanceFunc
 
@@ -50,11 +51,32 @@ class DBSSCANCluster(_Cluster):
         return mapping
 
 
-class AffinityCluster(_Cluster):
-    """ Uses Affinity Propagation to perform clustering """
+class AgglomerativeCluster(_Cluster):
+    """ Uses Agglomerative Clustering to perform clustering """
 
     def cluster(self, x: List[T]) -> List[int]:
-        # NB(nkansal96): The distance matrix is negated because smaller values means less similar
-        #  but positive distance would indiate the opposite
-        _, mapping = affinity_propagation(-self.get_distance_matrix(x))
-        return mapping
+        distance_matrix = self.get_distance_matrix(x)
+
+        def pairwise_distances(p):
+            return [distance_matrix[p[k]][p[y]] for k in range(len(p)) for y in range(k + 1, len(p))]
+
+        max_num_clusters = len(x) - 1
+        best_labels = [0]
+        best_score = 1000000000
+
+        for c in range(2, max_num_clusters):
+            a = AgglomerativeClustering(n_clusters=c, affinity="precomputed", linkage="average").fit(distance_matrix)
+            labels = a.labels_
+
+            cluster_points = collections.defaultdict(list)
+            for i, label in enumerate(labels.tolist()):
+                cluster_points[label].append(i)
+
+            variances = [np.var(pairwise_distances(points)) for points in cluster_points.items()]
+            score = 0.5 * c + np.var(variances)
+
+            if score < best_score:
+                best_score = score
+                best_labels = labels
+
+        return best_labels
