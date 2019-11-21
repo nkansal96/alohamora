@@ -1,6 +1,7 @@
 """ This module defines Interfaces, which manages the virtual IPs created on the system for some given hosts """
 
 import subprocess
+import sys
 from typing import List
 
 from blaze.logger import logger
@@ -50,7 +51,9 @@ class Interfaces:
         """
         for ip_addr in self.ip_addresses:
             self.log.debug("creating interface", device="lo", address=ip_addr)
-            subprocess.run(["ip", "addr", "add", f"{ip_addr}/32", "dev", "lo"], check=True)
+            subprocess.run(
+                ["ip", "addr", "add", f"{ip_addr}/32", "dev", "lo"], check=True, stdout=sys.stderr, stderr=sys.stderr
+            )
 
     def delete_interfaces(self):
         """
@@ -58,7 +61,7 @@ class Interfaces:
         """
         for ip_addr in self.ip_addresses:
             self.log.debug("deleting interface", device="lo", address=ip_addr)
-            subprocess.run(["ip", "addr", "del", f"{ip_addr}/32", "dev", "lo"])
+            subprocess.run(["ip", "addr", "del", f"{ip_addr}/32", "dev", "lo"], stdout=sys.stderr, stderr=sys.stderr)
 
     def __enter__(self):
         try:
