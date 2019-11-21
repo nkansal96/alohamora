@@ -13,7 +13,7 @@ public class CostModel implements eu.mihosoft.ext.apted.costmodel.CostModel<Node
      */
     @Override
     public float del(Node<NodeData> n) {
-        return 0;
+        return 1;
     }
 
     /**
@@ -24,7 +24,7 @@ public class CostModel implements eu.mihosoft.ext.apted.costmodel.CostModel<Node
      */
     @Override
     public float ins(Node<NodeData> n) {
-        return 0;
+        return 1;
     }
 
     /**
@@ -36,6 +36,14 @@ public class CostModel implements eu.mihosoft.ext.apted.costmodel.CostModel<Node
      */
     @Override
     public float ren(Node<NodeData> n1, Node<NodeData> n2) {
-        return 0;
+        float result = 0f;
+        if (n1.getNodeData().getSize() != n2.getNodeData().getSize()) {
+            result += 0.25;
+        }
+
+        if(!n1.getNodeData().getType().equalsIgnoreCase(n2.getNodeData().getType())) {
+            result += 0.25;
+        }
+        return result;
     }
 }
