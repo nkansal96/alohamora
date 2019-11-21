@@ -7,6 +7,7 @@ import requests
 
 from blaze.config.environment import EnvironmentConfig
 from blaze.evaluator.simulator import Simulator
+from blaze.logger import logger as log
 
 from .types import DistanceFunc
 
@@ -43,6 +44,9 @@ def create_apted_distance_function(port: int) -> DistanceFunc:
         a_tree = json.dumps(get_apted_tree(a))
         b_tree = json.dumps(get_apted_tree(b))
         r = requests.get(f"http://localhost:{port}/getTreeDiff", params={"tree1": a_tree, "tree2": b_tree}).json()
-        return r["editDistance"]
+
+        distance = r["editDistance"]
+        log.with_namespace("apted_distance").debug("got distance", distance=distance, a=a.request_url, b=b.request_url)
+        return distance
 
     return apted_distance

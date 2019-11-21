@@ -11,7 +11,8 @@ from blaze.logger import logger
 from . import command
 
 
-@command.argument("folder", nargs=1, help="The directory containing the manifests to cluster")
+@command.argument("folder", help="The directory containing the manifests to cluster")
+@command.argument("--apted_port", help="Port of APTED server", default=24451, type=int)
 @command.command
 def cluster(args):
     """ Cluster the given folder of pages """
@@ -23,7 +24,7 @@ def cluster(args):
         return EnvironmentConfig.load_file(fpath)
 
     files = list(map(read_file, glob.iglob(f"{args.folder}/*")))
-    distance_func = create_apted_distance_function(24451)
+    distance_func = create_apted_distance_function(args.apted_port)
     c = AffinityCluster(distance_func)
     mapping = c.cluster(files)
-    print(json.dumps({f.request_url: i for f, i in zip(files, mapping)}, indent=4))
+    print(json.dumps({f.request_url: int(i) for f, i in zip(files, mapping)}, indent=4))
