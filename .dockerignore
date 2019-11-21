@@ -15,4 +15,7 @@ __pycache__
 htmlcov
 
 tools/capture_har/node_modules
-tools/Dockerfile
+tools/capture_har/Dockerfile
+
+tools/tree_diff/.gradle
+tools/tree_diff/build
