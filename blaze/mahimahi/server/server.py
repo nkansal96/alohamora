@@ -120,7 +120,9 @@ def start_server(
                 # means that nginx is running successfully. If it finishes sooner, it means it crashed and
                 # we should raise an exception
                 try:
-                    proc = subprocess.Popen(["/usr/local/openresty/nginx/sbin/nginx", "-c", conf_file], stdout=sys.stderr, stderr=sys.stderr)
+                    proc = subprocess.Popen(
+                        ["/usr/local/openresty/nginx/sbin/nginx", "-c", conf_file], stdout=sys.stderr, stderr=sys.stderr
+                    )
                     proc.wait(0.5)
                     raise RuntimeError("nginx exited unsuccessfully")
                 except subprocess.TimeoutExpired:
