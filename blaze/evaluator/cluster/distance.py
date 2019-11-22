@@ -41,10 +41,11 @@ def create_apted_distance_function(port: int) -> DistanceFunc:
         return tree
 
     def apted_distance(a: EnvironmentConfig, b: EnvironmentConfig) -> float:
-        a_tree = json.dumps(get_apted_tree(a))
-        b_tree = json.dumps(get_apted_tree(b))
-        r = requests.get(f"http://localhost:{port}/getTreeDiff", params={"tree1": a_tree, "tree2": b_tree}).json()
-
+        a_tree = get_apted_tree(a)
+        b_tree = get_apted_tree(b)
+        r = requests.post(f"http://localhost:{port}/getTreeDiff", json={"tree1": a_tree, "tree2": b_tree})
+        print("GOT RESPONSE", r.text)
+        r = r.json()
         distance = r["editDistance"]
         log.with_namespace("apted_distance").debug("got distance", distance=distance, a=a.request_url, b=b.request_url)
         return distance

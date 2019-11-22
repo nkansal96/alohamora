@@ -32,6 +32,29 @@ public class TreeDiffWebService {
     public static void runServer(int serverPort) {
         TreeDiffWebService t = new TreeDiffWebService();
         port(serverPort);
+        post("/getTreeDiff" , ((request, response) -> {
+            JSONObject jsonOutput = new JSONObject();
+            try {
+                String incomingRequest = request.body();
+                JSONObject jsonInput = new JSONObject(incomingRequest);
+                JSONObject tree1 = (JSONObject)jsonInput.get("tree1");
+                JSONObject tree2 = (JSONObject)jsonInput.get("tree2");
+                return t.getDiffBetweenStrings(tree1.toString(), tree2.toString());
+            } catch (JSONException e) {
+                response.status(406);
+                jsonOutput.put("status", "error");
+                jsonOutput.put("editDistance", -1);
+                jsonOutput.put("message", "Error: query was malformed. Please ensure it is a valid JSON.");
+                return jsonOutput.toString();
+            } catch (Exception e) {
+                response.status(500);
+                jsonOutput.put("status", "error");
+                jsonOutput.put("editDistance", -1);
+                jsonOutput.put("message", "Error: Unable to parse input query.");
+                return jsonOutput.toString();
+            }
+
+        }));
         get("/getTreeDiff", (request, response) -> {
             JSONObject jsonOutput = new JSONObject();
             String treeData1 = request.queryMap().get("tree1").value();;
