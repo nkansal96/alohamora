@@ -1,35 +1,28 @@
 import contextlib
 import json
 import threading
-from urllib.parse import urlparse, parse_qs
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import socketserver
 
 
 @contextlib.contextmanager
 def apted_server(port, distances):
-    class RequestHandler(SimpleHTTPRequestHandler):
+    class RequestHandler(socketserver.BaseRequestHandler):
         def __init__(self, *args, **kwargs):
             self.i = 0
             super().__init__(*args, **kwargs)
 
-        def do_GET(self):
-            path = urlparse(self.path)
-            q = parse_qs(path.query)
-            assert path.path == "/getTreeDiff"
-            assert "tree1" in q and "tree2" in q
-
-            assert json.loads(q["tree1"][0])
-            assert json.loads(q["tree2"][0])
-
+        def handle(self):
+            self.request.recv(65535)
             d = distances[self.i]
             self.i += 1
 
-            self.send_response(200)
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(bytes(f'{{"editDistance": {d}}}', encoding="utf-8"))
+            rd = f'{{"editDistance": {d}}}'
+            self.request.sendall(
+                f"HTTP/1.1 200 OK\r\nContent-type: application/json\r\nContent-length: {len(rd)}\r\n\r\n{rd}".encode()
+            )
 
-    server = HTTPServer(("", port), RequestHandler)
+    server = socketserver.TCPServer(("", port), RequestHandler)
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.start()
     try:
