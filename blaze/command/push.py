@@ -193,7 +193,7 @@ def _get_results_in_replay_server(
             plt, *_ = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, policy)
             plts.append(plt)
             policies.append(policy)
-        except (subprocess.CalledProcessError, ValueError, FileNotFoundError) as e:
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError, FileNotFoundError) as e:
             log.warn("replay_server failed:", i=len(plts), retries=retries, error=repr(e))
             traceback.print_exc()
             retries += 1
