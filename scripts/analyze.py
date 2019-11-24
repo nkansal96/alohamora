@@ -26,8 +26,14 @@ def get_best_val_pair(a, b):
 
 
 folder = sys.argv[1]
-file_paths = [os.path.join(folder, f) for f in os.listdir(folder)]
-result_files = list(map(json.load, (open(f, "rb") for f in file_paths)))
+file_paths = [os.path.join(folder, f) for f in os.listdir(folder) if f.endswith(".json")]
+result_files = []
+
+for f in file_paths:
+    try:
+        result_files.append(json.load(open(f, "rb")))
+    except json.JSONDecodeError as e:
+        print("failed to decode json for " + f + ", err: " + e, file=sys.stderr)
 
 results_by_env = collections.defaultdict(list)
 for result, path in zip(result_files, file_paths):
