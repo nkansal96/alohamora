@@ -57,13 +57,23 @@ class HarCapturer {
       await client.Page.enable();
       await client.Network.enable();
       await client.Tracing.start();
+      await client.Runtime.enable();
 
+      client.Runtime.consoleAPICalled((loggedObject) => {
+        if (loggedObject.type == 'log' && typeof(loggedObject.args) != "undefined") {
+          for (let index = 0; index < loggedObject.args.length; index++) {
+            const element = loggedObject.args[index];
+            let logOutput = element["value"];
+            if (typeof(logOutput) != "undefined" && logOutput.indexOf("alohomora_output") >= 0) {
+              console.log(`found critical requests ${logOutput}`)
+            }
+          }
+        }
+      });
       await client.Page.navigate({ url: this.url });
       this.navStart = Date.now();
-
       await client.Page.loadEventFired();
       await client.Tracing.end();
-
       return new Promise((resolve, reject) => {
         client.Tracing.tracingComplete(() => {
           client.close();
