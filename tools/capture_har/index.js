@@ -44,7 +44,10 @@ const run = async args => {
     captureCmd.push("mm-link", args.linkTracePath, args.linkTracePath, "--");
   if (args.linkLatencyMs > 0)
     captureCmd.push("mm-delay", args.linkLatencyMs.toString());
-  captureCmd.push("sudo", "npm", "run", "capturer", "--", "-o", args.outputFile, "-s", args.cpuSlowdown, args.url);
+  if (args.extractCriticalRequests)
+    captureCmd.push("sudo", "npm", "run", "capturer", "--", "-o", args.outputFile, "-s", args.cpuSlowdown, args.url, "-x");
+  else 
+    captureCmd.push("sudo", "npm", "run", "capturer", "--", "-o", args.outputFile, "-s", args.cpuSlowdown, args.url);
 
   await utils.run(captureCmd, args.userId, args.groupId);
   console.log("Finished capturing HAR...");
