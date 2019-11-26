@@ -16,7 +16,7 @@ from .har import har_from_json, Har
 
 
 def capture_har_in_replay_server(
-    url: str, config: Config, client_env: ClientEnvironment, policy: Optional[Policy] = None
+    url: str, config: Config, client_env: ClientEnvironment, user_data_dir: str, policy: Optional[Policy] = None
 ) -> Har:
     """
     capture_har spawns a headless chrome instance and connects to its remote debugger
@@ -51,6 +51,7 @@ def capture_har_in_replay_server(
             policy_file_name="policy.json",
             link_trace_file_name="trace_file",
             capture_url=url,
+            user_data_dir=user_data_dir,
         )
 
         # spawn the HAR capturer process

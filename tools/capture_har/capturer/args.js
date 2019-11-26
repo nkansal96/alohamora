@@ -3,4 +3,5 @@ module.exports = [
   { name: 'cpu-slowdown', alias: 's', defaultValue: 1, type: Number },
   { name: 'url', defaultOption: true },
   { name: 'extract-critical-requests', alias: 'x', defaultValue: false, type: Boolean },
+  { name: 'user-data-dir', alias: 'd', defaultValue: '/tmp/', type: String },
 ];

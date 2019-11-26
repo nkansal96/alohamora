@@ -28,6 +28,7 @@ class MahiMahiConfig:
         policy_file_name: Optional[str] = None,
         link_trace_file_name: str = "",
         capture_url: str,
+        user_data_dir: str,
     ) -> List[str]:
         """
         Returns the full command to run that replays the configured folder with the given
@@ -60,6 +61,8 @@ class MahiMahiConfig:
             *(["--cpu-slowdown", str(self.client_environment.cpu_slowdown)] if self.client_environment else []),
             "--url",
             capture_url,
+            "--user-data-dir",
+            user_data_dir,
         ]
 
     def record_shell_with_cmd(self, save_dir: str, cmd: List[str]) -> List[str]:

@@ -51,6 +51,7 @@ def random_push_policy(args):
 @command.argument(
     "--cpu_slowdown", help="CPU Slowdown factor (1 means no slowdown)", choices=[1, 2, 4], type=int, default=1
 )
+@command.argument("--user_data_dir", help="The Chrome user data directory contains cached files (in case of using warm cache)", type=str, default=None)
 @command.command
 def test_push(args):
     """
@@ -68,6 +69,7 @@ def test_push(args):
         latency=args.latency,
         cpu_slowdown=args.cpu_slowdown,
         only_simulator=args.only_simulator,
+        user_data_dir=args.user_data_dir,
     )
     return 0
 
@@ -134,6 +136,7 @@ def _test_push(
     latency: Optional[int],
     cpu_slowdown: Optional[int],
     only_simulator: Optional[bool],
+    user_data_dir: Optional[bool],
 ):
     env_config = EnvironmentConfig.load_file(manifest)
     default_client_env = get_default_client_environment()
@@ -148,7 +151,7 @@ def _test_push(
     if not only_simulator:
         config = get_config(env_config)
         plt, push_plts, policies = _get_results_in_replay_server(
-            config, client_env, iterations, max_retries, policy_generator
+            config, client_env, iterations, max_retries, policy_generator, user_data_dir
         )
         data["replay_server"] = {
             "without_policy": plt,
@@ -175,9 +178,10 @@ def _get_results_in_replay_server(
     iterations: int,
     max_retries: int,
     policy_generator: Callable[[List[PushGroup]], Policy],
+    user_data_dir: str,
 ) -> Tuple[float, List[float], List[Policy]]:
     log.debug("capturing median PLT in mahimahi with given environment")
-    orig_plt, *_ = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config)
+    orig_plt, *_ = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, user_data_dir)
 
     plts = []
     policies = []
@@ -190,7 +194,7 @@ def _get_results_in_replay_server(
         log.debug(json.dumps(policy.as_dict, indent=4))
 
         try:
-            plt, *_ = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, policy)
+            plt, *_ = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, user_data_dir, policy)
             plts.append(plt)
             policies.append(policy)
         except (subprocess.CalledProcessError, ValueError, FileNotFoundError) as e:

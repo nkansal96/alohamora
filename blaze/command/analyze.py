@@ -26,6 +26,7 @@ from . import command
 @command.argument("--latency", help="The round trip latency to use (ms)", type=int, default=None)
 @command.argument("--bandwidth", help="The link bandwidth to use (kbps)", type=int, default=None)
 @command.argument("--cpu_slowdown", help="The CPU slowdown factor to use (1, 2, or 4)", type=int, default=None)
+@command.argument("--user_data_dir", help="The Chrome user data directory contains cached files (in case of using warm cache)", type=str, default=None)
 @command.command
 def page_load_time(args):
     """
@@ -73,7 +74,7 @@ def page_load_time(args):
         log.info("calculating page load time", manifest=args.from_manifest, url=env_config.request_url)
         if not args.only_simulator:
             log.debug("using pre-recorded webpage", record_dir=config.env_config.replay_dir)
-            plt, *_ = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, policy)
+            plt, *_ = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, args.user_data_dir, policy)
 
     else:
         log.info("calculating page load time", url=args.url)
@@ -88,7 +89,7 @@ def page_load_time(args):
             record_webpage(args.url, record_dir, config)
             log.debug("capturing median PLT in mahimahi with given environment")
             plt, res_list, push_groups, _ = get_page_load_time_in_replay_server(
-                config.env_config.request_url, client_env, config, policy
+                config.env_config.request_url, client_env, config, args.user_data_dir, policy
             )
 
             # If the user passed in a custom environment, we want to use the PLT from that environment
@@ -98,7 +99,7 @@ def page_load_time(args):
             if args.bandwidth or args.latency or args.cpu_slowdown:
                 log.debug("capturing median HAR in mahimahi for simulator in default environment")
                 _, res_list, push_groups, _ = get_page_load_time_in_replay_server(
-                    config.env_config.request_url, default_client_env, config
+                    config.env_config.request_url, default_client_env, config, args.user_data_dir
                 )
             env_config = EnvironmentConfig(
                 replay_dir=record_dir, request_url=args.url, push_groups=push_groups, har_resources=res_list
