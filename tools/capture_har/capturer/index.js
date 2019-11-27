@@ -5,7 +5,7 @@ const chromeRemoteDebugger = require('chrome-remote-interface');
 
 const { arrayMin, arraySum, asyncWait } = require('../utils');
 
-const chromeFlags = [
+let chromeFlags = [
   "--allow-insecure-localhost",
   "--disable-background-networking",
   "--disable-default-apps",
@@ -57,19 +57,27 @@ class HarCapturer {
       await client.Page.enable();
       await client.Network.enable();
       await client.Tracing.start();
-      await client.Runtime.enable();
-
-      client.Runtime.consoleAPICalled((loggedObject) => {
-        if (loggedObject.type == 'log' && typeof(loggedObject.args) != "undefined") {
-          for (let index = 0; index < loggedObject.args.length; index++) {
-            const element = loggedObject.args[index];
-            let logOutput = element["value"];
-            if (typeof(logOutput) != "undefined" && logOutput.indexOf("alohomora_output") >= 0) {
-              console.log(`found critical requests ${logOutput}`)
+      
+      if(this.options.extractCriticalRequests) {
+        console.log("extracting critical requests")
+        await client.Runtime.enable();
+        client.Runtime.consoleAPICalled((loggedObject) => {
+          if (loggedObject.type == 'log' && typeof(loggedObject.args) != "undefined") {
+            for (let index = 0; index < loggedObject.args.length; index++) {
+              const element = loggedObject.args[index];
+              let logOutput = element["value"];
+              if (typeof(logOutput) != "undefined" && logOutput.indexOf("alohomora_output") >= 0) {
+                console.log(`found critical requests ${logOutput}`)
+              }
             }
           }
-        }
-      });
+        });
+      } else {
+        console.log(this.options)
+        console.log("not extracting critical requests")
+      }
+
+      
       await client.Page.navigate({ url: this.url });
       this.navStart = Date.now();
       await client.Page.loadEventFired();
@@ -224,9 +232,16 @@ class HarCapturer {
   }
 }
 
-const captureHar = async (url, slowdown) => {
+const captureHar = async (url, slowdown, extractCriticalRequests, userDataDir) => {
   let chrome;
   try {
+    if(typeof(userDataDir) != "undefined" && userDataDir != '') {
+      console.log(`setting chrome user-data-dir to ${userDataDir}`)
+      chromeFlags.push("--user-data-dir")
+      chromeFlags.push(userDataDir)
+    } else {
+      console.log(`not setting chrome user-data-dir`)
+    }
     chrome = await chromeLauncher.launch({ chromeFlags });
     await asyncWait(2000);
 
@@ -235,6 +250,7 @@ const captureHar = async (url, slowdown) => {
       port: chrome.port,
       url,
       slowdown,
+      extractCriticalRequests,
     });
   
     const res = await capturer.captureHar();
@@ -246,12 +262,13 @@ const captureHar = async (url, slowdown) => {
   }
 };
 
-module.exports = async (url, slowdown, outputFile) => {
-  const res = await captureHar(url, slowdown);
+module.exports = async (url, slowdown, outputFile, extractCriticalRequests, userDataDir) => {
+  const res = await captureHar(url, slowdown, extractCriticalRequests, userDataDir);
   const json = JSON.stringify(res);
   if (outputFile) {
     fs.writeFileSync(outputFile, json);
   } else {
-    process.stdout.write(json)
+    // process.stdout.write(json)
+    console.log(`finished`)
   }
 }
