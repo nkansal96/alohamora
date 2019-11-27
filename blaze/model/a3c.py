@@ -70,6 +70,7 @@ COMMON_CONFIG = {
     "collect_metrics_timeout": 1200,
     "num_workers": 2,
     "num_gpus": 0,
+    "model": {"use_lstm": True, "lstm_use_prev_action_reward": True},
 }
 
 
@@ -91,12 +92,7 @@ def train(train_config: TrainConfig, config: Config):
                 "checkpoint_at_end": True,
                 "checkpoint_freq": 10,
                 "max_failures": 3,
-                "config": {
-                    **COMMON_CONFIG,
-                    "num_workers": train_config.num_workers,
-                    "env_config": config,
-                    # "model": {"custom_action_dist": action_distribution_creator},
-                },
+                "config": {**COMMON_CONFIG, "num_workers": train_config.num_workers, "env_config": config},
             }
         },
         resume=train_config.resume,

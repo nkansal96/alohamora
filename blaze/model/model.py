@@ -4,6 +4,7 @@ from typing import NamedTuple, Optional, Type
 import gym
 from ray.rllib.agents import Agent
 from ray.rllib.evaluation.episode import _flatten_action
+from ray.rllib.policy.sample_batch import DEFAULT_POLICY_ID
 
 from blaze.action import Policy
 from blaze.config.config import Config
@@ -34,9 +35,17 @@ class ModelInstance:
         env = Environment(self.config)
         # keep querying the agent until the policy is complete
         obs, action, reward, completed = env.observation, None, None, False
+        # initialize LSTM state if applicable
+        policy_map = self.agent.workers.local_worker().policy_map if hasattr(self.agent, "workers") else {}
+        state = policy_map.get(DEFAULT_POLICY_ID, [])
+        use_lstm = len(state) > 0
+
         while not completed:
             # query the agent for an action
-            action = self.agent.compute_action(obs, prev_action=action, prev_reward=reward)
+            if use_lstm:
+                action, state, _ = self.agent.compute_action(obs, state=state, prev_action=action, prev_reward=reward)
+            else:
+                action = self.agent.compute_action(obs, prev_action=action, prev_reward=reward)
             action = _flatten_action(action)
             # deflate and apply the action
             obs, reward, completed, _ = env.step(action)
