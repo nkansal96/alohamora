@@ -4,4 +4,5 @@ module.exports = [
   { name: 'url', defaultOption: true },
   { name: 'extract-critical-requests', alias: 'x', defaultValue: false, type: Boolean },
   { name: 'user-data-dir', alias: 'd', defaultValue: '', type: String },
+  { name: 'speed-index', defaultValue: true, type: Boolean },
 ];
