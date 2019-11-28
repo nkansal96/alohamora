@@ -15,7 +15,7 @@ from blaze.config import Config
 from blaze.config.client import ClientEnvironment, get_default_client_environment
 from blaze.config.environment import Resource
 from blaze.chrome.config import get_chrome_command, get_chrome_flags
-from blaze.chrome.devtools import capture_har_in_replay_server
+from blaze.chrome.devtools import capture_har_in_replay_server, capture_si_in_replay_server
 from blaze.logger import logger
 from blaze.mahimahi import MahiMahiConfig
 from blaze.util.seq import ordered_uniq
@@ -148,8 +148,8 @@ def get_page_load_time_in_replay_server(
     hars = []
     for i in range(EXECUTION_CAPTURE_RUNS):
         log.debug("recording page execution in Mahimahi", run=(i + 1), total_runs=EXECUTION_CAPTURE_RUNS)
-        har = capture_har_in_replay_server(request_url, config, client_env, user_data_dir, policy)
-        hars.append(har)
+        si = capture_si_in_replay_server(request_url, config, client_env, user_data_dir, policy)
+        si.append(si)
         log.debug("captured page execution", page_load_time=har.page_load_time_ms)
 
     hars.sort(key=lambda h: h.page_load_time_ms)
@@ -159,3 +159,27 @@ def get_page_load_time_in_replay_server(
     har_res_list = har_entries_to_resources(median_har)
     har_push_groups = resource_list_to_push_groups(har_res_list)
     return median_har.page_load_time_ms, har_res_list, har_push_groups, plt_ms
+
+def get_speed_index_in_replay_server(
+    request_url: str, client_env: ClientEnvironment, config: Config, user_data_dir: str, policy: Optional[Policy] = None
+):
+    """
+    Return the page speed index
+    """
+    def get_speed_index_from_json(speed_index):
+        #x.runs[0].timings
+        print(speed_index)
+        print("returning 1234 instead of that ==================")
+        return 1234
+    log = logger.with_namespace("get_speed_index_in_replay_server")
+    log.debug("using client environment", **client_env._asdict())
+    speed_indices = []
+    for i in range(EXECUTION_CAPTURE_RUNS):
+        log.debug("recording page execution in Mahimahi", run=(i + 1), total_runs=EXECUTION_CAPTURE_RUNS)
+        speed_index = get_speed_index_from_json(capture_si_in_replay_server(request_url, config, client_env, user_data_dir, policy))
+        speed_indices.append(speed_index)
+        log.debug("captured page execution", speed_index=speed_index)
+
+    speed_indices.sort()
+    median_speedindex = speed_indices[len(speed_indices) // 2]
+    return median_speedindex
