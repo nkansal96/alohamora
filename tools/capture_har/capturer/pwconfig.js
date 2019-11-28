@@ -2,9 +2,9 @@ for (let j = 0; j < process.argv.length; j++) {
     console.log(j + ' -> ' + (process.argv[j]));
 }
 
-if (process.argv.length < 5) {
-    console.log('Usage: yarn pwmetrics URL --config=pwmetrics_config.js out_path user_data_dir');
-    console.log('out_path and/or user_data_dir is missing from arguments!');
+if (process.argv.length < 3) {
+    console.log('Usage: pwmetrics URL --config=pwmetrics_config.js');
+    console.log('URL and/or config is missing from arguments.');
     process.exit(1);
 }
 let url = process.argv[2];
@@ -29,7 +29,8 @@ let flags = '--allow-insecure-localhost' +
     ' --no-first-run' +
     ' --no-sandbox' +
     ' --disable-gpu' +
-    ' --user-data-dir=' + userDataDir;
+    typeof(userDataDir) == 'undefined' || userDataDir.length < 1 ? '' : ' --user-data-dir=' + userDataDir;
+    
 
 module.exports = {
     url: url,
