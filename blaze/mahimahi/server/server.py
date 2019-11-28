@@ -128,13 +128,11 @@ def start_server(
                     log.warn("skipping", file_name=file.file_name, method=file.method, uri=file.uri, host=file.host)
                     continue
 
-                # if this is the root html file, then we want to insert our snippet here
+                # if this is an html file, then we want to insert our snippet here
                 # to extract critical requests.
-                # TODO: do we need to do for all other HTML pages, not just root?
-                if file.headers.get("content-type", None) == "text/html" and file.uri == '/':
+                if file.headers.get("content-type", "") == "text/html":
                     uncompressed_body = file.body
                     gzipped_file = False
-                    # TODO: what if headers are capitalized?
                     if 'gzip' in file.headers.get('content-encoding'):
                         gzipped_file = True
                         uncompressed_body = gzip.GzipFile(fileobj=BytesIO(uncompressed_body)).read()
