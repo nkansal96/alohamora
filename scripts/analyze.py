@@ -12,14 +12,14 @@ def pct_diff(a, b):
 
 
 def get_best_pct_diff(a, b):
-    return round(100 * min(filter(lambda d: d > -0.7, (pct_diff(bi, ai) for (ai, bi) in zip(a, b)))), 3)
+    return round(100 * min(filter(lambda d: d > -0.8, (pct_diff(bi, ai) for (ai, bi) in zip(a, b)))), 3)
 
 
 def get_best_val_pair(a, b):
     m, n = 0, 100
     for (ai, bi) in zip(a, b):
         new_n = pct_diff(bi, ai)
-        if new_n < n and new_n > -0.7:
+        if -0.8 < new_n < n:
             m = (ai, bi)
             n = new_n
     return m
