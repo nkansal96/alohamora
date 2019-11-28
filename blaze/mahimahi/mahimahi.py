@@ -28,7 +28,7 @@ class MahiMahiConfig:
         policy_file_name: Optional[str] = None,
         link_trace_file_name: str = "",
         capture_url: str,
-        user_data_dir: str,
+        user_data_dir: Optional[str] = None,
     ) -> List[str]:
         """
         Returns the full command to run that replays the configured folder with the given
@@ -59,9 +59,9 @@ class MahiMahiConfig:
             *(["--link-trace-path", f"/mnt/share/{link_trace_file_name}"] if link_trace_file_name else []),
             *(["--link-latency-ms", str(self.client_environment.latency // 2)] if self.client_environment else []),
             *(["--cpu-slowdown", str(self.client_environment.cpu_slowdown)] if self.client_environment else []),
+            *(["--user-data-dir", user_data_dir] if user_data_dir else []),
             "--url",
             capture_url,
-            "--user-data-dir",
             user_data_dir,
         ]
 

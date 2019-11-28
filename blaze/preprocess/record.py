@@ -137,7 +137,7 @@ def get_page_links(url: str, max_depth: int = 1) -> List[str]:
 
 
 def get_page_load_time_in_replay_server(
-    request_url: str, client_env: ClientEnvironment, config: Config, user_data_dir: str, policy: Optional[Policy] = None
+    request_url: str, client_env: ClientEnvironment, config: Config, user_data_dir: Optional[str] = None, policy: Optional[Policy] = None
 ):
     """
     Return the page load time, the HAR resources captured, and the push groups detected

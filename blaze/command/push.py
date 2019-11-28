@@ -136,7 +136,7 @@ def _test_push(
     latency: Optional[int],
     cpu_slowdown: Optional[int],
     only_simulator: Optional[bool],
-    user_data_dir: Optional[bool],
+    user_data_dir: Optional[str],
 ):
     env_config = EnvironmentConfig.load_file(manifest)
     default_client_env = get_default_client_environment()
@@ -178,7 +178,7 @@ def _get_results_in_replay_server(
     iterations: int,
     max_retries: int,
     policy_generator: Callable[[List[PushGroup]], Policy],
-    user_data_dir: str,
+    user_data_dir: Optional[str] = None,
 ) -> Tuple[float, List[float], List[Policy]]:
     log.debug("capturing median PLT in mahimahi with given environment")
     orig_plt, *_ = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, user_data_dir)
