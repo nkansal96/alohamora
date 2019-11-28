@@ -268,7 +268,6 @@ module.exports = async (url, slowdown, outputFile, extractCriticalRequests, user
   if (outputFile) {
     fs.writeFileSync(outputFile, json);
   } else {
-    // process.stdout.write(json)
-    console.log(`finished`)
+    process.stdout.write(json)
   }
 }
