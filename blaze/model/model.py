@@ -36,8 +36,8 @@ class ModelInstance:
         # keep querying the agent until the policy is complete
         obs, action, reward, completed = env.observation, env.action_space.sample(), None, False
         # initialize LSTM state if applicable
-        policy_map = self.agent.workers.local_worker().policy_map if hasattr(self.agent, "workers") else {}
-        state = policy_map[DEFAULT_POLICY_ID].get_initial_state()
+        policy_map = self.agent.workers.local_worker().policy_map if hasattr(self.agent, "workers") else None
+        state = policy_map[DEFAULT_POLICY_ID].get_initial_state() if policy_map else []
         use_lstm = len(state) > 0
 
         while not completed:
