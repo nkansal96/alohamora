@@ -3,32 +3,25 @@ const fs = require("fs")
 const utils = require('../../capture_har/utils')
 const pwmetrics = require('pwmetrics')
 
-const speedIndex = async (url, userDataDir, currentRunId) => {
+const speedIndex = async (url, userDataDir, outputFile) => {
     const speedIndexCmd = [];
-    const tempOutPath = 'output-'+currentRunId+".json"; // pwmetrics will output to here. we will read it and send back if user did not want a file. 
-    if (userDataDir == '') {
-      userDataDir = '/mnt/share/speed_index/chrome-user-data-'+currentRunId;
-    }
-    speedIndexCmd.push("./node_modules/.bin/pwmetrics", url, "--config=capturer/pwconfig.js", tempOutPath, userDataDir);
+    // TODO: if outputfile is empty, save to a tmp file ('output-'+currentRunId+".json")
+    speedIndexCmd.push("./node_modules/.bin/pwmetrics", url, "--config=capturer/pwconfig.js", outputFile, userDataDir);
     console.log(`going to get speed index for ${url} and userDataDir being ${userDataDir}`)
     await utils.run(speedIndexCmd);
     console.log(`got speed index for ${url} and userDataDir being ${userDataDir}`)
-    return 1000;
+    // TODO: if saved to a tmp file ('output-'+currentRunId+".json"), read and return the JSON string
+    return 1234;
 }
 
 module.exports = async (url, outputFile, userDataDir) => {
     const currentRunId = "" + new Date().getTime();
-    const res = await speedIndex(url, userDataDir, currentRunId);
+    const res = await speedIndex(url, userDataDir, outputFile);
     const json = JSON.stringify(res);
     if (outputFile) {
-      fs.rename('output-'+currentRunId+".json", outputFile, (err) => {
-        console.log(`unable to get pwmetrics json file with error ${err}`)
-      });
+     console.log(`output saved to ${outputFile}`)
     } else {
-      fs.readFile('output-'+currentRunId+".json", "utf8",(err, data) => {
-        if (err) throw err;
-        console.log(data);
-      });
+      console.log(json);
     }
   }
   
