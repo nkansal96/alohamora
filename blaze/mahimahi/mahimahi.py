@@ -29,6 +29,7 @@ class MahiMahiConfig:
         link_trace_file_name: str = "",
         capture_url: str,
         user_data_dir: Optional[str] = None,
+        extract_critical_requests: bool,
     ) -> List[str]:
         """
         Returns the full command to run that replays the configured folder with the given
@@ -63,6 +64,7 @@ class MahiMahiConfig:
             "--url",
             capture_url,
             user_data_dir,
+            "--extract-critical-requests" if extract_critical_requests else "",
         ]
 
     def si_capture_cmd(
