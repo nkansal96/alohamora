@@ -29,7 +29,7 @@ class MahiMahiConfig:
         link_trace_file_name: str = "",
         capture_url: str,
         user_data_dir: Optional[str] = None,
-        extract_critical_requests: bool,
+        extract_critical_requests: bool = False,
     ) -> List[str]:
         """
         Returns the full command to run that replays the configured folder with the given
@@ -61,10 +61,10 @@ class MahiMahiConfig:
             *(["--link-latency-ms", str(self.client_environment.latency // 2)] if self.client_environment else []),
             *(["--cpu-slowdown", str(self.client_environment.cpu_slowdown)] if self.client_environment else []),
             *(["--user-data-dir", user_data_dir] if user_data_dir else []),
+            *(["--extract-critical-requests"] if extract_critical_requests else []),
             "--url",
             capture_url,
             user_data_dir,
-            "--extract-critical-requests" if extract_critical_requests else "",
         ]
 
     def si_capture_cmd(

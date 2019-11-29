@@ -102,6 +102,7 @@ class HarCapturer {
   logRequest({ requestId, request, initiator}) {
     this.resources[requestId] = {
       started_date_time: (new Date()).toISOString(),
+      critical: false,
       request: {
         url: request.url,
         method: request.method,
@@ -222,7 +223,15 @@ class HarCapturer {
     );
     const filtered_res = Object.values(this.resources)
       .filter(r => this.timings[r.request.url].initiated_at <= first_load_time_ms + pageLoadTimeMs)
-      .filter(r => this.options.extractCriticalRequests ? this.critical_request_urls.includes(r.request.url) : true); // only return those that were critical
+      .map (r => {
+        if (this.options.extractCriticalRequests == false) return r;
+        else {
+          if (this.critical_request_urls.includes(r.request.url)) {
+            r.critical = true;
+          }
+          return r;
+        }
+      })
 
     return {
       log: {
