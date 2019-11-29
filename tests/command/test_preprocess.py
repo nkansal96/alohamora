@@ -50,8 +50,10 @@ class TestPreprocess:
         client_env = get_default_client_environment()
         config = get_config(EnvironmentConfig(replay_dir=output_dir, request_url="https://cs.ucla.edu"))
 
-        mock_capture_har_in_mahimahi.assert_called_once()
-        mock_capture_har_in_mahimahi.assert_called_with("https://cs.ucla.edu", config, client_env)
+        assert mock_capture_har_in_mahimahi.call_count == 2
+        mock_capture_har_in_mahimahi.assert_called_with(
+            "https://cs.ucla.edu", config, client_env, extract_critical_requests=True
+        )
 
     @mock.patch("blaze.command.preprocess.capture_har_in_replay_server")
     def test_runs_successfully_with_train_domain_suffix(self, mock_capture_har_in_mahimahi):
@@ -84,5 +86,7 @@ class TestPreprocess:
         client_env = get_default_client_environment()
         config = get_config(EnvironmentConfig(replay_dir=output_dir, request_url="https://cs.ucla.edu"))
 
-        mock_capture_har_in_mahimahi.assert_called_once()
-        mock_capture_har_in_mahimahi.assert_called_with("https://cs.ucla.edu", config, client_env)
+        assert mock_capture_har_in_mahimahi.call_count == 2
+        mock_capture_har_in_mahimahi.assert_called_with(
+            "https://cs.ucla.edu", config, client_env, extract_critical_requests=True
+        )
