@@ -21,13 +21,18 @@ const argumentsDefinition = [
 const run = async args => {
   // create and start the server
   let exitCode = -1;
-  const replayArgs = [
+  let replayArgs = [
     "replay",
     "--cert_path", args.certFile,
     "--key_path", args.keyFile,
     "--policy", args.policyPath,
     args.fileStorePath,
   ];
+
+  if (args.extractCriticalRequests) {
+    replayArgs.push("--extract_critical_requests")
+  }
+
   const server = child_process.spawn("blaze", replayArgs, { stdio: 'inherit' });
   server.on('exit', code => { exitCode = code });
   console.log("starting replay server with args", replayArgs);
