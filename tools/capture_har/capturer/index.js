@@ -24,11 +24,12 @@ class HarCapturer {
     this.host = options.host;
     this.port = options.port;
     this.options = options;
-
+    
     this.navStart = 0;
     this.resources = {};
     this.timings = {};
     this.events = [];
+    this.critical_request_urls = [];
   }
 
   async captureHar() {
@@ -59,7 +60,6 @@ class HarCapturer {
       await client.Tracing.start();
       
       if(this.options.extractCriticalRequests) {
-        console.log("extracting critical requests")
         await client.Runtime.enable();
         client.Runtime.consoleAPICalled((loggedObject) => {
           if (loggedObject.type == 'log' && typeof(loggedObject.args) != "undefined") {
@@ -67,15 +67,18 @@ class HarCapturer {
               const element = loggedObject.args[index];
               let logOutput = element["value"];
               if (typeof(logOutput) != "undefined" && logOutput.indexOf("alohomora_output") >= 0) {
-                console.log(`found critical requests ${logOutput}`)
+                try {
+                  logOutput = JSON.parse(logOutput);
+                  logOutput["alohomora_output"].forEach(e => this.critical_request_urls.push(e));  
+                } catch (error) {
+                  console.log(`critical req not found.`);
+                }
+                
               }
             }
           }
         });
-      } else {
-        console.log(this.options)
-        console.log("not extracting critical requests")
-      }
+      } 
 
       
       await client.Page.navigate({ url: this.url });
@@ -218,7 +221,8 @@ class HarCapturer {
         .filter(t => t > 0)
     );
     const filtered_res = Object.values(this.resources)
-      .filter(r => this.timings[r.request.url].initiated_at <= first_load_time_ms + pageLoadTimeMs);
+      .filter(r => this.timings[r.request.url].initiated_at <= first_load_time_ms + pageLoadTimeMs)
+      .filter(r => this.options.extractCriticalRequests ? this.critical_request_urls.includes(r.request.url) : true); // only return those that were critical
 
     return {
       log: {
@@ -236,11 +240,8 @@ const captureHar = async (url, slowdown, extractCriticalRequests, userDataDir) =
   let chrome;
   try {
     if(typeof(userDataDir) != "undefined" && userDataDir != '') {
-      console.log(`setting chrome user-data-dir to ${userDataDir}`)
       chromeFlags.push("--user-data-dir")
       chromeFlags.push(userDataDir)
-    } else {
-      console.log(`not setting chrome user-data-dir`)
     }
     chrome = await chromeLauncher.launch({ chromeFlags });
     await asyncWait(2000);
