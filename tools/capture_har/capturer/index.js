@@ -252,8 +252,7 @@ const captureHar = async (url, slowdown, extractCriticalRequests, userDataDir) =
   let chrome;
   try {
     if(typeof(userDataDir) != "undefined" && userDataDir != '') {
-      chromeFlags.push("--user-data-dir")
-      chromeFlags.push(userDataDir)
+      chromeFlags.push(`--user-data-dir=${userDataDir}`)
     }
     chrome = await chromeLauncher.launch({ chromeFlags });
     await asyncWait(2000);
