@@ -56,7 +56,7 @@ def capture_har_in_replay_server(
 
         # spawn the HAR capturer process
         log.debug("spawning har capturer", url=url, cmd=cmd)
-        har_capture_proc = subprocess.run(cmd, stdout=sys.stderr, stderr=sys.stderr)
+        har_capture_proc = subprocess.run(cmd, stdout=sys.stderr, stderr=sys.stderr, timeout=300)
         har_capture_proc.check_returncode()
 
         with open(output_file, "r") as f:
