@@ -62,7 +62,7 @@ if(isAnyPartOfElementInViewport(iframeElement)){var innerDoc=(iframeElement.cont
 
 @contextlib.contextmanager
 def start_server(
-    replay_dir: str, cert_path: Optional[str] = None, key_path: Optional[str] = None, policy: Optional[Policy] = None
+    replay_dir: str, cert_path: Optional[str] = None, key_path: Optional[str] = None, policy: Optional[Policy] = None, extract_critical_requests: Optional[bool] = False
 ):
     """
     Reads the given replay directory and sets up the NGINX server to replay it. This function also
@@ -128,22 +128,27 @@ def start_server(
                     log.warn("skipping", file_name=file.file_name, method=file.method, uri=file.uri, host=file.host)
                     continue
 
-                # if this is an html file, then we want to insert our snippet here
-                # to extract critical requests.
-                if file.headers.get("content-type", "") == "text/html":
-                    uncompressed_body = file.body
-                    gzipped_file = False
-                    if 'gzip' in file.headers.get('content-encoding'):
-                        gzipped_file = True
-                        uncompressed_body = gzip.GzipFile(fileobj=BytesIO(uncompressed_body)).read()
-                    uncompressed_body = prepend_javascript_snippet(uncompressed_body)
-                    if gzipped_file:
-                        out = BytesIO()
-                        with gzip.GzipFile(fileobj=out, mode="wb") as f:
-                            f.write(uncompressed_body.encode())
-                        file.body = out.getvalue()
-                    else:
-                        file.body = uncompressed_body
+
+                if extract_critical_requests:
+                    # if this is an html file, then we want to insert our snippet here
+                    # to extract critical requests.
+                    print("injecting critical request extractor")
+                    if file.headers.get("content-type", "") == "text/html":
+                        uncompressed_body = file.body
+                        gzipped_file = False
+                        if 'gzip' in file.headers.get('content-encoding'):
+                            gzipped_file = True
+                            uncompressed_body = gzip.GzipFile(fileobj=BytesIO(uncompressed_body)).read()
+                        uncompressed_body = prepend_javascript_snippet(uncompressed_body)
+                        if gzipped_file:
+                            out = BytesIO()
+                            with gzip.GzipFile(fileobj=out, mode="wb") as f:
+                                f.write(uncompressed_body.encode())
+                            file.body = out.getvalue()
+                        else:
+                            file.body = uncompressed_body
+                else:
+                    print("not injecting critical request extractor")
 
 
                 # Save the file's body to file
