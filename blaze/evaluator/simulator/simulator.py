@@ -3,6 +3,7 @@ This module defines the classes and methods to implement a way to simulate
 loading a webpage and simulating its page load time from a dependency graph
 """
 
+import copy
 import json
 from queue import PriorityQueue
 from typing import List, Optional, Tuple
@@ -58,7 +59,7 @@ class Simulator:
 
         self.no_push = None
         self.client_env = client_env
-        self.policy = policy
+        self.policy = copy.deepcopy(policy) if policy else None
 
     def schedule_pushed_and_preloaded_resources(
         self, node: Node, delay: float, dry_run=False

@@ -5,7 +5,7 @@ export PUSH_POLICY_DIR=/home/nikhil/push-policy
 
 MODEL=A3C
 WORKERS=72
-REWARD_FUNC=1
+REWARD_FUNC=3
 MANIFEST_DIR="${PUSH_POLICY_DIR}/training"
 TRAIN_LOG_FILE="${PUSH_POLICY_DIR}/train.log"
 TRAIN_MANIFESTS="${PUSH_POLICY_DIR}/train_manifests.txt"

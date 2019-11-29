@@ -12,7 +12,7 @@ from .model import SavedModel
 
 
 WINDOW_SIZE = 50
-MAX_ITERATIONS = 250
+MAX_ITERATIONS = 150
 MIN_ITERATIONS = 50
 MAX_TIME_SECONDS = 2 * 60 * 60  # 2 hours
 
@@ -51,7 +51,7 @@ def stop_condition():
         if num_iters > MIN_ITERATIONS:
             stdev_min, stdev_mean, stdev_max = tuple(map(stdev, zip(*past_rewards)))
             log.debug("reward stats", stdev_min=stdev_min, stdev_mean=stdev_mean, stdev_max=stdev_max)
-            relative_stdev_based_stop = stdev_mean <= 0.075 * abs(past_rewards[-1][1])
+            relative_stdev_based_stop = stdev_mean <= 0.05 * abs(past_rewards[-1][1])
 
             if num_iters > MAX_ITERATIONS or relative_stdev_based_stop:
                 log.info("auto stopping", time_seconds=result.get("time_since_restore", 0), iters=num_iters)
@@ -70,6 +70,7 @@ COMMON_CONFIG = {
     "collect_metrics_timeout": 1200,
     "num_workers": 2,
     "num_gpus": 0,
+    "model": {"use_lstm": True, "lstm_use_prev_action_reward": True},
 }
 
 
@@ -91,12 +92,7 @@ def train(train_config: TrainConfig, config: Config):
                 "checkpoint_at_end": True,
                 "checkpoint_freq": 10,
                 "max_failures": 3,
-                "config": {
-                    **COMMON_CONFIG,
-                    "num_workers": train_config.num_workers,
-                    "env_config": config,
-                    # "model": {"custom_action_dist": action_distribution_creator},
-                },
+                "config": {**COMMON_CONFIG, "num_workers": train_config.num_workers, "env_config": config},
             }
         },
         resume=train_config.resume,

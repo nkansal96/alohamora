@@ -12,26 +12,34 @@ def pct_diff(a, b):
 
 
 def get_best_pct_diff(a, b):
-    return round(100 * min(filter(lambda d: d > -0.7, (pct_diff(bi, ai) for (ai, bi) in zip(a, b)))), 3)
+    return round(100 * min(filter(lambda d: d > -0.8, (pct_diff(bi, ai) for (ai, bi) in zip(a, b)))), 3)
 
 
 def get_best_val_pair(a, b):
     m, n = 0, 100
     for (ai, bi) in zip(a, b):
         new_n = pct_diff(bi, ai)
-        if new_n < n and new_n > -0.7:
+        if -0.8 < new_n < n:
             m = (ai, bi)
             n = new_n
     return m
 
 
-folder = sys.argv[1]
-file_paths = [os.path.join(folder, f) for f in os.listdir(folder)]
-result_files = list(map(json.load, (open(f, "rb") for f in file_paths)))
+folders = sys.argv[1:]
+file_paths = [os.path.join(folder, f) for folder in folders for f in os.listdir(folder) if f.endswith(".json")]
+result_files = []
+
+for f in file_paths:
+    try:
+        result_files.append(json.load(open(f, "rb")))
+    except json.JSONDecodeError as e:
+        print("failed to decode json for " + f + ", err: " + str(e), file=sys.stderr)
 
 results_by_env = collections.defaultdict(list)
 for result, path in zip(result_files, file_paths):
-    results_by_env[path[-17:]].append(result)
+    env = (result["client_env"]["bandwidth"], result["client_env"]["latency"], result["client_env"]["cpu_slowdown"])
+    env_str = f"{env[0]//1000}mbps_{env[1]}ms_{env[2]}x"
+    results_by_env[env_str].append(result)
 
 results_map = {}
 for env, results in results_by_env.items():

@@ -94,7 +94,7 @@ def evaluate(args):
 
     import ray
 
-    ray.init(num_cpus=70, log_to_driver=False)
+    ray.init(num_cpus=2, log_to_driver=False)
 
     saved_model = model.get_model(args.location)
     instance = saved_model.instantiate(config)

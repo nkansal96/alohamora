@@ -26,6 +26,9 @@ repositories {
 
 dependencies {
     implementation 'eu.mihosoft.ext.apted:apted:0.1'
+    implementation 'org.json:json:20190722'
+    implementation 'com.sparkjava:spark-core:2.8.0'
+    testCompile group: 'org.slf4j', name: 'slf4j-simple', version: '1.6.1'
 
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:28.0-jre'

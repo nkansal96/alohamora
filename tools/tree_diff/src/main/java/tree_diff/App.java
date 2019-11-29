@@ -4,16 +4,20 @@
 
 package tree_diff;
 
-import eu.mihosoft.ext.apted.parser.*;
-
-
 public class App {
-    public String getGreeting() {
-        return "Hello world.";
-    }
+
+    private boolean serviceModeEnabled;
+    private int servicePort;
 
     public static void main(String[] args) {
-	BracketStringInputParser b = new BracketStringInputParser();
-        System.out.println(new App().getGreeting());
+        /*
+        * TODO: parse the arguments and set the port, server mode, etc.
+        *  */
+        App a = new App();
+        a.serviceModeEnabled = true;
+        a.servicePort = 8080;
+        if(a.serviceModeEnabled) {
+            TreeDiffWebService.runServer(a.servicePort);
+        }
     }
 }
