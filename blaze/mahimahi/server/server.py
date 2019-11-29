@@ -136,7 +136,6 @@ def start_server(
                 if extract_critical_requests:
                     # if this is an html file, then we want to insert our snippet here
                     # to extract critical requests.
-                    log.debug("injecting critical request extractor")
                     if file.headers.get("content-type", "") == "text/html":
                         uncompressed_body = file.body
                         gzipped_file = False
@@ -151,8 +150,6 @@ def start_server(
                             file.body = out.getvalue()
                         else:
                             file.body = uncompressed_body
-                else:
-                    log.debug("not injecting critical request extractor")
 
                 # Save the file's body to file
                 file_path = os.path.join(file_dir, file.file_name)
