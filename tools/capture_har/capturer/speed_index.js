@@ -2,33 +2,21 @@ const fs = require("fs")
 
 const utils = require('../../capture_har/utils')
 
-const speedIndex = async (url, userDataDir, outputFile, currentRunId) => {
+const speedIndex = async (url, userDataDir) => {
     const speedIndexCmd = [];
-    const saveToFile = !(typeof(outputFile) == 'undefined' || (typeof(outputFile) == 'string' && outputFile.length < 1));
-    if (!saveToFile) {
-      console.log("user does not want to save to file. wants json instead. ")
-      outputFile = '../../tmp/output-'+currentRunId+".json"
-    }
-    console.log(`outputfile is ${outputFile} type is ${typeof(outputFile)} length is ${outputFile.length} savetofile is ${saveToFile}`)
-    speedIndexCmd.push("./node_modules/.bin/pwmetrics", url, "--config=capturer/pwconfig.js", outputFile, userDataDir);
-    console.log(`going to get speed index for ${url} and userDataDir being ${userDataDir}`)
+    speedIndexCmd.push("./node_modules/.bin/pwmetrics", url, "--config=capturer/pwconfig.js", "speed-index-output.json", userDataDir);
     await utils.run(speedIndexCmd);
-    console.log(`got speed index for ${url} and userDataDir being ${userDataDir}`)
-    if (!saveToFile) {
-      return fs.readFileSync('../../tmp/output-'+currentRunId+".json", {encoding: 'utf8'})
-    } else {
-      return 'done';
-    }
+    let speedIndexJson = JSON.parse(fs.readFileSync("./speed-index-output.json", "utf8")); 
+    const speedIndex = JSON.stringify(speedIndexJson.runs[0].timings[4].timing); // the speed index is at a.runs[0].timings[4].timing
+    return speedIndex;
 }
 
 module.exports = async (url, outputFile, userDataDir) => {
-    const currentRunId = "" + new Date().getTime();
-    const res = await speedIndex(url, userDataDir, outputFile, currentRunId);
-    const json = JSON.parse(res);
+    const res = await speedIndex(url, userDataDir);
     if (outputFile) {
-     console.log(`output saved to ${outputFile}`)
+      fs.writeFileSync(outputFile, res); 
     } else {
-      console.log(JSON.stringify(json));
+      console.log(res);
     }
   }
   

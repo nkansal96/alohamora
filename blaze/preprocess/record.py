@@ -166,17 +166,12 @@ def get_speed_index_in_replay_server(
     """
     Return the page speed index
     """
-    def get_speed_index_from_json(speed_index):
-        #x.runs[0].timings
-        print(speed_index)
-        print("returning 1234 instead of that ==================")
-        return 1234
     log = logger.with_namespace("get_speed_index_in_replay_server")
     log.debug("using client environment", **client_env._asdict())
     speed_indices = []
     for i in range(EXECUTION_CAPTURE_RUNS):
         log.debug("recording page execution in Mahimahi", run=(i + 1), total_runs=EXECUTION_CAPTURE_RUNS)
-        speed_index = get_speed_index_from_json(capture_si_in_replay_server(request_url, config, client_env, user_data_dir, policy))
+        speed_index = capture_si_in_replay_server(request_url, config, client_env, user_data_dir, policy)
         speed_indices.append(speed_index)
         log.debug("captured page execution", speed_index=speed_index)
 

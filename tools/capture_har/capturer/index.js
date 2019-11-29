@@ -71,7 +71,7 @@ class HarCapturer {
                   logOutput = JSON.parse(logOutput);
                   logOutput["alohomora_output"].forEach(e => this.critical_request_urls.push(e));  
                 } catch (error) {
-                  console.log(`critical req not found.`);
+                  console.error(`critical req not found.`);
                 }
                 
               }
@@ -224,7 +224,10 @@ class HarCapturer {
     const filtered_res = Object.values(this.resources)
       .filter(r => this.timings[r.request.url].initiated_at <= first_load_time_ms + pageLoadTimeMs)
       .map (r => {
-        if (this.options.extractCriticalRequests == false) return r;
+        r.critical = false;
+        if (this.options.extractCriticalRequests == false) {
+          return r;
+        }
         else {
           if (this.critical_request_urls.includes(r.request.url)) {
             r.critical = true;
