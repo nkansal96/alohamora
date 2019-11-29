@@ -195,7 +195,9 @@ def _get_results_in_replay_server(
 ) -> Tuple[float, List[float], List[Policy]]:
     log.debug("capturing median PLT in mahimahi with given environment")
     if not speed_index:
-        orig_plt, *_ = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, user_data_dir)
+        orig_plt, *_ = get_page_load_time_in_replay_server(
+            config.env_config.request_url, client_env, config, user_data_dir
+        )
     else:
         orig_plt = get_speed_index_in_replay_server(config.env_config.request_url, client_env, config, user_data_dir)
 
@@ -211,9 +213,13 @@ def _get_results_in_replay_server(
 
         try:
             if not speed_index:
-                plt, *_ = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, user_data_dir, policy)
+                plt, *_ = get_page_load_time_in_replay_server(
+                    config.env_config.request_url, client_env, config, user_data_dir, policy
+                )
             else:
-                plt = get_speed_index_in_replay_server(config.env_config.request_url, client_env, config, user_data_dir, policy)
+                plt = get_speed_index_in_replay_server(
+                    config.env_config.request_url, client_env, config, user_data_dir, policy
+                )
             plts.append(plt)
             policies.append(policy)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError, FileNotFoundError) as e:

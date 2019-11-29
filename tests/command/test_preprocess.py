@@ -91,6 +91,7 @@ class TestPreprocess:
             "https://cs.ucla.edu", config, client_env, extract_critical_requests=True
         )
 
+
 class TestGetHarResources:
     def test_exits_with_missing_arguments(self):
         with pytest.raises(TypeError):
