@@ -20,7 +20,6 @@ let numOfRuns = 1;
 let flags = '--allow-insecure-localhost' +
     ' --disable-background-networking' +
     ' --disable-default-apps' +
-    ' --disable-logging' +
     ' --headless' +
     ' --ignore-certificate-errors' +
     ' --incognito' +
@@ -29,7 +28,8 @@ let flags = '--allow-insecure-localhost' +
     ' --no-first-run' +
     ' --no-sandbox' +
     ' --disable-gpu' +
-    typeof(userDataDir) == 'undefined' || userDataDir.length < 1 ? '' : ' --user-data-dir=' + userDataDir;
+    ' --disable-logging' 
+     typeof(userDataDir) == 'undefined' || (typeof(userDataDir) == 'string' && userDataDir.length < 1) ? '' : ' --user-data-dir=' + userDataDir;
     
 
 module.exports = {
