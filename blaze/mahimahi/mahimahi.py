@@ -76,7 +76,15 @@ class MahiMahiConfig:
         capture_url: str,
         user_data_dir: str,
     ) -> List[str]:
-        har_cmd = self.har_capture_cmd(share_dir=share_dir, har_output_file_name=si_output_file_name, policy_file_name=policy_file_name, link_trace_file_name=link_trace_file_name, capture_url=capture_url, user_data_dir=user_data_dir, extract_critical_requests=False)
+        har_cmd = self.har_capture_cmd(
+            share_dir=share_dir,
+            har_output_file_name=si_output_file_name,
+            policy_file_name=policy_file_name,
+            link_trace_file_name=link_trace_file_name,
+            capture_url=capture_url,
+            user_data_dir=user_data_dir,
+            extract_critical_requests=False,
+        )
         har_cmd.append("--speed-index")
         return har_cmd
 

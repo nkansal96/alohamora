@@ -10,7 +10,11 @@ from blaze.config.config import get_config
 from blaze.config.environment import EnvironmentConfig
 from blaze.evaluator.simulator import Simulator
 from blaze.logger import logger as log
-from blaze.preprocess.record import record_webpage, get_page_load_time_in_replay_server, get_speed_index_in_replay_server
+from blaze.preprocess.record import (
+    record_webpage,
+    get_page_load_time_in_replay_server,
+    get_speed_index_in_replay_server,
+)
 
 from . import command
 
@@ -26,8 +30,17 @@ from . import command
 @command.argument("--latency", help="The round trip latency to use (ms)", type=int, default=None)
 @command.argument("--bandwidth", help="The link bandwidth to use (kbps)", type=int, default=None)
 @command.argument("--cpu_slowdown", help="The CPU slowdown factor to use (1, 2, or 4)", type=int, default=None)
-@command.argument("--user_data_dir", help="The Chrome user data directory contains cached files (in case of using warm cache)", type=str, default=None)
-@command.argument("--speed_index", help="Returns the speed index of the page calculated using pwmetrics. As a float.", action="store_true")
+@command.argument(
+    "--user_data_dir",
+    help="The Chrome user data directory contains cached files (in case of using warm cache)",
+    type=str,
+    default=None,
+)
+@command.argument(
+    "--speed_index",
+    help="Returns the speed index of the page calculated using pwmetrics. As a float.",
+    action="store_true",
+)
 @command.command
 def page_load_time(args):
     """
@@ -76,9 +89,13 @@ def page_load_time(args):
         if not args.only_simulator:
             log.debug("using pre-recorded webpage", record_dir=config.env_config.replay_dir)
             if not args.speed_index:
-                plt, *_ = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, args.user_data_dir, policy)
+                plt, *_ = get_page_load_time_in_replay_server(
+                    config.env_config.request_url, client_env, config, args.user_data_dir, policy
+                )
             else:
-                plt = get_speed_index_in_replay_server(config.env_config.request_url, client_env, config, args.user_data_dir, policy)
+                plt = get_speed_index_in_replay_server(
+                    config.env_config.request_url, client_env, config, args.user_data_dir, policy
+                )
 
     else:
         log.info("calculating page load time", url=args.url)

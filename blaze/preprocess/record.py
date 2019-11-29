@@ -137,7 +137,11 @@ def get_page_links(url: str, max_depth: int = 1) -> List[str]:
 
 
 def get_page_load_time_in_replay_server(
-    request_url: str, client_env: ClientEnvironment, config: Config, user_data_dir: Optional[str] = None, policy: Optional[Policy] = None
+    request_url: str,
+    client_env: ClientEnvironment,
+    config: Config,
+    user_data_dir: Optional[str] = None,
+    policy: Optional[Policy] = None,
 ):
     """
     Return the page load time, the HAR resources captured, and the push groups detected
@@ -159,6 +163,7 @@ def get_page_load_time_in_replay_server(
     har_res_list = har_entries_to_resources(median_har)
     har_push_groups = resource_list_to_push_groups(har_res_list)
     return median_har.page_load_time_ms, har_res_list, har_push_groups, plt_ms
+
 
 def get_speed_index_in_replay_server(
     request_url: str, client_env: ClientEnvironment, config: Config, user_data_dir: str, policy: Optional[Policy] = None

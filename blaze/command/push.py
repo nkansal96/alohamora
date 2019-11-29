@@ -51,7 +51,12 @@ def random_push_policy(args):
 @command.argument(
     "--cpu_slowdown", help="CPU Slowdown factor (1 means no slowdown)", choices=[1, 2, 4], type=int, default=1
 )
-@command.argument("--user_data_dir", help="The Chrome user data directory contains cached files (in case of using warm cache)", type=str, default=None)
+@command.argument(
+    "--user_data_dir",
+    help="The Chrome user data directory contains cached files (in case of using warm cache)",
+    type=str,
+    default=None,
+)
 @command.command
 def test_push(args):
     """
@@ -194,7 +199,9 @@ def _get_results_in_replay_server(
         log.debug(json.dumps(policy.as_dict, indent=4))
 
         try:
-            plt, *_ = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, user_data_dir, policy)
+            plt, *_ = get_page_load_time_in_replay_server(
+                config.env_config.request_url, client_env, config, user_data_dir, policy
+            )
             plts.append(plt)
             policies.append(policy)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError, FileNotFoundError) as e:

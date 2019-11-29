@@ -14,7 +14,11 @@ from . import command
 @command.argument("--policy", help="The file path to a JSON-formatted push policy to serve")
 @command.argument("--cert_path", help="Location of the server certificate")
 @command.argument("--key_path", help="Location of the server key")
-@command.argument("--extract_critical_requests", help="true or false to specify if server should inject critical request extractor", action='store_true')
+@command.argument(
+    "--extract_critical_requests",
+    help="true or false to specify if server should inject critical request extractor",
+    action="store_true",
+)
 @command.command
 def replay(args):
     """
