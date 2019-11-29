@@ -55,8 +55,7 @@ def preprocess(args):
 
     log.info("capturing execution")
     client_env = get_default_client_environment()
-    har = capture_har_in_replay_server(args.website, config, client_env)
-    har_resources = har_entries_to_resources(har)
+    har_resources = get_har_resources(args.website, config, client_env)
 
     log.info("finding dependency stable set...")
     res_list = find_url_stable_set(args.website, config)
@@ -80,3 +79,18 @@ def get_page_links(args):
     """ Finds pages links on the given page up to the given depth """
     log.info("getting page links", website=args.website, max_depth=args.max_depth)
     print(_get_page_links(args.website, max_depth=args.max_depth))
+
+
+def get_har_resources(website, config, client_env):
+    """
+    Returns the HAR entries in the website including information about the critical requests.
+    """
+    har = capture_har_in_replay_server(website, config, client_env)
+    har2 = capture_har_in_replay_server(website, config, client_env, extract_critical_requests=True)
+
+    critical_requests = set(h.request.url for h in har2.log.entries if h.critical)
+    for res in har.log.entries:
+        if res.request.url in critical_requests:
+            res._replace(critical=True)
+
+    return har_entries_to_resources(har)

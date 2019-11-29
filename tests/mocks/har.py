@@ -37,7 +37,9 @@ def generate_har():
     last_date = datetime.datetime.now()
     for (i, entry) in enumerate(har_entries):
         last_date += datetime.timedelta(milliseconds=np.random.randint(0, 1000))
-        har_entries[i] = HarEntry(started_date_time=last_date, request=entry.request, response=entry.response, critical=False)
+        har_entries[i] = HarEntry(
+            started_date_time=last_date, request=entry.request, response=entry.response, critical=False
+        )
     return Har(log=HarLog(entries=har_entries), timings=har_file.timings)
 
 

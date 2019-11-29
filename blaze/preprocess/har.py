@@ -47,6 +47,7 @@ def compute_parent_child_relationships(res_list: List[Resource], timings: Dict[s
                 execution_ms=timing.execution_ms if timing else 0,
                 fetch_delay_ms=timing.fetch_delay_ms if timing else 0,
                 time_to_first_byte_ms=timing.time_to_first_byte_ms if timing else 0,
+                critical=res.critical,
             )
         )
 
@@ -75,6 +76,7 @@ def har_entries_to_resources(har: Har) -> List[Resource]:
                 type=get_har_entry_type(entry),
                 order=order,
                 source_id=order,
+                critical=entry.critical,
             )
         )
 
