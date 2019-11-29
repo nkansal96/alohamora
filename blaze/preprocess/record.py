@@ -148,8 +148,8 @@ def get_page_load_time_in_replay_server(
     hars = []
     for i in range(EXECUTION_CAPTURE_RUNS):
         log.debug("recording page execution in Mahimahi", run=(i + 1), total_runs=EXECUTION_CAPTURE_RUNS)
-        si = capture_si_in_replay_server(request_url, config, client_env, user_data_dir, policy)
-        si.append(si)
+        har = capture_har_in_replay_server(request_url, config, client_env, user_data_dir, policy)
+        hars.append(har)
         log.debug("captured page execution", page_load_time=har.page_load_time_ms)
 
     hars.sort(key=lambda h: h.page_load_time_ms)
