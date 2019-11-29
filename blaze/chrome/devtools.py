@@ -94,7 +94,7 @@ def capture_si_in_replay_server(
         # configure the SI (speed index) capturer
         cmd = mahimahi_config.si_capture_cmd(
             share_dir=temp_dir,
-            har_output_file_name="si.json",
+            si_output_file_name="si.json",
             policy_file_name="policy.json",
             link_trace_file_name="trace_file",
             capture_url=url,

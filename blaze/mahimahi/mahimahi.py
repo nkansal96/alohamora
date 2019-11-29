@@ -69,7 +69,7 @@ class MahiMahiConfig:
         self,
         *,
         share_dir: str,
-        har_output_file_name: str,
+        si_output_file_name: str,
         policy_file_name: Optional[str] = None,
         link_trace_file_name: str = "",
         capture_url: str,
@@ -80,7 +80,7 @@ class MahiMahiConfig:
         push policy and link trace name and stores output in the given output locations.
 
         :param share_dir: the directory to share to the container
-        :param har_output_file_name: the file inside share_dir to write the HAR output to
+        :param si_output_file_name: the file inside share_dir to write the SI output to
         :param policy_file_name: the file inside share_dir to read the push/preload policy from (JSON formatted)
         :param link_trace_file_name: the file inside share_dir to read the link trace from (Mahimahi formatted). If not
                                      specified, no mm-link shell will be spawned.
@@ -99,7 +99,7 @@ class MahiMahiConfig:
             "--file-store-path",
             "/mnt/filestore",
             "--output-file",
-            f"/mnt/share/{har_output_file_name}",
+            f"/mnt/share/{si_output_file_name}",
             *(["--policy-path", f"/mnt/share/{policy_file_name}"] if policy_file_name else []),
             *(["--link-trace-path", f"/mnt/share/{link_trace_file_name}"] if link_trace_file_name else []),
             *(["--link-latency-ms", str(self.client_environment.latency // 2)] if self.client_environment else []),
