@@ -3,7 +3,7 @@ import tempfile
 import pytest
 from unittest import mock
 
-from blaze.command.preprocess import preprocess, record
+from blaze.command.preprocess import preprocess, record, get_har_resources
 from blaze.config.client import get_default_client_environment
 from blaze.config.config import get_config
 from blaze.config.environment import EnvironmentConfig
@@ -90,3 +90,8 @@ class TestPreprocess:
         mock_capture_har_in_mahimahi.assert_called_with(
             "https://cs.ucla.edu", config, client_env, extract_critical_requests=True
         )
+
+class TestGetHarResources:
+    def test_exits_with_missing_arguments(self):
+        with pytest.raises(TypeError):
+            get_har_resources([])
