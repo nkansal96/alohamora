@@ -2,6 +2,7 @@
 
 import glob
 import os
+import subprocess
 from typing import Dict, List
 
 from recordclass import RecordClass
@@ -81,8 +82,19 @@ class File(RecordClass):
             body = encoding.unchunk(body)
             del res_headers[TRANSFER_ENCODING_HEADER]
 
-        # Pushable objects must be cacheable and ignore security settings for replayed resources
-        res_headers[CACHE_CONTROL_HEADER] = "3600"
+        out = subprocess.Popen(['/opt/blaze/blaze/mahimahi/server/iscacheable', path],
+           stdout=subprocess.PIPE,
+           stderr=subprocess.STDOUT)
+        stdout, stderr = out.communicate()
+        if stderr is not None:
+            # TODO: what if we cannot read cache headers from mahimahi file, should we set 0 or 3600
+            res_headers[CACHE_CONTROL_HEADER] = "0"
+        else:
+            if "YES" in stdout.decode('utf-8'):
+                # Pushable objects must be cacheable and ignore security settings for replayed resources
+                res_headers[CACHE_CONTROL_HEADER] = "3600"
+            else:
+                res_headers[CACHE_CONTROL_HEADER] = "0"
         if ACCESS_CONTROL_ALLOW_ORIGIN_HEADER not in res_headers:
             res_headers[ACCESS_CONTROL_ALLOW_ORIGIN_HEADER] = "*"
 
