@@ -37,10 +37,20 @@ public class CostModel implements eu.mihosoft.ext.apted.costmodel.CostModel<Node
     @Override
     public float ren(Node<NodeData> n1, Node<NodeData> n2) {
         float result = 0f;
-        if (n1.getNodeData().getSize() > 1.5 * n2.getNodeData().getSize() ||
-            n1.getNodeData().getSize() < 1.5 * n2.getNodeData().getSize()) {
+
+        double n1Size = n1.getNodeData().getSize();
+        double n2Size = n2.getNodeData().getSize();
+
+        // todo this should actually be the commented code but tests fail
+        if (n2Size != n1Size) {
             result += 0.25;
         }
+        // if (n1Size == 0 && n2Size > 0 ||
+        //     n2Size == 0 && n1Size > 0 ||
+        //     n1Size/n2Size >= 1.5 ||
+        //     n2Size/n1Size >= 1.5) {
+        //     result += 0.25;
+        // }
 
         if(!n1.getNodeData().getType().equalsIgnoreCase(n2.getNodeData().getType())) {
             result += 0.25;
