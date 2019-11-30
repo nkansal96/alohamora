@@ -23,24 +23,27 @@ class MahiMahiConfig:
     def har_capture_cmd(
         self,
         *,
+        capture_url: str,
         share_dir: str,
         har_output_file_name: str,
         policy_file_name: Optional[str] = None,
         link_trace_file_name: str = "",
-        capture_url: str,
         user_data_dir: Optional[str] = None,
-        extract_critical_requests: bool = False,
+        extract_critical_requests: Optional[bool] = False,
     ) -> List[str]:
         """
         Returns the full command to run that replays the configured folder with the given
         push policy and link trace name and stores output in the given output locations.
 
+        :param capture_url: The url to capture HAR for
         :param share_dir: the directory to share to the container
         :param har_output_file_name: the file inside share_dir to write the HAR output to
         :param policy_file_name: the file inside share_dir to read the push/preload policy from (JSON formatted)
         :param link_trace_file_name: the file inside share_dir to read the link trace from (Mahimahi formatted). If not
                                      specified, no mm-link shell will be spawned.
-        :param capture_url: The url to capture HAR for
+        :param user_data_dir: Indicates the the HAR capturer should use the given user data
+                              directory (warm cache load)
+        :param extract_critical_requests: The HAR capturer should extract critical requests
         """
         return [
             "docker",
@@ -51,8 +54,7 @@ class MahiMahiConfig:
             f"{self.config.env_config.replay_dir}:/mnt/filestore",
             "-v",
             f"{share_dir}:/mnt/share",
-            "-v",
-            *([f"{user_data_dir}:/mnt/chrome-user-dir"] if user_data_dir else []),
+            *(["-v", f"{user_data_dir}:/mnt/chrome-user-dir"] if user_data_dir else []),
             self.config.http2push_image,
             "--file-store-path",
             "/mnt/filestore",
@@ -82,13 +84,6 @@ class MahiMahiConfig:
         """
         Returns the full command to run that replays the configured folder with the given
         push policy and link trace name and stores speed index output in the given output locations.
-
-        :param share_dir: the directory to share to the container
-        :param har_output_file_name: the file inside share_dir to write the HAR output to
-        :param policy_file_name: the file inside share_dir to read the push/preload policy from (JSON formatted)
-        :param link_trace_file_name: the file inside share_dir to read the link trace from (Mahimahi formatted). If not
-                                     specified, no mm-link shell will be spawned.
-        :param capture_url: The url to capture HAR for
         """
         har_cmd = self.har_capture_cmd(
             share_dir=share_dir,
