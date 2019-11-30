@@ -70,7 +70,12 @@ def capture_har_in_replay_server(
 
 
 def capture_si_in_replay_server(
-    url: str, config: Config, client_env: ClientEnvironment, user_data_dir: str, policy: Optional[Policy] = None
+    url: str,
+    config: Config,
+    client_env: ClientEnvironment,
+    user_data_dir: str,
+    policy: Optional[Policy] = None,
+    extract_critical_requests: Optional[bool] = False,
 ) -> float:
     """
     capture_har spawns a headless chrome instance and connects to its remote debugger
@@ -106,6 +111,7 @@ def capture_si_in_replay_server(
             link_trace_file_name="trace_file",
             capture_url=url,
             user_data_dir=user_data_dir,
+            extract_critical_requests=extract_critical_requests,
         )
 
         # spawn the SI capturer process

@@ -77,6 +77,7 @@ class MahiMahiConfig:
         link_trace_file_name: str = "",
         capture_url: str,
         user_data_dir: str,
+        extract_critical_requests: Optional[bool] = False,
     ) -> List[str]:
         """
         Returns the full command to run that replays the configured folder with the given
@@ -96,7 +97,7 @@ class MahiMahiConfig:
             link_trace_file_name=link_trace_file_name,
             capture_url=capture_url,
             user_data_dir=user_data_dir,
-            extract_critical_requests=False,
+            extract_critical_requests=extract_critical_requests,
         )
         har_cmd.append("--speed-index")
         return har_cmd

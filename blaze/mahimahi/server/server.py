@@ -56,8 +56,9 @@ window.addEventListener('load',(event)=>{console.log("alohomoradebug: extracting
 document.querySelectorAll("iframe").forEach((ele)=>{var iframeID=ele.id;iframeElement=document.getElementById(iframeID)
 if(isAnyPartOfElementInViewport(iframeElement)){var innerDoc=(iframeElement.contentDocument)?iframeElement.contentDocument:iframeElement.contentWindow.document;findAndPrintImagesInViewport(innerDoc)}});findAndPrintImagesInViewport(document)})
     """
-    soup.html.insert(0, critical_catcher)
-    soup.html.insert(0, stack_trace_dependency)
+    if soup.html is not None:
+        soup.html.insert(0, critical_catcher)
+        soup.html.insert(0, stack_trace_dependency)
     return str(soup)
 
 
@@ -133,28 +134,42 @@ def start_server(
                     log.warn("skipping", file_name=file.file_name, method=file.method, uri=file.uri, host=file.host)
                     continue
 
-                if extract_critical_requests:
-                    # if this is an html file, then we want to insert our snippet here
-                    # to extract critical requests.
-                    if file.headers.get("content-type", "") == "text/html":
-                        uncompressed_body = file.body
-                        gzipped_file = False
-                        if "gzip" in file.headers.get("content-encoding"):
-                            gzipped_file = True
-                            uncompressed_body = gzip.GzipFile(fileobj=BytesIO(uncompressed_body)).read()
-                        uncompressed_body = prepend_javascript_snippet(uncompressed_body)
-                        if gzipped_file:
-                            out = BytesIO()
-                            with gzip.GzipFile(fileobj=out, mode="wb") as f:
-                                f.write(uncompressed_body.encode())
-                            file.body = out.getvalue()
-                        else:
-                            file.body = uncompressed_body
-
-                # Save the file's body to file
-                file_path = os.path.join(file_dir, file.file_name)
-                with open(os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o644), "wb") as f:
-                    f.write(file.body)
+                backup_file_body = file.body
+                try:
+                    if extract_critical_requests:
+                        # if this is an html file, then we want to insert our snippet here
+                        # to extract critical requests.
+                        if file.headers.get("content-type", "") == "text/html":
+                            uncompressed_body = file.body
+                            gzipped_file = False
+                            if (
+                                file.headers is not None
+                                and file.headers.get("content-encoding") is not None
+                                and "gzip" in file.headers.get("content-encoding")
+                            ):
+                                gzipped_file = True
+                                uncompressed_body = gzip.GzipFile(fileobj=BytesIO(uncompressed_body)).read()
+                            uncompressed_body = prepend_javascript_snippet(uncompressed_body)
+                            if gzipped_file:
+                                out = BytesIO()
+                                with gzip.GzipFile(fileobj=out, mode="wb") as f:
+                                    f.write(uncompressed_body.encode())
+                                file.body = out.getvalue()
+                            else:
+                                file.body = uncompressed_body
+                    # Save the file's body to file
+                    file_path = os.path.join(file_dir, file.file_name)
+                    with open(os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o644), "wb") as f:
+                        f.write(file.body)
+                except TypeError as e:
+                    # file.body somehow because corrupted. happens in nbcnews where some ad server file is of type html
+                    # # this messes up the encoding
+                    # Save the file's original body to file
+                    log.error("unable to extract critical css for file", error=e)
+                    file.body = backup_file_body
+                    file_path = os.path.join(file_dir, file.file_name)
+                    with open(os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o644), "wb") as f:
+                        f.write(file.body)
 
                 # Add headers
                 for key, value in file.headers.items():

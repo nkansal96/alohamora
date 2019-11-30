@@ -41,6 +41,11 @@ from . import command
     help="Returns the speed index of the page calculated using pwmetrics. As a float.",
     action="store_true",
 )
+@command.argument(
+    "--extract_critical_requests",
+    help="Returns the response taking into account the critical resources in the page",
+    action="store_true",
+)
 @command.command
 def page_load_time(args):
     """
@@ -90,11 +95,21 @@ def page_load_time(args):
             log.debug("using pre-recorded webpage", record_dir=config.env_config.replay_dir)
             if not args.speed_index:
                 plt, *_ = get_page_load_time_in_replay_server(
-                    config.env_config.request_url, client_env, config, args.user_data_dir, policy
+                    config.env_config.request_url,
+                    client_env,
+                    config,
+                    args.user_data_dir,
+                    policy,
+                    args.extract_critical_requests,
                 )
             else:
                 plt = get_speed_index_in_replay_server(
-                    config.env_config.request_url, client_env, config, args.user_data_dir, policy
+                    config.env_config.request_url,
+                    client_env,
+                    config,
+                    args.user_data_dir,
+                    policy,
+                    args.extract_critical_requests,
                 )
 
     else:

@@ -142,6 +142,7 @@ def get_page_load_time_in_replay_server(
     config: Config,
     user_data_dir: Optional[str] = None,
     policy: Optional[Policy] = None,
+    extract_critical_requests: Optional[bool] = False,
 ):
     """
     Return the page load time, the HAR resources captured, and the push groups detected
@@ -152,7 +153,9 @@ def get_page_load_time_in_replay_server(
     hars = []
     for i in range(EXECUTION_CAPTURE_RUNS):
         log.debug("recording page execution in Mahimahi", run=(i + 1), total_runs=EXECUTION_CAPTURE_RUNS)
-        har = capture_har_in_replay_server(request_url, config, client_env, user_data_dir, policy)
+        har = capture_har_in_replay_server(
+            request_url, config, client_env, user_data_dir, policy, extract_critical_requests
+        )
         hars.append(har)
         log.debug("captured page execution", page_load_time=har.page_load_time_ms)
 
@@ -166,7 +169,12 @@ def get_page_load_time_in_replay_server(
 
 
 def get_speed_index_in_replay_server(
-    request_url: str, client_env: ClientEnvironment, config: Config, user_data_dir: str, policy: Optional[Policy] = None
+    request_url: str,
+    client_env: ClientEnvironment,
+    config: Config,
+    user_data_dir: str,
+    policy: Optional[Policy] = None,
+    extract_critical_requests: Optional[bool] = False,
 ):
     """
     Return the page speed index
@@ -176,7 +184,9 @@ def get_speed_index_in_replay_server(
     speed_indices = []
     for i in range(EXECUTION_CAPTURE_RUNS):
         log.debug("recording page execution in Mahimahi", run=(i + 1), total_runs=EXECUTION_CAPTURE_RUNS)
-        speed_index = capture_si_in_replay_server(request_url, config, client_env, user_data_dir, policy)
+        speed_index = capture_si_in_replay_server(
+            request_url, config, client_env, user_data_dir, policy, extract_critical_requests
+        )
         speed_indices.append(speed_index)
         log.debug("captured page execution", speed_index=speed_index)
 
