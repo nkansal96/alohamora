@@ -21,7 +21,6 @@ from blaze.mahimahi import MahiMahiConfig
 from blaze.util.seq import ordered_uniq
 
 from .har import har_entries_to_resources, compute_parent_child_relationships
-from .resource import resource_list_to_push_groups
 from .url import Url
 
 EXECUTION_CAPTURE_RUNS = 5
@@ -161,11 +160,10 @@ def get_page_load_time_in_replay_server(
 
     hars.sort(key=lambda h: h.page_load_time_ms)
     plt_ms = [h.page_load_time_ms for h in hars]
-    log.debug("recorded execution times", plt_ms=plt_ms)
     median_har = hars[len(hars) // 2]
-    har_res_list = har_entries_to_resources(median_har)
-    har_push_groups = resource_list_to_push_groups(har_res_list)
-    return median_har.page_load_time_ms, har_res_list, har_push_groups, plt_ms
+    log.debug("recorded execution times", plt_ms=plt_ms)
+
+    return median_har.page_load_time_ms, plt_ms
 
 
 def get_speed_index_in_replay_server(
