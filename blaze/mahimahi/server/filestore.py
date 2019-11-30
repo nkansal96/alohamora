@@ -10,20 +10,48 @@ from blaze.proto import http_record_pb2
 from blaze.util import encoding
 
 
+DATE_HEADER = "date"
+PRAGMA_HEADER = "pragma"
+EXPIRES_HEADER = "expires"
+LAST_MODIFIED_HEADER = "last-modified"
 CACHE_CONTROL_HEADER = "cache-control"
 TRANSFER_ENCODING_HEADER = "transfer-encoding"
 ACCESS_CONTROL_ALLOW_ORIGIN_HEADER = "access-control-allow-origin"
 REMOVE_HEADERS = [
-    "cache-control",
     "connection",
     "content-length",
-    "expires",
     "keep-alive",
-    "last-modified",
-    "date",
     "age",
     "etag",
+    CACHE_CONTROL_HEADER,
+    DATE_HEADER,
+    EXPIRES_HEADER,
+    LAST_MODIFIED_HEADER,
+    PRAGMA_HEADER,
+    TRANSFER_ENCODING_HEADER,
 ]
+
+
+def check_cacheability(headers: Dict[str, str]) -> bool:
+    cache_control = headers.get(CACHE_CONTROL_HEADER, "")
+    if "no-cache" in cache_control or "no-store" in cache_control:
+        return False
+
+    if "max-age=" in cache_control:
+        try:
+            max_age = int(cache_control.split("max-age=")[1].split(",")[0])
+            if max_age > 0:
+                return True
+        except ValueError:
+            pass
+
+    pragma = headers.get(PRAGMA_HEADER, "")
+    if "no-cache" in pragma:
+        return False
+
+    expires = headers.get(EXPIRES_HEADER, False)
+    last_modified = headers.get(LAST_MODIFIED_HEADER, False)
+    return (expires and expires != "0") or last_modified
 
 
 class File(RecordClass):
@@ -68,21 +96,20 @@ class File(RecordClass):
         # Decode headers from a list of pairs to a dictionary, decoding bytes to str and converting to lowercase
         # to make easier parsing. Also remove headers that we don't want to send back in a replayed response
         req_headers = {h.key.decode().lower(): h.value.decode() for h in record.request.header}
-        res_headers = {
-            h.key.decode().lower(): h.value.decode()
-            for h in record.response.header
-            if h.key.decode().lower() not in REMOVE_HEADERS
-        }
+        res_headers = {h.key.decode().lower(): h.value.decode() for h in record.response.header}
 
-        body = record.response.body
+        # Pushable objects must be cacheable
+        is_cacheable = check_cacheability(res_headers)
 
         # Unchunk the body if it is chunked since HTTP/2 does not support chunked encoding
+        body = record.response.body
         if TRANSFER_ENCODING_HEADER in res_headers and "chunked" in res_headers[TRANSFER_ENCODING_HEADER].lower():
             body = encoding.unchunk(body)
-            del res_headers[TRANSFER_ENCODING_HEADER]
 
-        # Pushable objects must be cacheable and ignore security settings for replayed resources
-        res_headers[CACHE_CONTROL_HEADER] = "3600"
+        # Remove the unnecessary headers after checking for cacheability and transer encoding
+        res_headers = {k: v for (k, v) in res_headers.items() if k not in REMOVE_HEADERS}
+        if is_cacheable:
+            res_headers[CACHE_CONTROL_HEADER] = "3600000"
         if ACCESS_CONTROL_ALLOW_ORIGIN_HEADER not in res_headers:
             res_headers[ACCESS_CONTROL_ALLOW_ORIGIN_HEADER] = "*"
 
