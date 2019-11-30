@@ -275,11 +275,30 @@ const captureHar = async (url, slowdown, extractCriticalRequests, userDataDir) =
 };
 
 module.exports = async (url, slowdown, outputFile, extractCriticalRequests, userDataDir) => {
-  const res = await captureHar(url, slowdown, extractCriticalRequests, userDataDir);
-  const json = JSON.stringify(res);
-  if (outputFile) {
-    fs.writeFileSync(outputFile, json);
+  if(typeof(userDataDir) != "undefined" && userDataDir != '') {
+    // user-data-dir was passed in
+    let files = fs.readdirSync(userDataDir);
+    // check if the passed in folder is empty. user passed it in to get warm cache results
+    // so we run captureHar once, and then run it again and return the result from the second run
+    if (!files.length) {
+      // dir was empty. run once to prime the cache. 
+      await captureHar(url, slowdown, extractCriticalRequests, userDataDir);
+    }
+    const res = await captureHar(url, slowdown, extractCriticalRequests, userDataDir);
+    const json = JSON.stringify(res);
+    if (outputFile) {
+      fs.writeFileSync(outputFile, json);
+    } else {
+      process.stdout.write(json)
+    }
   } else {
-    process.stdout.write(json)
+    // user did not pass in user-data-dir. just do once and return output. 
+    const res = await captureHar(url, slowdown, extractCriticalRequests, userDataDir);
+    const json = JSON.stringify(res);
+    if (outputFile) {
+      fs.writeFileSync(outputFile, json);
+    } else {
+      process.stdout.write(json)
+    }
   }
 }
