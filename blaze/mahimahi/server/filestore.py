@@ -33,6 +33,9 @@ REMOVE_HEADERS = [
 
 
 def check_cacheability(headers: Dict[str, str]) -> bool:
+    """
+    Checks whether a resource with the given headers is cacheable or not
+    """
     cache_control = headers.get(CACHE_CONTROL_HEADER, "")
     if "no-cache" in cache_control or "no-store" in cache_control:
         return False
@@ -51,7 +54,7 @@ def check_cacheability(headers: Dict[str, str]) -> bool:
 
     expires = headers.get(EXPIRES_HEADER, False)
     last_modified = headers.get(LAST_MODIFIED_HEADER, False)
-    return (expires and expires != "0") or last_modified
+    return expires != "0" if expires else last_modified
 
 
 class File(RecordClass):
