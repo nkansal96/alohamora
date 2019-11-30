@@ -73,6 +73,9 @@ class File(RecordClass):
     status: int
     body: bytes
 
+    # Convenience metadata
+    is_cacheable: bool
+
     @property
     def file_name(self):
         """
@@ -120,7 +123,14 @@ class File(RecordClass):
         # it doesn't work when specifying the 'typename' parameter, but pylint complains
         # pylint: disable=no-value-for-parameter
         return File(
-            file_path=path, method=method, uri=uri, host=host, headers=res_headers, status=int(status), body=body
+            file_path=path,
+            method=method,
+            uri=uri,
+            host=host,
+            headers=res_headers,
+            status=int(status),
+            body=body,
+            is_cacheable=is_cacheable,
         )
 
 
