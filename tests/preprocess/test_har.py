@@ -28,6 +28,7 @@ class TestGetHarEntryType:
                 started_date_time="",
                 request=Request(url="", method=""),
                 response=Response(status=200, body_size=0, headers_size=0, mime_type=mime_type),
+                critical=False,
             )
             assert get_har_entry_type(har_entry) == resource_type
 
@@ -76,6 +77,7 @@ class TestHarEntriesToResources:
                         headers_size=entry.response.headers_size,
                         mime_type=entry.response.mime_type,
                     ),
+                    critical=False,
                 )
                 entries.append(new_entry)
                 invalid_entries.add(new_entry.request.url)

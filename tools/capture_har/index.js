@@ -21,13 +21,18 @@ const argumentsDefinition = [
 const run = async args => {
   // create and start the server
   let exitCode = -1;
-  const replayArgs = [
+  let replayArgs = [
     "replay",
     "--cert_path", args.certFile,
     "--key_path", args.keyFile,
     "--policy", args.policyPath,
     args.fileStorePath,
   ];
+
+  if (args.extractCriticalRequests) {
+    replayArgs.push("--extract_critical_requests")
+  }
+
   const server = child_process.spawn("blaze", replayArgs, { stdio: 'inherit' });
   server.on('exit', code => { exitCode = code });
   console.log("starting replay server with args", replayArgs);
@@ -44,7 +49,12 @@ const run = async args => {
     captureCmd.push("mm-link", args.linkTracePath, args.linkTracePath, "--");
   if (args.linkLatencyMs > 0)
     captureCmd.push("mm-delay", args.linkLatencyMs.toString());
-  captureCmd.push("sudo", "npm", "run", "capturer", "--", "-o", args.outputFile, "-s", args.cpuSlowdown, args.url);
+  captureCmd.push("sudo", "npm", "run", "capturer", "--", "-o", args.outputFile, "-s", args.cpuSlowdown, args.url, "-d", args.userDataDir);
+  if (args.extractCriticalRequests)
+    captureCmd.push("-x");
+  if (args.speedIndex)
+    captureCmd.push("--speed-index")
+    
 
   await utils.run(captureCmd, args.userId, args.groupId);
   console.log("Finished capturing HAR...");

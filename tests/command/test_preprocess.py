@@ -3,7 +3,7 @@ import tempfile
 import pytest
 from unittest import mock
 
-from blaze.command.preprocess import preprocess, record
+from blaze.command.preprocess import preprocess, record, get_har_resources
 from blaze.config.client import get_default_client_environment
 from blaze.config.config import get_config
 from blaze.config.environment import EnvironmentConfig
@@ -50,7 +50,7 @@ class TestPreprocess:
         client_env = get_default_client_environment()
         config = get_config(EnvironmentConfig(replay_dir=output_dir, request_url="https://cs.ucla.edu"))
 
-        mock_capture_har_in_mahimahi.assert_called_once()
+        assert mock_capture_har_in_mahimahi.call_count == 1
         mock_capture_har_in_mahimahi.assert_called_with("https://cs.ucla.edu", config, client_env)
 
     @mock.patch("blaze.command.preprocess.capture_har_in_replay_server")
@@ -84,5 +84,11 @@ class TestPreprocess:
         client_env = get_default_client_environment()
         config = get_config(EnvironmentConfig(replay_dir=output_dir, request_url="https://cs.ucla.edu"))
 
-        mock_capture_har_in_mahimahi.assert_called_once()
+        assert mock_capture_har_in_mahimahi.call_count == 1
         mock_capture_har_in_mahimahi.assert_called_with("https://cs.ucla.edu", config, client_env)
+
+
+class TestGetHarResources:
+    def test_exits_with_missing_arguments(self):
+        with pytest.raises(TypeError):
+            get_har_resources(None, None, None)

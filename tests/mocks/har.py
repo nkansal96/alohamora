@@ -1,5 +1,6 @@
 import datetime
 import os
+import json
 from types import SimpleNamespace
 
 import numpy as np
@@ -11,7 +12,10 @@ HAR_JSON = open(HAR_JSON_FILE, "r").read()
 
 
 def get_har_json():
-    return HAR_JSON
+    x = json.loads(HAR_JSON)
+    for entry in x["log"]["entries"]:
+        entry["critical"] = False
+    return json.dumps(x)
 
 
 def generate_har():
@@ -33,8 +37,9 @@ def generate_har():
     last_date = datetime.datetime.now()
     for (i, entry) in enumerate(har_entries):
         last_date += datetime.timedelta(milliseconds=np.random.randint(0, 1000))
-        har_entries[i] = HarEntry(started_date_time=last_date, request=entry.request, response=entry.response)
-
+        har_entries[i] = HarEntry(
+            started_date_time=last_date, request=entry.request, response=entry.response, critical=False
+        )
     return Har(log=HarLog(entries=har_entries), timings=har_file.timings)
 
 

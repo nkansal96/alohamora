@@ -16,7 +16,7 @@ from blaze.config.config import get_config, Config
 from blaze.config.environment import EnvironmentConfig, PushGroup, ResourceType
 from blaze.evaluator.simulator import Simulator
 from blaze.logger import logger as log
-from blaze.preprocess.record import get_page_load_time_in_replay_server
+from blaze.preprocess.record import get_page_load_time_in_replay_server, get_speed_index_in_replay_server
 
 from . import command
 
@@ -51,6 +51,17 @@ def random_push_policy(args):
 @command.argument(
     "--cpu_slowdown", help="CPU Slowdown factor (1 means no slowdown)", choices=[1, 2, 4], type=int, default=1
 )
+@command.argument(
+    "--user_data_dir",
+    help="The Chrome user data directory contains cached files (in case of using warm cache)",
+    type=str,
+    default=None,
+)
+@command.argument(
+    "--speed_index",
+    help="Returns the speed index of the page calculated using pwmetrics. As a float.",
+    action="store_true",
+)
 @command.command
 def test_push(args):
     """
@@ -68,6 +79,8 @@ def test_push(args):
         latency=args.latency,
         cpu_slowdown=args.cpu_slowdown,
         only_simulator=args.only_simulator,
+        speed_index=args.speed_index,
+        user_data_dir=args.user_data_dir,
     )
     return 0
 
@@ -134,6 +147,8 @@ def _test_push(
     latency: Optional[int],
     cpu_slowdown: Optional[int],
     only_simulator: Optional[bool],
+    speed_index: Optional[bool],
+    user_data_dir: Optional[str],
 ):
     env_config = EnvironmentConfig.load_file(manifest)
     default_client_env = get_default_client_environment()
@@ -148,7 +163,7 @@ def _test_push(
     if not only_simulator:
         config = get_config(env_config)
         plt, push_plts, policies = _get_results_in_replay_server(
-            config, client_env, iterations, max_retries, policy_generator
+            config, client_env, iterations, max_retries, policy_generator, user_data_dir, speed_index
         )
         data["replay_server"] = {
             "without_policy": plt,
@@ -175,9 +190,16 @@ def _get_results_in_replay_server(
     iterations: int,
     max_retries: int,
     policy_generator: Callable[[List[PushGroup]], Policy],
+    user_data_dir: Optional[str] = None,
+    speed_index: Optional[bool] = False,
 ) -> Tuple[float, List[float], List[Policy]]:
     log.debug("capturing median PLT in mahimahi with given environment")
-    orig_plt, *_ = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config)
+    if not speed_index:
+        orig_plt, *_ = get_page_load_time_in_replay_server(
+            config.env_config.request_url, client_env, config, user_data_dir
+        )
+    else:
+        orig_plt = get_speed_index_in_replay_server(config.env_config.request_url, client_env, config, user_data_dir)
 
     plts = []
     policies = []
@@ -190,7 +212,14 @@ def _get_results_in_replay_server(
         log.debug(json.dumps(policy.as_dict, indent=4))
 
         try:
-            plt, *_ = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, policy)
+            if not speed_index:
+                plt, *_ = get_page_load_time_in_replay_server(
+                    config.env_config.request_url, client_env, config, user_data_dir, policy
+                )
+            else:
+                plt = get_speed_index_in_replay_server(
+                    config.env_config.request_url, client_env, config, user_data_dir, policy
+                )
             plts.append(plt)
             policies.append(policy)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError, FileNotFoundError) as e:
