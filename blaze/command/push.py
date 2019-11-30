@@ -158,7 +158,12 @@ def _test_push(
         cpu_slowdown or default_client_env.cpu_slowdown,
     )
 
-    data = {"client_env": client_env._asdict(), "url": env_config.request_url}
+    data = {
+        "client_env": client_env._asdict(),
+        "url": env_config.request_url,
+        "cache": "warm" if user_data_dir else "cold",
+        "metric": "speed_index" if speed_index else "plt",
+    }
 
     if not only_simulator:
         config = get_config(env_config)

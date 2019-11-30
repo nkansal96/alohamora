@@ -55,39 +55,6 @@ public class TreeDiffWebService {
             }
 
         }));
-        get("/getTreeDiff", (request, response) -> {
-            JSONObject jsonOutput = new JSONObject();
-            String treeData1 = request.queryMap().get("tree1").value();;
-            String treeData2 = request.queryMap().get("tree2").value();;
-            if (treeData1 == null || treeData2 == null) {
-                response.status(406);
-                jsonOutput.put("status", "error");
-                jsonOutput.put("editDistance", -1);
-                jsonOutput.put("message", "Error: query must include tree1 and tree2.");
-                return jsonOutput.toString();
-            } else {
-                try {
-                    return t.getDiffBetweenStrings(treeData1, treeData2);
-                } catch (JSONException e) {
-                    response.status(406);
-                    jsonOutput.put("status", "error");
-                    jsonOutput.put("editDistance", -1);
-                    jsonOutput.put("message", "Error: query was malformed. Please ensure it is a valid JSON.");
-                    return jsonOutput.toString();
-                } catch (Exception e) {
-                    response.status(500);
-                    jsonOutput.put("status", "error");
-                    jsonOutput.put("editDistance", -1);
-                    jsonOutput.put("message", "Error: Unable to parse input query.");
-                    return jsonOutput.toString();
-                }
-
-            }
-        });
-
-        post("/", (request, response) -> {
-            return "Post root";
-        });
     }
 
 }
