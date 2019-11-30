@@ -14,13 +14,12 @@ public class AppTest {
      * string is JSON representation of a tree
      */
     @Test public void equalTreesHaveZeroEditDistance() {
-        App classUnderTest = new App();
         InputParser parser = new InputParser();
         Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1,2],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"2\":{\"children\":[],\"size\":50,\"type\":\"text/css\"},\"length\":3}");
         Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1,2],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"2\":{\"children\":[],\"size\":50,\"type\":\"text/css\"},\"length\":3}");
         APTED<CostModel, NodeData> apted = new APTED<>(new CostModel());
         float result = apted.computeEditDistance(t1, t2);
-        assertEquals(result, 0.0, 0);
+        assertEquals(0.0, result, 0);
     }
 
     /**
@@ -28,13 +27,12 @@ public class AppTest {
      * string is JSON representation of a tree
      */
     @Test public void leftHasOneExtra() {
-        App classUnderTest = new App();
         InputParser parser = new InputParser();
         Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1,2],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"2\":{\"children\":[],\"size\":50,\"type\":\"text/css\"},\"length\":3}");
         Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
         APTED<CostModel, NodeData> apted = new APTED<>(new CostModel());
         float result = apted.computeEditDistance(t1, t2);
-        assertEquals(result, 1.0, 0);
+        assertEquals(1.0, result, 0);
     }
 
     /**
@@ -42,7 +40,6 @@ public class AppTest {
      * string is JSON representation of a tree
      */
     @Test public void rightHasOneExtra() {
-        App classUnderTest = new App();
         InputParser parser = new InputParser();
         Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
         Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1,2],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"2\":{\"children\":[],\"size\":50,\"type\":\"text/css\"},\"length\":3}");
@@ -56,7 +53,6 @@ public class AppTest {
      * string is JSON representation of a tree
      */
     @Test public void rightHasOneElementWithOneChange() {
-        App classUnderTest = new App();
         InputParser parser = new InputParser();
         Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
         Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1],\"size\":90,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
@@ -70,7 +66,6 @@ public class AppTest {
      * string is JSON representation of a tree
      */
     @Test public void leftHasOneElementWithOneChange() {
-        App classUnderTest = new App();
         InputParser parser = new InputParser();
         Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1],\"size\":90,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
         Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
@@ -84,7 +79,6 @@ public class AppTest {
      * string is JSON representation of a tree
      */
     @Test public void rightHasOneElementWithTwoChanges() {
-        App classUnderTest = new App();
         InputParser parser = new InputParser();
         Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
         Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1],\"size\":90,\"type\":\"image/png\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
@@ -98,7 +92,6 @@ public class AppTest {
      * string is JSON representation of a tree
      */
     @Test public void leftHasOneElementWithTwoChanges() {
-        App classUnderTest = new App();
         InputParser parser = new InputParser();
         Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1],\"size\":90,\"type\":\"image/png\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
         Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
@@ -112,7 +105,6 @@ public class AppTest {
      * string is JSON representation of a tree
      */
     @Test public void rightHasTwoElementsWithTwoChanges() {
-        App classUnderTest = new App();
         InputParser parser = new InputParser();
         Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");
         Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1],\"size\":90,\"type\":\"image/png\"},\"1\":{\"children\":[],\"size\":70,\"type\":\"text/css\"},\"length\":2}");
@@ -126,7 +118,6 @@ public class AppTest {
      * string is JSON representation of a tree
      */
     @Test public void leftHasTwoElementsWithTwoChanges() {
-        App classUnderTest = new App();
         InputParser parser = new InputParser();
         Node<NodeData> t1 = parser.fromString("{\"0\":{\"children\":[1],\"size\":90,\"type\":\"image/png\"},\"1\":{\"children\":[],\"size\":70,\"type\":\"text/css\"},\"length\":2}");
         Node<NodeData> t2 = parser.fromString("{\"0\":{\"children\":[1],\"size\":100,\"type\":\"text/html\"},\"1\":{\"children\":[],\"size\":75,\"type\":\"image/jpeg\"},\"length\":2}");

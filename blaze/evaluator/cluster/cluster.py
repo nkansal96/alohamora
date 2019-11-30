@@ -60,7 +60,7 @@ class AgglomerativeCluster(_Cluster):
         def pairwise_distances(p):
             return [distance_matrix[p[k]][p[y]] for k in range(len(p)) for y in range(k + 1, len(p))]
 
-        max_num_clusters = len(x) - 1
+        max_num_clusters = 1 + len(x) // 2
         best_labels = [0]
         best_score = 1000000000
 
@@ -72,8 +72,10 @@ class AgglomerativeCluster(_Cluster):
             for i, label in enumerate(labels.tolist()):
                 cluster_points[label].append(i)
 
-            variances = [np.var(pairwise_distances(points)) for points in cluster_points.items()]
-            score = 0.5 * c + np.var(variances)
+            variances = [
+                np.average(pairwise_distances(points)) for points in cluster_points.values() if len(points) > 1
+            ]
+            score = c + np.var(variances)
 
             if score < best_score:
                 best_score = score
