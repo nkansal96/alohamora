@@ -163,7 +163,7 @@ def worker(results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, lat
 
 
 def generate_random_params():
-    bandwidth = list(range(12, 25, 2))
+    bandwidth = list(range(12000, 24001, 2000))
     latency = list(range(20, 101, 20))
     cpu = [2, 4]
     return list(itertools.product(bandwidth, cpu, latency))
