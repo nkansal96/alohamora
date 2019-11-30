@@ -32,6 +32,11 @@ def record(args):
 @command.argument("--output", help="The location to save the prepared manifest", required=True)
 @command.argument("--record_dir", help="The directory of the recorded webpage", required=True)
 @command.argument(
+    "--extract_critical_requests",
+    help="Returns the response taking into account the critical resources in the page",
+    action="store_true",
+)
+@command.argument(
     "--train_domain_globs",
     nargs="*",
     help="The glob patterns of domain names to enable training for. "
@@ -55,7 +60,7 @@ def preprocess(args):
 
     log.info("capturing execution")
     client_env = get_default_client_environment()
-    har_resources = get_har_resources(args.website, config, client_env)
+    har_resources = get_har_resources(args.website, config, client_env, args.extract_critical_requests)
 
     log.info("finding dependency stable set...")
     res_list = find_url_stable_set(args.website, config)
@@ -81,16 +86,19 @@ def get_page_links(args):
     print(_get_page_links(args.website, max_depth=args.max_depth))
 
 
-def get_har_resources(website, config, client_env):
+def get_har_resources(website, config, client_env, extract_critical_requests):
     """
     Returns the HAR entries in the website including information about the critical requests.
     """
     har = capture_har_in_replay_server(website, config, client_env)
+    if not extract_critical_requests:
+        return har_entries_to_resources(har)
     har2 = capture_har_in_replay_server(website, config, client_env, extract_critical_requests=True)
 
     critical_requests = set(h.request.url for h in har2.log.entries if h.critical)
     for res in har.log.entries:
         if res.request.url in critical_requests:
+            print("doing some critical work")
             res._replace(critical=True)
 
     return har_entries_to_resources(har)
