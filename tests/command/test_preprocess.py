@@ -50,10 +50,8 @@ class TestPreprocess:
         client_env = get_default_client_environment()
         config = get_config(EnvironmentConfig(replay_dir=output_dir, request_url="https://cs.ucla.edu"))
 
-        assert mock_capture_har_in_mahimahi.call_count == 2
-        mock_capture_har_in_mahimahi.assert_called_with(
-            "https://cs.ucla.edu", config, client_env, extract_critical_requests=True
-        )
+        assert mock_capture_har_in_mahimahi.call_count == 1
+        mock_capture_har_in_mahimahi.assert_called_with("https://cs.ucla.edu", config, client_env)
 
     @mock.patch("blaze.command.preprocess.capture_har_in_replay_server")
     def test_runs_successfully_with_train_domain_suffix(self, mock_capture_har_in_mahimahi):
@@ -86,13 +84,11 @@ class TestPreprocess:
         client_env = get_default_client_environment()
         config = get_config(EnvironmentConfig(replay_dir=output_dir, request_url="https://cs.ucla.edu"))
 
-        assert mock_capture_har_in_mahimahi.call_count == 2
-        mock_capture_har_in_mahimahi.assert_called_with(
-            "https://cs.ucla.edu", config, client_env, extract_critical_requests=True
-        )
+        assert mock_capture_har_in_mahimahi.call_count == 1
+        mock_capture_har_in_mahimahi.assert_called_with("https://cs.ucla.edu", config, client_env)
 
 
 class TestGetHarResources:
     def test_exits_with_missing_arguments(self):
         with pytest.raises(TypeError):
-            get_har_resources([])
+            get_har_resources(None, None, None)
