@@ -79,7 +79,7 @@ def page_load_time(args):
                 config.env_config.request_url, client_env, config, args.user_data_dir
             )
             if policy:
-                plt, *_ = get_speed_index_in_replay_server(
+                plt, *_ = get_page_load_time_in_replay_server(
                     config.env_config.request_url, client_env, config, args.user_data_dir, policy
                 )
         else:
