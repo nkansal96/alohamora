@@ -28,6 +28,7 @@ class Resource(NamedTuple):
     group_id: int = 0
     source_id: int = 0
     initiator: int = 0
+    critical: bool = False
 
     execution_ms: float = 0
     fetch_delay_ms: float = 0

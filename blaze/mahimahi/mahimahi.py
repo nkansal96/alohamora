@@ -28,6 +28,8 @@ class MahiMahiConfig:
         policy_file_name: Optional[str] = None,
         link_trace_file_name: str = "",
         capture_url: str,
+        user_data_dir: Optional[str] = None,
+        extract_critical_requests: bool = False,
     ) -> List[str]:
         """
         Returns the full command to run that replays the configured folder with the given
@@ -49,6 +51,8 @@ class MahiMahiConfig:
             f"{self.config.env_config.replay_dir}:/mnt/filestore",
             "-v",
             f"{share_dir}:/mnt/share",
+            "-v",
+            *([f"{user_data_dir}:/mnt/chrome-user-dir"] if user_data_dir else []),
             self.config.http2push_image,
             "--file-store-path",
             "/mnt/filestore",
@@ -58,9 +62,45 @@ class MahiMahiConfig:
             *(["--link-trace-path", f"/mnt/share/{link_trace_file_name}"] if link_trace_file_name else []),
             *(["--link-latency-ms", str(self.client_environment.latency // 2)] if self.client_environment else []),
             *(["--cpu-slowdown", str(self.client_environment.cpu_slowdown)] if self.client_environment else []),
+            *(["--user-data-dir /mnt/chrome-user-dir"] if user_data_dir else []),
+            *(["--extract-critical-requests"] if extract_critical_requests else []),
             "--url",
             capture_url,
         ]
+
+    def si_capture_cmd(
+        self,
+        *,
+        share_dir: str,
+        si_output_file_name: str,
+        policy_file_name: Optional[str] = None,
+        link_trace_file_name: str = "",
+        capture_url: str,
+        user_data_dir: str,
+        extract_critical_requests: Optional[bool] = False,
+    ) -> List[str]:
+        """
+        Returns the full command to run that replays the configured folder with the given
+        push policy and link trace name and stores speed index output in the given output locations.
+
+        :param share_dir: the directory to share to the container
+        :param har_output_file_name: the file inside share_dir to write the HAR output to
+        :param policy_file_name: the file inside share_dir to read the push/preload policy from (JSON formatted)
+        :param link_trace_file_name: the file inside share_dir to read the link trace from (Mahimahi formatted). If not
+                                     specified, no mm-link shell will be spawned.
+        :param capture_url: The url to capture HAR for
+        """
+        har_cmd = self.har_capture_cmd(
+            share_dir=share_dir,
+            har_output_file_name=si_output_file_name,
+            policy_file_name=policy_file_name,
+            link_trace_file_name=link_trace_file_name,
+            capture_url=capture_url,
+            user_data_dir=user_data_dir,
+            extract_critical_requests=extract_critical_requests,
+        )
+        har_cmd.append("--speed-index")
+        return har_cmd
 
     def record_shell_with_cmd(self, save_dir: str, cmd: List[str]) -> List[str]:
         """

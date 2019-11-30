@@ -46,6 +46,7 @@ class HarEntry(NamedTuple):
     started_date_time: str
     request: Request
     response: Response
+    critical: bool
 
 
 class HarLog(NamedTuple):

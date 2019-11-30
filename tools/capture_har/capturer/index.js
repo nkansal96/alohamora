@@ -5,7 +5,7 @@ const chromeRemoteDebugger = require('chrome-remote-interface');
 
 const { arrayMin, arraySum, asyncWait } = require('../utils');
 
-const chromeFlags = [
+let chromeFlags = [
   "--allow-insecure-localhost",
   "--disable-background-networking",
   "--disable-default-apps",
@@ -24,11 +24,12 @@ class HarCapturer {
     this.host = options.host;
     this.port = options.port;
     this.options = options;
-
+    
     this.navStart = 0;
     this.resources = {};
     this.timings = {};
     this.events = [];
+    this.critical_request_urls = [];
   }
 
   async captureHar() {
@@ -57,13 +58,33 @@ class HarCapturer {
       await client.Page.enable();
       await client.Network.enable();
       await client.Tracing.start();
+      
+      if(this.options.extractCriticalRequests) {
+        await client.Runtime.enable();
+        client.Runtime.consoleAPICalled((loggedObject) => {
+          if (loggedObject.type == 'log' && typeof(loggedObject.args) != "undefined") {
+            for (let index = 0; index < loggedObject.args.length; index++) {
+              const element = loggedObject.args[index];
+              let logOutput = element["value"];
+              if (typeof(logOutput) != "undefined" && logOutput.indexOf("alohomora_output") >= 0) {
+                try {
+                  logOutput = JSON.parse(logOutput);
+                  logOutput["alohomora_output"].forEach(e => this.critical_request_urls.push(e));  
+                } catch (error) {
+                  console.error(`critical req not found.`);
+                }
+                
+              }
+            }
+          }
+        });
+      } 
 
+      
       await client.Page.navigate({ url: this.url });
       this.navStart = Date.now();
-
       await client.Page.loadEventFired();
       await client.Tracing.end();
-
       return new Promise((resolve, reject) => {
         client.Tracing.tracingComplete(() => {
           client.close();
@@ -81,6 +102,7 @@ class HarCapturer {
   logRequest({ requestId, request, initiator}) {
     this.resources[requestId] = {
       started_date_time: (new Date()).toISOString(),
+      critical: false,
       request: {
         url: request.url,
         method: request.method,
@@ -200,7 +222,19 @@ class HarCapturer {
         .filter(t => t > 0)
     );
     const filtered_res = Object.values(this.resources)
-      .filter(r => this.timings[r.request.url].initiated_at <= first_load_time_ms + pageLoadTimeMs);
+      .filter(r => this.timings[r.request.url].initiated_at <= first_load_time_ms + pageLoadTimeMs)
+      .map (r => {
+        r.critical = false;
+        if (this.options.extractCriticalRequests == false) {
+          return r;
+        }
+        else {
+          if (this.critical_request_urls.includes(r.request.url)) {
+            r.critical = true;
+          }
+          return r;
+        }
+      })
 
     return {
       log: {
@@ -214,9 +248,12 @@ class HarCapturer {
   }
 }
 
-const captureHar = async (url, slowdown) => {
+const captureHar = async (url, slowdown, extractCriticalRequests, userDataDir) => {
   let chrome;
   try {
+    if(typeof(userDataDir) != "undefined" && userDataDir != '') {
+      chromeFlags.push(`--user-data-dir=${userDataDir}`)
+    }
     chrome = await chromeLauncher.launch({ chromeFlags });
     await asyncWait(2000);
 
@@ -225,6 +262,7 @@ const captureHar = async (url, slowdown) => {
       port: chrome.port,
       url,
       slowdown,
+      extractCriticalRequests,
     });
   
     const res = await capturer.captureHar();
@@ -236,8 +274,8 @@ const captureHar = async (url, slowdown) => {
   }
 };
 
-module.exports = async (url, slowdown, outputFile) => {
-  const res = await captureHar(url, slowdown);
+module.exports = async (url, slowdown, outputFile, extractCriticalRequests, userDataDir) => {
+  const res = await captureHar(url, slowdown, extractCriticalRequests, userDataDir);
   const json = JSON.stringify(res);
   if (outputFile) {
     fs.writeFileSync(outputFile, json);
