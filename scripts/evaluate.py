@@ -68,9 +68,10 @@ def get_args():
     parser.add_argument("--manifests_dir", required=True, help="Directory of stored training manifests")
     parser.add_argument("--num_workers", default=4, type=int, help="Number of workers to use")
 
-    parser.add_argument("--bandwidth", required=True, type=int, help="bandwidth to test with")
-    parser.add_argument("--latency", required=True, type=int, help="latency to test with")
-    parser.add_argument("--cpu_slowdown", required=True, type=int, choices=[1, 2, 4], help="cpu_slowdown to test with")
+    parser.add_argument("--bandwidth", type=int, help="bandwidth to test with")
+    parser.add_argument("--latency", type=int, help="latency to test with")
+    parser.add_argument("--cpu_slowdown", type=int, choices=[1, 2, 4], help="cpu_slowdown to test with")
+    parser.add_argument("--randomize", help="set this flag to randomly choose bw, latency and cpu", action='store_true')
     parser.add_argument(
         "--reward_func",
         required=True,
@@ -102,17 +103,17 @@ def get_test_websites(ray_results_dir):
         yield latest_checkpoint_file, experiment_name
 
 
-def get_results_fname(experiment_name, results_dir):
-    return os.path.join(results_dir, experiment_name)
+def get_results_fname(experiment_name, results_dir, bandwidth='', cpu_slowdown='', latency=''):
+    return os.path.join(results_dir, experiment_name+str(bandwidth)+'_'+str(latency)+'_'+str(cpu_slowdown))
 
 
 def website_exists(experiment_name, results_dir):
     return os.path.exists(get_results_fname(experiment_name, results_dir) + ".json")
 
 
-def test_website(args, checkpoint_file, experiment_name):
-    with open(get_results_fname(experiment_name, args.results_dir) + ".json", "ab+") as outf:
-        with open(get_results_fname(experiment_name, args.results_dir) + ".log", "ab+") as errf:
+def test_website(results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, latency, checkpoint_file, experiment_name):
+    with open(get_results_fname(experiment_name, results_dir, bandwidth, cpu_slowdown, latency) + ".json", "ab+") as outf:
+        with open(get_results_fname(experiment_name, results_dir, bandwidth, cpu_slowdown, latency) + ".log", "ab+") as errf:
             monitor_process(
                 [
                     "blaze",
@@ -122,15 +123,15 @@ def test_website(args, checkpoint_file, experiment_name):
                     "--location",
                     checkpoint_file,
                     "--manifest",
-                    os.path.join(args.manifests_dir, experiment_name) + ".manifest",
+                    os.path.join(manifests_dir, experiment_name) + ".manifest",
                     "--latency",
-                    str(args.latency),
+                    str(latency),
                     "--bandwidth",
-                    str(args.bandwidth),
+                    str(bandwidth),
                     "--cpu_slowdown",
-                    str(args.cpu_slowdown),
+                    str(cpu_slowdown),
                     "--reward_func",
-                    str(args.reward_func),
+                    str(reward_func),
                     "--run_simulator",
                     "--run_replay_server",
                 ],
@@ -140,26 +141,52 @@ def test_website(args, checkpoint_file, experiment_name):
             )
 
 
-def worker(args, checkpoint_file, experiment_name):
+def worker(results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, latency, checkpoint_file, experiment_name):
     try:
-        if website_exists(experiment_name, args.results_dir):
+        if website_exists(experiment_name, results_dir):
             print(f"evaluating {checkpoint_file} ... skipping (already exists)")
             return
         print(f"evaluating {checkpoint_file} ...")
-        test_website(args, checkpoint_file, experiment_name)
+        test_website(results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, latency, checkpoint_file, experiment_name)
     except KeyboardInterrupt:
         raise
     except:
         traceback.print_exc()
 
+def generate_random_params():
+    # {12, 14, 16, 18, 20, 22, 24} * {20, 40, 60, 80, 100} * {2x, 4x}
+    while True:
+        for cpu in range(2):
+            for latency in range(5):
+                for bandwidth in range(7):
+                    chosen_cpu = (cpu + 1) * 2
+                    chosen_latency = (latency + 1) * 20
+                    chosen_bandwidth = 12 + (bandwidth * 2)
+                    yield (chosen_bandwidth, chosen_cpu, chosen_latency)
 
 def main(args):
-    websites = list(get_test_websites(args.ray_results_dir))
-    with concurrent.futures.ThreadPoolExecutor(max_workers=args.num_workers) as pool:
-        f = [
-            pool.submit(worker, args, checkpoint_file, experiment_name) for checkpoint_file, experiment_name in websites
-        ]
-        print("Finished processing", len([p.result() for p in f]), "websites")
+    if (not args.randomize) and (args.bandwidth is None or args.cpu_slowdown is None or args.latency is None):
+        print("Either choose randomize option or provide all three of (bw, latency, cpu).")
+    else:
+        websites = list(get_test_websites(args.ray_results_dir))
+        with concurrent.futures.ThreadPoolExecutor(max_workers=args.num_workers) as pool:
+            random_params = generate_random_params()
+            for checkpoint_file, experiment_name in websites:
+                for i in range(70):
+                    print("starting permutation ", i, " for website ", checkpoint_file, experiment_name)
+                    results_dir = args.results_dir
+                    manifests_dir = args.manifests_dir
+                    reward_func = args.reward_func
+                    if args.randomize:
+                        bandwidth, cpu_slowdown, latency = random_params.__next__()
+                    else:
+                        bandwidth = 0
+                        cpu_slowdown = 0
+                        latency = 0
+                    f = [
+                        pool.submit(worker, results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, latency, checkpoint_file, experiment_name)
+                    ]
+                    print("Finished processing", len([p.result() for p in f]), "websites")
 
 
 if __name__ == "__main__":
