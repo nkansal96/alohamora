@@ -117,7 +117,9 @@ def evaluate(args):
 
     if args.run_replay_server:
         *_, plts = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config)
-        *_, push_plts = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, policy=policy)
+        *_, push_plts = get_page_load_time_in_replay_server(
+            config.env_config.request_url, client_env, config, policy=policy
+        )
         data["replay_server"] = {"without_policy": plts, "with_policy": push_plts}
 
     print(json.dumps(data, indent=4))
