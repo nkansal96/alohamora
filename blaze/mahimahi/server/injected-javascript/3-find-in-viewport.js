@@ -22,16 +22,6 @@ function isAnyPartOfElementInViewport(el) {
     return (vertInView && horInView);
 }
 
-function printCriticalRequests() {
-    urlRequestors.forEach(function(k) {
-        if (imagesInViewPort.includes(k.url)) {
-            console.log(`${k.url} is requested by ${k.initiator}`)
-        } else {
-            console.log(`${k.url} is not in viewport.`)
-        }
-    })
-}
-
 function getCriticalRequests() {
     importantRequests = []
     importantRequests = imagesInViewPort.map(function(url) {return url;});
@@ -68,21 +58,27 @@ function findAndPrintImagesInViewport(ele) {
 }
 
 window.addEventListener('load', function (event) {
-    var listOfIframes = document.querySelectorAll("iframe");
-    for (var index = 0; listOfIframes && index < listOfIframes.length; index++) {
-        const iframeElement = listOfIframes[index];
-        if(typeof(iframeElement) == 'undefined') {
-            continue;
-        }
-        if(iframeElement && isAnyPartOfElementInViewport(iframeElement)) {
-            try {
-                var innerDoc = (iframeElement.contentDocument) ? iframeElement.contentDocument : iframeElement.contentWindow.document;    
-                findAndPrintImagesInViewport(innerDoc)
-            } catch (error) {
-                console.log('avoid processing iframe due to an exception ', error)
+    console.log("window onload")
+    try {
+        var listOfIframes = document.querySelectorAll("iframe");
+        for (var index = 0; listOfIframes && index < listOfIframes.length; index++) {
+            const iframeElement = listOfIframes[index];
+            if(typeof(iframeElement) == 'undefined') {
+                continue;
             }
-        }
+            if(iframeElement && isAnyPartOfElementInViewport(iframeElement)) {
+                try {
+                    var innerDoc = (iframeElement.contentDocument) ? iframeElement.contentDocument : iframeElement.contentWindow.document;    
+                    findAndPrintImagesInViewport(innerDoc)
+                } catch (error) {
+                    console.log('avoid processing iframe due to an exception ', error)
+                }
+            }
+        }    
+    } catch (error) {
+        console.log("skipping iframes due to error ", error)
     }
+    
     findAndPrintImagesInViewport(document)
   });
 

@@ -1,4 +1,5 @@
 function htmlToElement(html) {
+    console.log("in html to element")
     try {
         var template = document.createElement('template');
         if (typeof html.trim != "undefined") {
@@ -15,27 +16,31 @@ function htmlToElement(html) {
 
 /* XHR intercept */
 
-let open = window.XMLHttpRequest.prototype.open;
+
 let urlRequestors = [];
 
 let stackInterceptCallback = function (stackframes, url) {
-    // if(url.match(/\.(jpeg|jpg|gif|png)$/i) == null) return; // only worry about images
+    console.log("in stack intercept callback")
     // if we have a stack, and the url we are currently looking at is not for a stacktrace related request
-    if(stackframes.length > 0 && url != 'https://cdnjs.cloudflare.com/ajax/libs/stacktrace.js/2.0.1/stacktrace.min.js') {
-    // if the request was not initiated by stacktrace
-    if ('https://cdnjs.cloudflare.com/ajax/libs/stacktrace.js/2.0.1/stacktrace.min.js' != stackframes[stackframes.length - 1].fileName) {
-    urlRequestors.push({
-        'url': url,
-        'initiator': stackframes.map(function(s){return s.fileName;} ) //[[stackframes.length - 1].fileName, stackframes[stackframes.length - 2].fileName],
-    })
-}
+    try {
+        if(stackframes.length > 0 && url != 'https://cdnjs.cloudflare.com/ajax/libs/stacktrace.js/2.0.1/stacktrace.min.js') {
+            // if the request was not initiated by stacktrace
+            if ('https://cdnjs.cloudflare.com/ajax/libs/stacktrace.js/2.0.1/stacktrace.min.js' != stackframes[stackframes.length - 1].fileName) {
+                urlRequestors.push({
+                    'url': url,
+                    'initiator': stackframes.map(function(s){return s.fileName;} ) //[[stackframes.length - 1].fileName, stackframes[stackframes.length - 2].fileName],
+                })
+            }
+        }        
+    } catch (error) {
+        console.log("error caught ", error)
+    }
 
-// urlRequestors[url] = stackframes[stackframes.length - 1].fileName
-}
 };
+
 let stackInterceptErrBack = function(err) { console.log(err.message); };
 
-
+let openOrig = window.XMLHttpRequest.prototype.open;
 function openReplacement(method, url, async, user, password) {
     this._url = url;
     StackTrace.get()
@@ -44,7 +49,7 @@ function openReplacement(method, url, async, user, password) {
     }).catch(function(err) {
         stackInterceptErrBack(err);
     }) 
-    return open.apply(this, arguments);
+    return openOrig.apply(this, arguments);
 }
 
 window.XMLHttpRequest.prototype.open = openReplacement;
