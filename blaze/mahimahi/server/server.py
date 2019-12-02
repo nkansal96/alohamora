@@ -30,13 +30,16 @@ def prepend_javascript_snippet(input_string: str):
     """
     soup = BeautifulSoup(input_string, "html.parser")
     stack_trace_dependency = soup.new_tag("script")
-    with open("/home/murali/Code/blaze/blaze/mahimahi/server/injected-javascript/1-stacktrace.js") as f:
+    # in docker this should be /opt/blaze/blaze/mahimahi/server/injected-javascript
+    # in host, this should point to the folder in the machine like /home/murali/Code/blaze/blaze/mahimahi/server/injected-javascript
+    dir_name = "/opt/blaze/blaze/mahimahi/server/injected-javascript"
+    with open(os.path.join(dir_name, "1-stacktrace.js")) as f:
         stack_trace_dependency.string = f.read()
     interceptor = soup.new_tag("script")
-    with open("/home/murali/Code/blaze/blaze/mahimahi/server/injected-javascript/2-interceptor.js") as f:
+    with open(os.path.join(dir_name, "2-interceptor.js")) as f:
         interceptor.string = f.read()
     critical_catcher = soup.new_tag("script")
-    with open("/home/murali/Code/blaze/blaze/mahimahi/server/injected-javascript/3-find-in-viewport.js") as f:
+    with open(os.path.join(dir_name, "3-find-in-viewport.js")) as f:
         critical_catcher.string = f.read()
     if soup.html is not None:
         soup.html.insert(0, critical_catcher)
