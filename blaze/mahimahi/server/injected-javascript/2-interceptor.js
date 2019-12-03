@@ -1,5 +1,37 @@
+if (!StackTrace) {
+    var StackTrace = function () {
+
+    }
+    
+    StackTrace.prototype.get = function () {
+        // console.log("using mock stack trace")
+        try {
+            throw new Error()
+        } catch (err) {
+            var fileNames = err.stack.split('\n').map(function(l) {
+                // var regExp = /^at (?:.* \()?(.*):\d+:\d+[\n\)]?$/
+                var regExp = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)/
+                var matches = regExp.exec(l.trim())
+                if (matches != null && matches.length > 1) {
+                    return matches[1]
+                } else {
+                    return null
+                }
+            }).filter(function(x) {
+                return x != null;
+            })
+            var returnObject = fileNames.map(function(ele) {
+                return {fileName: ele};
+            })
+            return Promise.resolve(returnObject)
+        }
+    }
+
+    window.StackTrace = new StackTrace()
+}
+
 function htmlToElement(html) {
-    console.log("in html to element")
+    // console.log("in html to element")
     try {
         var template = document.createElement('template');
         if (typeof html.trim != "undefined") {
@@ -17,10 +49,9 @@ function htmlToElement(html) {
 /* XHR intercept */
 
 
-let urlRequestors = [];
+var urlRequestors = [];
 
-let stackInterceptCallback = function (stackframes, url) {
-    console.log("in stack intercept callback")
+var stackInterceptCallback = function (stackframes, url) {
     // if we have a stack, and the url we are currently looking at is not for a stacktrace related request
     try {
         if(stackframes.length > 0 && url != 'https://cdnjs.cloudflare.com/ajax/libs/stacktrace.js/2.0.1/stacktrace.min.js') {
@@ -38,9 +69,9 @@ let stackInterceptCallback = function (stackframes, url) {
 
 };
 
-let stackInterceptErrBack = function(err) { console.log(err.message); };
+var stackInterceptErrBack = function(err) { console.log(err.message); };
 
-let openOrig = window.XMLHttpRequest.prototype.open;
+var openOrig = window.XMLHttpRequest.prototype.open;
 function openReplacement(method, url, async, user, password) {
     this._url = url;
     StackTrace.get()
@@ -56,7 +87,7 @@ window.XMLHttpRequest.prototype.open = openReplacement;
 
 const _fetch = window.fetch;
 window.fetch = function() {
-    let url = arguments[0]
+    var url = arguments[0]
     StackTrace.get()
     .then(function(stackframes) {
         stackInterceptCallback(stackframes, url);
@@ -70,7 +101,7 @@ window.fetch = function() {
 document.old_write = document.write;
 
 document.write = function (str) {
-    let element = htmlToElement(str)
+    var element = htmlToElement(str)
     if(typeof element.href != 'undefined') {
         StackTrace.get()
         .then(function(stackframes) {
@@ -94,7 +125,7 @@ document.write = function (str) {
 document.old_writeln = document.writeln;
 
 document.writeln = function (str) {
-    let element = htmlToElement(str)
+    var element = htmlToElement(str)
     if(typeof element.href != 'undefined') {
         StackTrace.get()
         .then(function(stackframes) {
@@ -132,8 +163,8 @@ document.writeln = function (str) {
     });
     
     function my_function(value) {
-        let element = value
-        let url = getURLfromString(element)
+        var element = value
+        var url = getURLfromString(element)
         if (url != null) {
             StackTrace.get()
             .then(function(stackframes) {
@@ -152,7 +183,7 @@ document.writeln = function (str) {
 old_appendChild = Element.prototype.appendChild;
 
 Element.prototype.appendChild = function () {
-    let e = arguments[0]
+    var e = arguments[0]
     if(typeof e.href != 'undefined') {
         StackTrace.get()
         .then(function(stackframes) {
@@ -176,8 +207,8 @@ Element.prototype.appendChild = function () {
 old_append = Element.prototype.append;
 
 Element.prototype.append = function () {
-    let element = arguments[0] + ""
-    let url = getURLfromString(element)
+    var element = arguments[0] + ""
+    var url = getURLfromString(element)
     if (url != null) {
         StackTrace.get()
         .then(function(stackframes) {
@@ -187,7 +218,7 @@ Element.prototype.append = function () {
         }) 
     } else {
         element = arguments[0];
-        let e = htmlToElement(element)
+        var e = htmlToElement(element)
         if(typeof e.href != 'undefined') {
             StackTrace.get()
             .then(function(stackframes) {
@@ -203,7 +234,7 @@ Element.prototype.append = function () {
                 stackInterceptErrBack(err);
             }) 
         } else {            
-            let e = element
+            var e = element
             if(typeof e.href != 'undefined') {
                 StackTrace.get()
                 .then(function(stackframes) {
@@ -230,8 +261,8 @@ Element.prototype.append = function () {
 old_prepend = Element.prototype.prepend;
 
 Element.prototype.prepend = function () {
-    let element = arguments[0] + ""
-    let url = getURLfromString(element)
+    var element = arguments[0] + ""
+    var url = getURLfromString(element)
     if (url != null) {
         StackTrace.get()
         .then(function(stackframes) {
@@ -241,7 +272,7 @@ Element.prototype.prepend = function () {
         }) 
     } else {
         element = arguments[0];
-        let e = htmlToElement(element)
+        var e = htmlToElement(element)
         if(typeof e.href != 'undefined') {
             StackTrace.get()
             .then(function(stackframes) {
@@ -257,7 +288,7 @@ Element.prototype.prepend = function () {
                 stackInterceptErrBack(err);
             }) 
         } else {            
-            let e = element
+            var e = element
             if(typeof e.href != 'undefined') {
                 StackTrace.get()
                 .then(function(stackframes) {
@@ -283,8 +314,8 @@ Element.prototype.prepend = function () {
 old_before = Element.prototype.before;
 
 Element.prototype.before = function () {
-    let element = arguments[0] + ""
-    let url = getURLfromString(element)
+    var element = arguments[0] + ""
+    var url = getURLfromString(element)
     if (url != null) {
         StackTrace.get()
         .then(function(stackframes) {
@@ -294,7 +325,7 @@ Element.prototype.before = function () {
         }) 
     } else {
         element = arguments[0];
-        let e = htmlToElement(element)
+        var e = htmlToElement(element)
         if(typeof e.href != 'undefined') {
             StackTrace.get()
             .then(function(stackframes) {
@@ -310,7 +341,7 @@ Element.prototype.before = function () {
                 stackInterceptErrBack(err);
             }) 
         } else {            
-            let e = element
+            var e = element
             if(typeof e.href != 'undefined') {
                 StackTrace.get()
                 .then(function(stackframes) {
@@ -336,8 +367,8 @@ Element.prototype.before = function () {
 old_after = Element.prototype.after;
 
 Element.prototype.after = function () {
-    let element = arguments[0] + ""
-    let url = getURLfromString(element)
+    var element = arguments[0] + ""
+    var url = getURLfromString(element)
     if (url != null) {
         StackTrace.get()
         .then(function(stackframes) {
@@ -347,7 +378,7 @@ Element.prototype.after = function () {
         }) 
     } else {
         element = arguments[0];
-        let e = htmlToElement(element)
+        var e = htmlToElement(element)
         if(typeof e.href != 'undefined') {
             StackTrace.get()
             .then(function(stackframes) {
@@ -363,7 +394,7 @@ Element.prototype.after = function () {
                 stackInterceptErrBack(err);
             }) 
         } else {            
-            let e = element
+            var e = element
             if(typeof e.href != 'undefined') {
                 StackTrace.get()
                 .then(function(stackframes) {
@@ -390,7 +421,7 @@ Element.prototype.after = function () {
 old_insertBefore = Element.prototype.insertBefore;
 
 Element.prototype.insertBefore = function () {
-    let e = arguments[0]
+    var e = arguments[0]
     if(typeof e.href != 'undefined') {
         StackTrace.get()
         .then(function(stackframes) {
@@ -417,7 +448,7 @@ Element.prototype.insertBefore = function () {
 old_replaceWith = Element.prototype.replaceWith;
 
 Element.prototype.replaceWith = function () {
-    let e = arguments[0]
+    var e = arguments[0]
     if(typeof e.href != 'undefined') {
         StackTrace.get()
         .then(function(stackframes) {
@@ -441,8 +472,8 @@ Element.prototype.replaceWith = function () {
 old_insertAdjacentHTML = Element.prototype.insertAdjacentHTML;
 
 Element.prototype.insertAdjacentHTML = function () {
-    let element = arguments[1] + ""
-    let url = getURLfromString(element)
+    var element = arguments[1] + ""
+    var url = getURLfromString(element)
     if (url != null) {
         StackTrace.get()
         .then(function(stackframes) {
@@ -452,7 +483,7 @@ Element.prototype.insertAdjacentHTML = function () {
         }) 
     } else {
         element = arguments[1];
-        let e = htmlToElement(element)
+        var e = htmlToElement(element)
         if(typeof e.href != 'undefined') {
             StackTrace.get()
             .then(function(stackframes) {
@@ -468,7 +499,7 @@ Element.prototype.insertAdjacentHTML = function () {
                 stackInterceptErrBack(err);
             }) 
         } else {            
-            let e = element
+            var e = element
             if(typeof e.href != 'undefined') {
                 StackTrace.get()
                 .then(function(stackframes) {
@@ -494,8 +525,8 @@ Element.prototype.insertAdjacentHTML = function () {
 old_insertAdjacentText = Element.prototype.insertAdjacentText;
 
 Element.prototype.insertAdjacentText = function () {
-    let element = arguments[1] + ""
-    let url = getURLfromString(element)
+    var element = arguments[1] + ""
+    var url = getURLfromString(element)
     if (url != null) {
         StackTrace.get()
         .then(function(stackframes) {
@@ -505,7 +536,7 @@ Element.prototype.insertAdjacentText = function () {
         }) 
     } else {
         element = arguments[1];
-        let e = htmlToElement(element)
+        var e = htmlToElement(element)
         if(typeof e.href != 'undefined') {
             StackTrace.get()
             .then(function(stackframes) {
@@ -521,7 +552,7 @@ Element.prototype.insertAdjacentText = function () {
                 stackInterceptErrBack(err);
             }) 
         } else {            
-            let e = element
+            var e = element
             if(typeof e.href != 'undefined') {
                 StackTrace.get()
                 .then(function(stackframes) {
@@ -547,8 +578,8 @@ Element.prototype.insertAdjacentText = function () {
 old_insertAdjacentElement = Element.prototype.insertAdjacentElement;
 
 Element.prototype.insertAdjacentElement = function () {
-    let element = arguments[1] + ""
-    let url = getURLfromString(element)
+    var element = arguments[1] + ""
+    var url = getURLfromString(element)
     if (url != null) {
         StackTrace.get()
         .then(function(stackframes) {
@@ -558,7 +589,7 @@ Element.prototype.insertAdjacentElement = function () {
         }) 
     } else {
         element = arguments[1];
-        let e = htmlToElement(element)
+        var e = htmlToElement(element)
         if(typeof e.href != 'undefined') {
             StackTrace.get()
             .then(function(stackframes) {
@@ -574,7 +605,7 @@ Element.prototype.insertAdjacentElement = function () {
                 stackInterceptErrBack(err);
             }) 
         } else {            
-            let e = element
+            var e = element
             if(typeof e.href != 'undefined') {
                 StackTrace.get()
                 .then(function(stackframes) {
@@ -600,7 +631,7 @@ Element.prototype.insertAdjacentElement = function () {
 old_replaceChild = Element.prototype.replaceChild;
 
 Element.prototype.replaceChild = function () {
-    let e = arguments[0]
+    var e = arguments[0]
     if(typeof e.href != 'undefined') {
         StackTrace.get()
         .then(function(stackframes) {
@@ -623,30 +654,30 @@ Element.prototype.replaceChild = function () {
 /** Helpers */
 
 function getURLfromString(element) {
-    let url = null;
+    var url = null;
     try {
         if (element.indexOf("<") >= 0 && element.indexOf(">") >= 0) { // has < and >, so could be an html tag
             // don't want to use the htmlToElement function as that will recurse
             element = element.replace("= ", "=").replace("= ", "=")
             element = element.replace(/["']/g, "")
-            let start = element.indexOf("src=")
+            var start = element.indexOf("src=")
             if (start >= 0) {
-                let end = element.indexOf(" ", start)
+                var end = element.indexOf(" ", start)
                 if (end < 0) {
                     end = element.indexOf(">", start)
                 }
-                let s = element.substring(start, end)
+                var s = element.substring(start, end)
                 s = s.replace(" ", "")
                 s= s.replace("src=", "")
                 url = s.trim()
             } else {
                 start = element.indexOf("href=")
                 if(start >= 0) {
-                    let end = element.indexOf(" ", start)
+                    var end = element.indexOf(" ", start)
                     if (end < 0) {
                         end = element.indexOf(">", start)
                     }
-                    let s = element.substring(start, end)
+                    var s = element.substring(start, end)
                     s = s.replace(" ", "")
                     s = s.replace("href=", "")
                     url = s.trim()
