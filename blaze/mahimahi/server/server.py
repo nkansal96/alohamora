@@ -29,20 +29,19 @@ def prepend_javascript_snippet(input_string: str):
     converts back into string and returns
     """
     soup = BeautifulSoup(input_string, "html.parser")
+    if soup.html is None:
+        return str(soup)
     dir_name = "/opt/blaze/blaze/mahimahi/server/injected-javascript"
-    stack_trace_dependency = soup.new_tag("script")
-    stack_trace_dependency["type"] = "application/javascript"
-    interceptor = soup.new_tag("script")
-    interceptor["type"] = "application/javascript"
-    with open(os.path.join(dir_name, "interceptor.js")) as f:
-        interceptor.string = f.read()
-    critical_catcher = soup.new_tag("script")
-    critical_catcher["type"] = "application/javascript"
-    with open(os.path.join(dir_name, "find-in-viewport.js")) as f:
-        critical_catcher.string = f.read()
-    if soup.html is not None:
-        soup.html.insert(0, critical_catcher)
-        soup.html.insert(0, interceptor)
+    
+    for file_name in ["find-in-viewport.js", "interceptor.js"]:
+        curr_file = os.path.join(dir_name, file_name)
+        with open(curr_file) as f:
+            file_contents = f.read()
+            script_tag = soup.new_tag("script")
+            script_tag["type"] = "application/javascript"
+            script_tag.string = file_contents
+            soup.html.insert(0, script_tag)
+    
     return str(soup)
 
 
