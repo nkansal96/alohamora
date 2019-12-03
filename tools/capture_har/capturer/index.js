@@ -61,7 +61,6 @@ class HarCapturer {
       
       if(this.options.extractCriticalRequests) {
         await client.Runtime.enable();
-        console.log("enabled runtime")
         client.Runtime.consoleAPICalled((loggedObject) => {
           if(loggedObject.type != 'log') return;
           if (typeof(loggedObject.args) != "undefined") {
@@ -70,7 +69,6 @@ class HarCapturer {
               let logOutput = element["value"];
               try {
                 if (typeof(logOutput) == "string" && logOutput.indexOf("alohomora_output") >= 0) {
-                  
                     logOutput = JSON.parse(logOutput);
                     logOutput["alohomora_output"].forEach(e => this.critical_request_urls.push(e));   
               }} catch (error) {
@@ -84,9 +82,7 @@ class HarCapturer {
       
       await client.Page.navigate({ url: this.url });
       this.navStart = Date.now();
-      console.log('waiting for load')
       await client.Page.loadEventFired();
-      console.log('load fired')
       await client.Tracing.end();
       return new Promise((resolve, reject) => {
         client.Tracing.tracingComplete(() => {
