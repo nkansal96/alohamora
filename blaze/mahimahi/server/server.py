@@ -42,9 +42,13 @@ def prepend_javascript_snippet(input_string: str):
             soup.html.insert(0, script_tag)
     return str(soup)
 
+
 def inject_extract_critical_requests_javascript(file):
-    # tries to inject the two js files in the given file.
-    # throws exception if an error happens
+    """
+    tries to inject the two js files in the given file.
+    throws exception if an error happens
+    returns body as string after injection
+    """
     uncompressed_body = file.body
     gzipped_file = False
     if (
