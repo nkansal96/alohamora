@@ -29,22 +29,42 @@ def prepend_javascript_snippet(input_string: str):
     converts back into string and returns
     """
     soup = BeautifulSoup(input_string, "html.parser")
-    stack_trace_dependency = soup.new_tag("script")
+    
     # in docker this should be /opt/blaze/blaze/mahimahi/server/injected-javascript
     # in host, this should point to the folder in the machine like /home/murali/Code/blaze/blaze/mahimahi/server/injected-javascript
-    dir_name = "/opt/blaze/blaze/mahimahi/server/injected-javascript"
-    with open(os.path.join(dir_name, "1-stacktrace.js")) as f:
-        stack_trace_dependency.string = f.read()
-    interceptor = soup.new_tag("script")
-    with open(os.path.join(dir_name, "2-interceptor.js")) as f:
-        interceptor.string = f.read()
-    critical_catcher = soup.new_tag("script")
-    with open(os.path.join(dir_name, "3-find-in-viewport.js")) as f:
-        critical_catcher.string = f.read()
+    try:        
+        dir_name = "/opt/blaze/blaze/mahimahi/server/injected-javascript"
+        stack_trace_dependency = soup.new_tag("script")
+        stack_trace_dependency["type"] = "application/javascript"
+        with open(os.path.join(dir_name, "1-stacktrace.js")) as f:
+            stack_trace_dependency.string = f.read()
+        interceptor = soup.new_tag("script")
+        interceptor["type"] = "application/javascript"
+        with open(os.path.join(dir_name, "2-interceptor.js")) as f:
+            interceptor.string = f.read()
+        critical_catcher = soup.new_tag("script")
+        critical_catcher["type"] = "application/javascript"
+        with open(os.path.join(dir_name, "3-find-in-viewport.js")) as f:
+            critical_catcher.string = f.read()
+    except FileNotFoundError:
+        dir_name = "/home/murali/Code/blaze/blaze/mahimahi/server/injected-javascript"
+        stack_trace_dependency = soup.new_tag("script")
+        stack_trace_dependency["type"] = "application/javascript"
+        with open(os.path.join(dir_name, "1-stacktrace.js")) as f:
+            stack_trace_dependency.string = f.read()
+        interceptor = soup.new_tag("script")
+        interceptor["type"] = "application/javascript"
+        with open(os.path.join(dir_name, "2-interceptor.js")) as f:
+            interceptor.string = f.read()
+        critical_catcher = soup.new_tag("script")
+        critical_catcher["type"] = "application/javascript"
+        with open(os.path.join(dir_name, "3-find-in-viewport.js")) as f:
+            critical_catcher.string = f.read()
+
     if soup.html is not None:
         soup.html.insert(0, critical_catcher)
-        soup.html.insert(0, interceptor)
-        soup.html.insert(0, stack_trace_dependency)
+        #soup.html.insert(0, interceptor)
+        #soup.html.insert(0, stack_trace_dependency)
     return str(soup)
 
 
@@ -125,7 +145,7 @@ def start_server(
                     if extract_critical_requests:
                         # if this is an html file, then we want to insert our snippet here
                         # to extract critical requests.
-                        if "text/html" in file.headers.get("content-type", "") and file.uri == '/':
+                        if "text/html" in file.headers.get("content-type", ""):
                             uncompressed_body = file.body
                             gzipped_file = False
                             if (
@@ -150,10 +170,14 @@ def start_server(
                     with open(os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o644), "wb") as f:
                         f.write(file.body)
                 except TypeError as e:
+                    file_path = os.path.join(file_dir, file.file_name)
+                    with open(os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o644), mode="w", encoding="utf8") as f:
+                        f.write(file.body)
+                except UnicodeEncodeError as e:
                     # file.body somehow because corrupted. happens in nbcnews where some ad server file is of type html
                     # # this messes up the encoding
                     # Save the file's original body to file
-                    log.error("unable to inject critical for file", error=e)
+                    log.error("unable to inject critical for file ", uri=file.uri, error=e)
                     file.body = backup_file_body
                     file_path = os.path.join(file_dir, file.file_name)
                     with open(os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o644), "wb") as f:
