@@ -29,43 +29,20 @@ def prepend_javascript_snippet(input_string: str):
     converts back into string and returns
     """
     soup = BeautifulSoup(input_string, "html.parser")
-
-    # in docker this should be /opt/blaze/blaze/mahimahi/server/injected-javascript
-    # in host, this should point to the folder in the machine
-    # eg. /home/murali/Code/blaze/blaze/mahimahi/server/injected-javascript
-    try:
-        dir_name = "/opt/blaze/blaze/mahimahi/server/injected-javascript"
-        stack_trace_dependency = soup.new_tag("script")
-        stack_trace_dependency["type"] = "application/javascript"
-        with open(os.path.join(dir_name, "1-stacktrace.js")) as f:
-            stack_trace_dependency.string = f.read()
-        interceptor = soup.new_tag("script")
-        interceptor["type"] = "application/javascript"
-        with open(os.path.join(dir_name, "2-interceptor.js")) as f:
-            interceptor.string = f.read()
-        critical_catcher = soup.new_tag("script")
-        critical_catcher["type"] = "application/javascript"
-        with open(os.path.join(dir_name, "3-find-in-viewport.js")) as f:
-            critical_catcher.string = f.read()
-    except FileNotFoundError:
-        dir_name = "/home/murali/Code/blaze/blaze/mahimahi/server/injected-javascript"
-        stack_trace_dependency = soup.new_tag("script")
-        stack_trace_dependency["type"] = "application/javascript"
-        with open(os.path.join(dir_name, "1-stacktrace.js")) as f:
-            stack_trace_dependency.string = f.read()
-        interceptor = soup.new_tag("script")
-        interceptor["type"] = "application/javascript"
-        with open(os.path.join(dir_name, "2-interceptor.js")) as f:
-            interceptor.string = f.read()
-        critical_catcher = soup.new_tag("script")
-        critical_catcher["type"] = "application/javascript"
-        with open(os.path.join(dir_name, "3-find-in-viewport.js")) as f:
-            critical_catcher.string = f.read()
-
+    dir_name = "/opt/blaze/blaze/mahimahi/server/injected-javascript"
+    stack_trace_dependency = soup.new_tag("script")
+    stack_trace_dependency["type"] = "application/javascript"
+    interceptor = soup.new_tag("script")
+    interceptor["type"] = "application/javascript"
+    with open(os.path.join(dir_name, "interceptor.js")) as f:
+        interceptor.string = f.read()
+    critical_catcher = soup.new_tag("script")
+    critical_catcher["type"] = "application/javascript"
+    with open(os.path.join(dir_name, "find-in-viewport.js")) as f:
+        critical_catcher.string = f.read()
     if soup.html is not None:
         soup.html.insert(0, critical_catcher)
-        # soup.html.insert(0, interceptor)
-        # soup.html.insert(0, stack_trace_dependency)
+        soup.html.insert(0, interceptor)
     return str(soup)
 
 
