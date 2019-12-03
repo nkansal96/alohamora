@@ -32,7 +32,6 @@ def prepend_javascript_snippet(input_string: str):
     if soup.html is None:
         return str(soup)
     dir_name = "/opt/blaze/blaze/mahimahi/server/injected-javascript"
-    
     for file_name in ["find-in-viewport.js", "interceptor.js"]:
         curr_file = os.path.join(dir_name, file_name)
         with open(curr_file) as f:
@@ -41,8 +40,29 @@ def prepend_javascript_snippet(input_string: str):
             script_tag["type"] = "application/javascript"
             script_tag.string = file_contents
             soup.html.insert(0, script_tag)
-    
     return str(soup)
+
+def inject_extract_critical_requests_javascript(file):
+    # tries to inject the two js files in the given file.
+    # throws exception if an error happens
+    uncompressed_body = file.body
+    gzipped_file = False
+    if (
+        file.headers is not None
+        and file.headers.get("content-encoding") is not None
+        and "gzip" in file.headers.get("content-encoding")
+    ):
+        gzipped_file = True
+        uncompressed_body = gzip.GzipFile(fileobj=BytesIO(uncompressed_body)).read()
+    uncompressed_body = prepend_javascript_snippet(uncompressed_body)
+    if gzipped_file:
+        out = BytesIO()
+        with gzip.GzipFile(fileobj=out, mode="wb") as f:
+            f.write(uncompressed_body.encode())
+        file.body = out.getvalue()
+    else:
+        file.body = uncompressed_body
+    return file.body
 
 
 @contextlib.contextmanager
@@ -119,30 +139,8 @@ def start_server(
 
                 backup_file_body = file.body
                 try:
-                    if extract_critical_requests:
-                        # if this is an html file, then we want to insert our snippet here
-                        # to extract critical requests.
-                        if "text/html" in file.headers.get("content-type", ""):
-                            uncompressed_body = file.body
-                            gzipped_file = False
-                            if (
-                                file.headers is not None
-                                and file.headers.get("content-encoding") is not None
-                                and "gzip" in file.headers.get("content-encoding")
-                            ):
-                                gzipped_file = True
-                                uncompressed_body = gzip.GzipFile(fileobj=BytesIO(uncompressed_body)).read()
-                            uncompressed_body = prepend_javascript_snippet(uncompressed_body)
-                            if gzipped_file:
-                                out = BytesIO()
-                                with gzip.GzipFile(fileobj=out, mode="wb") as f:
-                                    f.write(uncompressed_body.encode())
-                                file.body = out.getvalue()
-                            else:
-                                file.body = uncompressed_body
-                        else:
-                            print("skip injecting in ", file.uri)
-                    # Save the file's body to file
+                    if extract_critical_requests and "text/html" in file.headers.get("content-type", ""):
+                        file.body = inject_extract_critical_requests_javascript(file)
                     file_path = os.path.join(file_dir, file.file_name)
                     with open(os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o644), "wb") as f:
                         f.write(file.body)
@@ -151,10 +149,11 @@ def start_server(
                     with open(os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o644), mode="w", encoding="utf8") as f:
                         f.write(file.body)
                 except UnicodeEncodeError as e:
-                    # file.body somehow because corrupted. happens in nbcnews where some ad server file is of type html
-                    # # this messes up the encoding
+                    # file.body somehow because corrupted.
+                    # this messes up the encoding
                     # Save the file's original body to file
-                    log.error("unable to inject critical for file ", uri=file.uri, error=e)
+                    # this happens if a file is a bytestream but does not have gzip header or vice versa
+                    log.warn("unable to inject critical for file ", uri=file.uri, error=e)
                     file.body = backup_file_body
                     file_path = os.path.join(file_dir, file.file_name)
                     with open(os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o644), "wb") as f:
