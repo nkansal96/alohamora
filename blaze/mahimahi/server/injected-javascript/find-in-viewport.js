@@ -34,7 +34,6 @@ function getCriticalRequests() {
 
 
 function findAndPrintImagesInViewport(ele) {
-    console.log("inside find and print images")
     ele.querySelectorAll('*').forEach(function(node) {
         try {
             if (isElementInViewport(node)) {
@@ -47,7 +46,6 @@ function findAndPrintImagesInViewport(ele) {
                         url = node.src;
                     }
                     if (url != null) {
-                        // console.log("image is in viewport ", url)
                         imagesInViewPort.push(url)
                     }
             } else {
@@ -89,19 +87,16 @@ function findAndPrintImagesInViewport(ele) {
             }  
             }           
         } catch (error) {
-            console.log("ignoring node due to error ", error)
+            console.error("ignoring node due to error ", error)
         }
 
     });
     var answer = getCriticalRequests()
-    console.log("alohomora: this is the answer")
     console.log(JSON.stringify({'alohomora_output': answer}))
-    console.log("alohomora: that was the the answer")
 }
 
 
 window.addEventListener('load', function (event) {
-    console.log("window onload")
     try {
         findAndPrintImagesInViewport(document)
         var listOfIframes = document.querySelectorAll("iframe");
@@ -115,12 +110,12 @@ window.addEventListener('load', function (event) {
                     var innerDoc = (iframeElement.contentDocument) ? iframeElement.contentDocument : iframeElement.contentWindow.document;    
                     findAndPrintImagesInViewport(innerDoc)
                 } catch (error) {
-                    console.log('avoid processing iframe due to an exception ', error)
+                    console.error('avoid processing iframe due to an exception ', error)
                 }
             }
         }    
     } catch (error) {
-        console.log("skipping due to error ", error)
+        console.error("skipping due to error ", error)
     }    
   });
 
