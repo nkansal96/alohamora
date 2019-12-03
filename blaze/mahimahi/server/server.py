@@ -29,10 +29,11 @@ def prepend_javascript_snippet(input_string: str):
     converts back into string and returns
     """
     soup = BeautifulSoup(input_string, "html.parser")
-    
+
     # in docker this should be /opt/blaze/blaze/mahimahi/server/injected-javascript
-    # in host, this should point to the folder in the machine like /home/murali/Code/blaze/blaze/mahimahi/server/injected-javascript
-    try:        
+    # in host, this should point to the folder in the machine
+    # eg. /home/murali/Code/blaze/blaze/mahimahi/server/injected-javascript
+    try:
         dir_name = "/opt/blaze/blaze/mahimahi/server/injected-javascript"
         stack_trace_dependency = soup.new_tag("script")
         stack_trace_dependency["type"] = "application/javascript"
@@ -63,8 +64,8 @@ def prepend_javascript_snippet(input_string: str):
 
     if soup.html is not None:
         soup.html.insert(0, critical_catcher)
-        #soup.html.insert(0, interceptor)
-        #soup.html.insert(0, stack_trace_dependency)
+        # soup.html.insert(0, interceptor)
+        # soup.html.insert(0, stack_trace_dependency)
     return str(soup)
 
 
