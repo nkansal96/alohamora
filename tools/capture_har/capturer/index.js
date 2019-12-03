@@ -63,7 +63,6 @@ class HarCapturer {
         await client.Runtime.enable();
         console.log("enabled runtime")
         client.Runtime.consoleAPICalled((loggedObject) => {
-          console.log(loggedObject)
           if(loggedObject.type != 'log') return;
           if (typeof(loggedObject.args) != "undefined") {
             for (let index = 0; index < loggedObject.args.length; index++) {
@@ -300,7 +299,6 @@ module.exports = async (url, slowdown, outputFile, extractCriticalRequests, user
     const res = await captureHar(url, slowdown, extractCriticalRequests, userDataDir);
     const json = JSON.stringify(res);
     if (outputFile) {
-      process.stdout.write(json)
       fs.writeFileSync(outputFile, json);
     } else {
       process.stdout.write(json)
