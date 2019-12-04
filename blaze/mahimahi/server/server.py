@@ -64,8 +64,6 @@ def inject_extract_critical_requests_javascript(file):
         with gzip.GzipFile(fileobj=out, mode="wb") as f:
             f.write(uncompressed_body.encode())
         file.body = out.getvalue()
-    else:
-        file.body = uncompressed_body
     return file.body
 
 
