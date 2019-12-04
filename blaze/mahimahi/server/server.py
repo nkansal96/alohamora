@@ -49,22 +49,18 @@ def inject_extract_critical_requests_javascript(file):
     throws exception if an error happens
     returns body as string after injection
     """
-    uncompressed_body = file.body
-    gzipped_file = False
     if (
         file.headers is not None
         and file.headers.get("content-encoding") is not None
         and "gzip" in file.headers.get("content-encoding")
     ):
-        gzipped_file = True
-        uncompressed_body = gzip.GzipFile(fileobj=BytesIO(uncompressed_body)).read()
-    uncompressed_body = prepend_javascript_snippet(uncompressed_body)
-    if gzipped_file:
+        uncompressed_body = gzip.GzipFile(fileobj=BytesIO(file.body)).read()
+        uncompressed_body = prepend_javascript_snippet(uncompressed_body)
         out = BytesIO()
         with gzip.GzipFile(fileobj=out, mode="wb") as f:
             f.write(uncompressed_body.encode())
-        file.body = out.getvalue()
-    return file.body
+        return out.getvalue()
+    return prepend_javascript_snippet(file.body)
 
 
 @contextlib.contextmanager
