@@ -14,7 +14,7 @@ from blaze.config.client import (
     ClientEnvironment,
 )
 from blaze.config.config import get_config, Config
-from blaze.config.environment import EnvironmentConfig, PushGroup, ResourceType
+from blaze.config.environment import EnvironmentConfig, ResourceType
 from blaze.evaluator.simulator import Simulator
 from blaze.logger import logger as log
 from blaze.preprocess.record import get_page_load_time_in_replay_server, get_speed_index_in_replay_server
@@ -177,7 +177,7 @@ def _test_push(
     manifest: str,
     iterations: Optional[int] = 1,
     max_retries: Optional[int] = 0,
-    policy_generator: Callable[EnvironmentConfig], Policy],
+    policy_generator: Callable[[EnvironmentConfig], Policy],
     bandwidth: Optional[int],
     latency: Optional[int],
     cpu_slowdown: Optional[int],
@@ -229,7 +229,7 @@ def _get_results_in_replay_server(
     client_env: ClientEnvironment,
     iterations: int,
     max_retries: int,
-    policy_generator: Callable[EnvironmentConfig], Policy],
+    policy_generator: Callable[[EnvironmentConfig], Policy],
     user_data_dir: Optional[str] = None,
     speed_index: Optional[bool] = False,
 ) -> Tuple[float, List[float], List[Policy]]:
