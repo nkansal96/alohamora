@@ -43,7 +43,7 @@ def random_push_policy(args):
 @command.argument("--from_manifest", help="The training manifest file to use as input to the simulator", required=True)
 @command.argument("--only_simulator", action="store_true", help="Only evaluate the page load time on the simulator")
 @command.argument(
-    "--policy_type", help="The test type to run", choices=["push", "push_preload", "preload"], required=True
+    "--policy_type", help="The test type to run", choices=["push", "push_preload", "preload", "all"], required=True
 )
 @command.argument("--iterations", help="Number of trials", type=int, default=1)
 @command.argument("--max_retries", help="Maximum number of times to retry failed runs", type=int, default=0)
