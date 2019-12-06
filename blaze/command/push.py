@@ -35,7 +35,7 @@ def random_push_policy(args):
     env_config = EnvironmentConfig.load_file(args.from_manifest)
 
     weight = 0 if args.policy_type == "preload" else 1 if args.policy_type == "push" else None
-    policy = _random_push_preload_policy_generator(weight)(env_config.push_groups)
+    policy = _random_push_preload_policy_generator(weight)(env_config)
 
     print(json.dumps(policy.as_dict, indent=4))
 
@@ -177,7 +177,7 @@ def _test_push(
     manifest: str,
     iterations: Optional[int] = 1,
     max_retries: Optional[int] = 0,
-    policy_generator: Callable[[List[PushGroup]], Policy],
+    policy_generator: Callable[EnvironmentConfig], Policy],
     bandwidth: Optional[int],
     latency: Optional[int],
     cpu_slowdown: Optional[int],
@@ -211,7 +211,7 @@ def _test_push(
         }
 
     else:
-        policies = [policy_generator(env_config.push_groups) for _ in range(iterations)]
+        policies = [policy_generator(env_config) for _ in range(iterations)]
 
     sim = Simulator(env_config)
     data["simulator"] = {
@@ -229,7 +229,7 @@ def _get_results_in_replay_server(
     client_env: ClientEnvironment,
     iterations: int,
     max_retries: int,
-    policy_generator: Callable[[List[PushGroup]], Policy],
+    policy_generator: Callable[EnvironmentConfig], Policy],
     user_data_dir: Optional[str] = None,
     speed_index: Optional[bool] = False,
 ) -> Tuple[float, List[float], List[Policy]]:
@@ -246,7 +246,7 @@ def _get_results_in_replay_server(
     retries = 0
 
     while retries <= max_retries and len(plts) < iterations:
-        policy = policy_generator(config.env_config.push_groups)
+        policy = policy_generator(config.env_config)
 
         log.debug("getting HAR in mahimahi with policy:")
         log.debug(json.dumps(policy.as_dict, indent=4))
