@@ -23,7 +23,7 @@ from . import command
 
 
 @command.argument(
-    "--policy_type", help="The test type to run", choices=["push", "push_preload", "preload"], required=True
+    "--policy_type", help="The test type to run", choices=["push", "push_preload", "preload", "all"], required=True
 )
 @command.argument("--from_manifest", required=True, help="The training manifest file to use as input to the simulator")
 @command.command
@@ -63,22 +63,16 @@ def random_push_policy(args):
     help="Returns the speed index of the page calculated using pwmetrics. As a float.",
     action="store_true",
 )
-@command.argument(
-    "--use_push_all",
-    help="Push policy is simply push/preload all. Does not use the model to get a policy.",
-    default=False,
-    action="store_true",
-)
 @command.command
 def test_push(args):
     """
     Runs a pre-defined test on the given webpage
     """
-    if args.use_push_all:
+    if args.policy_type == "all":
+        policy_generator = push_preload_all_policy_generator()
+    else:
         weight = 0 if args.policy_type == "preload" else 1 if args.policy_type == "push" else None
         policy_generator = _random_push_preload_policy_generator(weight)
-    else:
-        policy_generator = push_preload_all_policy_generator()
 
     _test_push(
         manifest=args.from_manifest,
