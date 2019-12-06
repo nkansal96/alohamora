@@ -63,13 +63,22 @@ def random_push_policy(args):
     help="Returns the speed index of the page calculated using pwmetrics. As a float.",
     action="store_true",
 )
+@command.argument(
+    "--use_push_all",
+    help="Push policy is simply push/preload all. Does not use the model to get a policy.",
+    default=False,
+    action="store_true",
+)
 @command.command
 def test_push(args):
     """
     Runs a pre-defined test on the given webpage
     """
-    weight = 0 if args.policy_type == "preload" else 1 if args.policy_type == "push" else None
-    policy_generator = _random_push_preload_policy_generator(weight)
+    if args.use_push_all:
+        weight = 0 if args.policy_type == "preload" else 1 if args.policy_type == "push" else None
+        policy_generator = _random_push_preload_policy_generator(weight)
+    else:
+        policy_generator = push_preload_all_policy_generator()
 
     _test_push(
         manifest=args.from_manifest,
