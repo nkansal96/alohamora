@@ -119,7 +119,7 @@ def push_preload_all_policy_generator() -> Callable[[EnvironmentConfig], Policy]
     return _generator
 
 
-def _random_push_preload_policy_generator(push_weight: Optional[float] = None) -> Callable[[List[PushGroup]], Policy]:
+def _random_push_preload_policy_generator(push_weight: Optional[float] = None) -> Callable[[EnvironmentConfig], Policy]:
     dist = {ResourceType.SCRIPT: 32, ResourceType.CSS: 32, ResourceType.IMAGE: 24, ResourceType.FONT: 12}
 
     def _choose_with_dist(groups, distribution):
@@ -129,7 +129,8 @@ def _random_push_preload_policy_generator(push_weight: Optional[float] = None) -
         r = random.randrange(0, len(random_group))
         return g, r, random_group[r]
 
-    def _generator(push_groups: List[PushGroup]) -> Policy:
+    def _generator(env_config: EnvironmentConfig) -> Policy:
+        push_groups = env_config.push_groups
         # Collect all resources and group them by type
         all_resources = sorted([res for group in push_groups for res in group.resources], key=lambda res: res.order)
         res_by_type = collections.defaultdict(list)
