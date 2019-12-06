@@ -124,6 +124,7 @@ def evaluate(args):
 
     print(json.dumps(data, indent=4))
 
+
 @command.argument("--location", help="The path to the saved model", required=True)
 @command.argument(
     "--model",
@@ -146,7 +147,10 @@ def evaluate(args):
     "--reward_func", help="Reward function to use", default=1, choices=list(range(get_num_rewards())), type=int
 )
 @command.argument(
-    "--output_file", help="File to save query timing profile info. First timing obtained right after launching Ray", required=True, type=str
+    "--output_file",
+    help="File to save query timing profile info. First timing obtained right after launching Ray",
+    required=True,
+    type=str,
 )
 def get_inference_time(args):
     """
@@ -176,9 +180,9 @@ def get_inference_time(args):
     _ = instance.policy
     profiler_1.disable()
     s = io.StringIO()
-    ps = pstats.Stats(profiler_1, stream=s).sort_stats('tottime')
-    ps.print_stats()
+    p_stats_client = pstats.Stats(profiler_1, stream=s).sort_stats("tottime")
+    p_stats_client.print_stats()
     profile_stats = s.getvalue().splitlines()
     with open(args.output_file, mode="w") as f:
-        f.write(profile_stats[0].split(' ')[-2])
+        f.write(profile_stats[0].split(" ")[-2])
     ray.shutdown()
