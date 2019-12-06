@@ -1,5 +1,6 @@
 """ Implements the command for querying a trained policy """
 import json
+
 import grpc
 
 from blaze.config.client import get_client_environment_from_parameters
@@ -94,6 +95,7 @@ def evaluate(args):
     import ray
 
     ray.init(num_cpus=2, log_to_driver=False)
+
     saved_model = model.get_model(args.location)
     instance = saved_model.instantiate(config)
     policy = instance.policy
