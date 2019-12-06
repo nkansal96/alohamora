@@ -2,6 +2,7 @@
 import collections
 import json
 import random
+import urllib
 import subprocess
 import traceback
 from typing import Callable, List, Optional, Tuple
@@ -83,6 +84,36 @@ def test_push(args):
         user_data_dir=args.user_data_dir,
     )
     return 0
+
+
+def push_preload_all_policy_generator() -> Callable[[EnvironmentConfig], Policy]:
+    """
+    Returns a generator than always choose to push/preload all assets
+    Push all in same domain. Preload all in other domains.
+    """
+
+    def _generator(env_config: EnvironmentConfig) -> Policy:
+        push_groups = env_config.push_groups
+        # Collect all resources and group them by type
+        all_resources = sorted([res for group in push_groups for res in group.resources], key=lambda res: res.order)
+        # choose the weight factor between push and preload
+        main_domain = urllib.parse.urlparse(env_config.request_url)
+        policy = Policy()
+        for r in all_resources:
+            if r.source_id == 0 or r.order == 0:
+                continue
+            request_domain = urllib.parse.urlparse(r.url)
+            push = request_domain.netloc == main_domain.netloc
+            policy.steps_taken += 1
+            if push:
+                source = random.randint(0, r.source_id - 1)
+                policy.add_default_push_action(push_groups[r.group_id].resources[source], r)
+            else:
+                source = random.randint(0, r.order - 1)
+                policy.add_default_preload_action(all_resources[source], r)
+        return policy
+
+    return _generator
 
 
 def _random_push_preload_policy_generator(push_weight: Optional[float] = None) -> Callable[[List[PushGroup]], Policy]:

@@ -1,6 +1,5 @@
 """ Implements the command for querying a trained policy """
 import json
-
 import grpc
 
 from blaze.config.client import get_client_environment_from_parameters
@@ -11,6 +10,7 @@ from blaze.evaluator.simulator import Simulator
 from blaze.logger import logger as log
 from blaze.preprocess.record import get_page_load_time_in_replay_server
 from blaze.serve.client import Client
+from blaze.command.push import push_preload_all_policy_generator
 
 from . import command
 
@@ -73,6 +73,12 @@ def query(args):
 @command.argument(
     "--run_replay_server", help="Run the outputted policy through the replay server (implies -v)", action="store_true"
 )
+@command.argument(
+    "--use_push_all",
+    help="Push policy is simply push/preload all. Does not use the model to get a policy.",
+    default=False,
+    action="store_true",
+)
 @command.command
 def evaluate(args):
     """
@@ -92,14 +98,18 @@ def evaluate(args):
     if args.model == "PPO":
         from blaze.model import ppo as model
 
-    import ray
+    if not args.use_push_all:
+        import ray
 
-    ray.init(num_cpus=2, log_to_driver=False)
-
-    saved_model = model.get_model(args.location)
-    instance = saved_model.instantiate(config)
-    policy = instance.policy
-    data = policy.as_dict
+        ray.init(num_cpus=2, log_to_driver=False)
+        saved_model = model.get_model(args.location)
+        instance = saved_model.instantiate(config)
+        policy = instance.policy
+        data = policy.as_dict
+    else:
+        env_config = EnvironmentConfig.load_file(args.manifest)
+        policy = push_preload_all_policy_generator()(env_config)
+        data = policy.as_dict
 
     if args.verbose or args.run_simulator or args.run_replay_server:
         data = {
