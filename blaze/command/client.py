@@ -1,6 +1,8 @@
 """ Implements the command for querying a trained policy """
 import json
-
+import cProfile
+import pstats
+import io
 import grpc
 
 from blaze.config.client import get_client_environment_from_parameters
@@ -121,3 +123,62 @@ def evaluate(args):
         data["replay_server"] = {"without_policy": plts, "with_policy": push_plts}
 
     print(json.dumps(data, indent=4))
+
+@command.argument("--location", help="The path to the saved model", required=True)
+@command.argument(
+    "--model",
+    help="The RL technique used during training for the saved model",
+    required=True,
+    choices=["A3C", "APEX", "PPO"],
+)
+@command.argument("--manifest", "-m", help="The location of the page manifest to query the model for", required=True)
+@command.argument("--bandwidth", "-b", help="The bandwidth to query the model for (kbps)", type=int, required=True)
+@command.argument("--latency", "-l", help="The latency to query the model for (ms)", type=int, required=True)
+@command.argument(
+    "--cpu_slowdown",
+    "-s",
+    help="The cpu slowdown of the device to query the model for",
+    type=int,
+    choices=[1, 2, 4],
+    default=1,
+)
+@command.argument(
+    "--reward_func", help="Reward function to use", default=1, choices=list(range(get_num_rewards())), type=int
+)
+@command.argument(
+    "--output_file", help="File to save query timing profile info. First timing obtained right after launching Ray", required=True, type=str
+)
+def get_inference_time(args):
+    """
+    Instantiate the given model and checkpoint and query it for the policy corresponding to the given
+    client and network conditions. Returns time taken for querying for the policy.
+    """
+    log.info("evaluating model...", model=args.model, location=args.location, manifest=args.manifest)
+    client_env = get_client_environment_from_parameters(args.bandwidth, args.latency, args.cpu_slowdown)
+    manifest = EnvironmentConfig.load_file(args.manifest)
+    config = get_config(manifest, client_env, args.reward_func)
+
+    if args.model == "A3C":
+        from blaze.model import a3c as model
+    if args.model == "APEX":
+        from blaze.model import apex as model
+    if args.model == "PPO":
+        from blaze.model import ppo as model
+
+    import ray
+
+    ray.init(num_cpus=2, log_to_driver=False)
+    saved_model = model.get_model(args.location)
+    instance = saved_model.instantiate(config)
+
+    profiler_1 = cProfile.Profile()
+    profiler_1.enable()
+    _ = instance.policy
+    profiler_1.disable()
+    s = io.StringIO()
+    ps = pstats.Stats(profiler_1, stream=s).sort_stats('tottime')
+    ps.print_stats()
+    profile_stats = s.getvalue().splitlines()
+    with open(args.output_file, mode="w") as f:
+        f.write(profile_stats[0].split(' ')[-2])
+    ray.shutdown()
