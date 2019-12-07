@@ -60,7 +60,7 @@ def monitor_process(cmd, timeout, output_file, error_file, max_retries=3):
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--test_type", required=True, choices=["push", "push_preload", "preload"], help="The test type to run"
+        "--test_type", required=True, choices=["push", "push_preload", "preload", "all"], help="The test type to run"
     )
     parser.add_argument("--manifests_file", required=True, help="Line-delimited file of paths to manifests to test")
     parser.add_argument("--results_dir", required=True, help="Directory to store the results in")

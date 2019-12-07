@@ -62,21 +62,20 @@ class HarCapturer {
       if(this.options.extractCriticalRequests) {
         await client.Runtime.enable();
         client.Runtime.consoleAPICalled((loggedObject) => {
-          if (loggedObject.type == 'log' && typeof(loggedObject.args) != "undefined") {
+          if(loggedObject.type != 'log') return;
+          if (typeof(loggedObject.args) != "undefined") {
             for (let index = 0; index < loggedObject.args.length; index++) {
               const element = loggedObject.args[index];
               let logOutput = element["value"];
-              if (typeof(logOutput) != "undefined" && logOutput.indexOf("alohomora_output") >= 0) {
-                try {
-                  logOutput = JSON.parse(logOutput);
-                  logOutput["alohomora_output"].forEach(e => this.critical_request_urls.push(e));  
-                } catch (error) {
-                  console.error(`critical req not found.`);
-                }
-                
+              try {
+                if (typeof(logOutput) == "string" && logOutput.indexOf("alohomora_output") >= 0) {
+                    logOutput = JSON.parse(logOutput);
+                    logOutput["alohomora_output"].forEach(e => this.critical_request_urls.push(e));   
+              }} catch (error) {
+                console.error(`critical req not found. `, error);
               }
             }
-          }
+          } 
         });
       } 
 
