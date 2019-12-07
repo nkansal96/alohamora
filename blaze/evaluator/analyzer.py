@@ -139,7 +139,7 @@ class Analyzer:
         self.client_environment = client_environment or self.client_environment
         self.cached_urls = cached_urls
         self.reward_func = REWARD_FUNCTIONS[self.reward_func_num](
-            self.simulator, self.client_environment, self.cached_urls
+            self.simulator, self.client_environment, self.cached_urls, self.use_aft
         )
 
     def get_reward(self, policy: Policy) -> float:

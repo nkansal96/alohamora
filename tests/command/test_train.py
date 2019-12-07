@@ -26,7 +26,7 @@ class TestTrain:
     def test_train_a3c(self, mock_train):
         env_config = get_env_config()
         train_config = TrainConfig(experiment_name="experiment_name", num_workers=4)
-        config = get_config(env_config, reward_func=1)
+        config = get_config(env_config, reward_func=1, use_aft=False)
         with tempfile.NamedTemporaryFile() as env_file:
             env_config.save_file(env_file.name)
             train(
@@ -48,7 +48,7 @@ class TestTrain:
     def test_train_apex(self, mock_train):
         env_config = get_env_config()
         train_config = TrainConfig(experiment_name="experiment_name", num_workers=4)
-        config = get_config(env_config, reward_func=1)
+        config = get_config(env_config, reward_func=1, use_aft=False)
         with tempfile.NamedTemporaryFile() as env_file:
             env_config.save_file(env_file.name)
             train(
@@ -70,7 +70,7 @@ class TestTrain:
     def test_train_ppo(self, mock_train):
         env_config = get_env_config()
         train_config = TrainConfig(experiment_name="experiment_name", num_workers=4)
-        config = get_config(env_config, reward_func=1)
+        config = get_config(env_config, reward_func=1, use_aft=False)
         with tempfile.NamedTemporaryFile() as env_file:
             env_config.save_file(env_file.name)
             train(
@@ -92,7 +92,7 @@ class TestTrain:
     def test_train_resume(self, mock_train):
         env_config = get_env_config()
         train_config = TrainConfig(experiment_name="experiment_name", num_workers=4, resume=True)
-        config = get_config(env_config, reward_func=1)
+        config = get_config(env_config, reward_func=1, use_aft=False)
         with tempfile.NamedTemporaryFile() as env_file:
             env_config.save_file(env_file.name)
             train(
@@ -115,7 +115,7 @@ class TestTrain:
     def test_train_no_resume(self, mock_train):
         env_config = get_env_config()
         train_config = TrainConfig(experiment_name="experiment_name", num_workers=4, resume=False)
-        config = get_config(env_config, reward_func=1)
+        config = get_config(env_config, reward_func=1, use_aft=False)
         with tempfile.NamedTemporaryFile() as env_file:
             env_config.save_file(env_file.name)
             train(
@@ -128,6 +128,53 @@ class TestTrain:
                     "--manifest_file",
                     env_file.name,
                     "--no-resume",
+                ]
+            )
+
+        mock_train.assert_called_once()
+        mock_train.assert_called_with(train_config, config)
+
+    @mock.patch("blaze.model.apex.train")
+    def test_train_with_use_aft(self, mock_train):
+        env_config = get_env_config()
+        train_config = TrainConfig(experiment_name="experiment_name", num_workers=4)
+        config = get_config(env_config, reward_func=1, use_aft=True)
+        with tempfile.NamedTemporaryFile() as env_file:
+            env_config.save_file(env_file.name)
+            train(
+                [
+                    train_config.experiment_name,
+                    "--workers",
+                    str(train_config.num_workers),
+                    "--model",
+                    "APEX",
+                    "--manifest_file",
+                    env_file.name,
+                    "--use_aft",
+                ]
+            )
+
+        mock_train.assert_called_once()
+        mock_train.assert_called_with(train_config, config)
+
+    @mock.patch("blaze.model.apex.train")
+    def test_train_with_reward_func(self, mock_train):
+        env_config = get_env_config()
+        train_config = TrainConfig(experiment_name="experiment_name", num_workers=4)
+        config = get_config(env_config, reward_func=3, use_aft=False)
+        with tempfile.NamedTemporaryFile() as env_file:
+            env_config.save_file(env_file.name)
+            train(
+                [
+                    train_config.experiment_name,
+                    "--workers",
+                    str(train_config.num_workers),
+                    "--model",
+                    "APEX",
+                    "--manifest_file",
+                    env_file.name,
+                    "--reward_func",
+                    "3",
                 ]
             )
 

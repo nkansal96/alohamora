@@ -13,12 +13,13 @@ class TestConfig:
         assert conf.env_config is None
         assert conf.client_env is None
         assert conf.reward_func is None
+        assert conf.use_aft is None
 
     def test_items(self):
         conf = config.get_config()
         items = conf.items()
         assert all(len(v) == 2 for v in items)
-        assert len(items) == 5
+        assert len(items) == 6
 
     def test_with_mutations(self):
         conf = config.Config(http2push_image="", chrome_bin="")

@@ -75,10 +75,7 @@ def preprocess(args):
         log.info("extracting critical requests")
         push_groups = annotate_critical_requests(args.website, config, client_env, push_groups)
         critical_resources = set(res.url for group in push_groups for res in group.resources if res.critical)
-        log.debug(
-            "critical resources",
-            resources=critical_resources,
-        )
+        log.debug("critical resources", resources=critical_resources)
 
     log.info("finding cacheable objects")
     push_groups = annotate_cacheable_objects(args.record_dir, push_groups)
