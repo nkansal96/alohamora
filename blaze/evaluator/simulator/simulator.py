@@ -6,7 +6,7 @@ loading a webpage and simulating its page load time from a dependency graph
 import copy
 import json
 from queue import PriorityQueue
-from typing import List, Optional, Tuple
+from typing import List, Optional, Set, Tuple
 
 from blaze.action.policy import Policy
 from blaze.config.environment import EnvironmentConfig, ResourceType
@@ -38,17 +38,21 @@ class Simulator:
         self.completed_nodes = {}
         self.pushed_nodes = {}
         self.total_time_ms = 0
+        self.cached_urls = set()
 
         self.no_push: Optional[Simulator] = None
         self.client_env: Optional[ClientEnvironment] = None
         self.policy: Optional[Policy] = None
 
-    def reset_simulation(self, client_env: ClientEnvironment, policy: Optional[Policy] = None):
+    def reset_simulation(
+        self, client_env: ClientEnvironment, policy: Optional[Policy] = None, cached_urls: Optional[Set[str]] = None
+    ):
         """
         Resets the state of the simulator with the given client environment
 
         :param client_env: the client environment to reset with
         :param policy: the push/prelaod policy to reset with
+        :param cached_urls: the cached URLs to not download
         """
 
         self.pq = PriorityQueue()
@@ -56,6 +60,7 @@ class Simulator:
         self.completed_nodes = {}
         self.pushed_nodes = {}
         self.total_time_ms = 0
+        self.cached_urls = cached_urls if cached_urls else set()
 
         self.no_push = None
         self.client_env = client_env
@@ -85,6 +90,9 @@ class Simulator:
         for res in push_resources:
             push_node = self.url_to_node_map.get(res.url)
             if push_node and push_node not in self.completed_nodes and push_node not in self.request_queue:
+                cached = push_node.resource.url in self.cached_urls
+                if cached:
+                    continue
                 push_delay = delay + push_node.resource.time_to_first_byte_ms
                 if dry_run:
                     dry_run_list.append((push_node, push_delay))
@@ -111,6 +119,9 @@ class Simulator:
             if preload_node and preload_node not in self.completed_nodes and preload_node not in self.request_queue:
                 # Same delay as parent, but adds an extra RTT because the browser needs
                 # to explicitly make a request for it
+                cached = preload_node.resource.url in self.cached_urls
+                if cached:
+                    continue
                 preload_delay = delay + preload_node.resource.time_to_first_byte_ms + self.request_queue.rtt_latency_ms
                 if dry_run:
                     dry_run_list.append((preload_node, preload_delay))
@@ -229,8 +240,10 @@ class Simulator:
                 last_execution_delay = child.resource.execution_ms
 
             if child not in self.completed_nodes and child not in self.request_queue:
+                cached = child.resource.url in self.cached_urls
                 if dry_run:
-                    dry_run_list.append((child, child_delay))
+                    if not cached:
+                        dry_run_list.append((child, child_delay))
                     dry_run_list.extend(
                         self.schedule_pushed_and_preloaded_resources(
                             child, child_delay - child.resource.time_to_first_byte_ms, dry_run=True
@@ -250,14 +263,20 @@ class Simulator:
                         total_time=self.total_time_ms,
                     )
                     self.pq.put((child.priority, child))
-                    self.request_queue.add_with_delay(child, child_delay)
+                    self.request_queue.add_with_delay(child, child_delay, cached=cached)
                     self.schedule_pushed_and_preloaded_resources(
                         child, child_delay - child.resource.time_to_first_byte_ms
                     )
 
         return dry_run_list if dry_run else None
 
-    def simulate_load_time(self, client_env: ClientEnvironment, policy: Optional[Policy] = None) -> float:
+    def simulate_load_time(
+        self,
+        client_env: ClientEnvironment,
+        policy: Optional[Policy] = None,
+        cached_urls: Optional[Set[str]] = None,
+        use_aft: Optional[bool] = False,
+    ) -> float:
         """
         Simulates the page load time of a webpage in the given client environment
         with an optional push policy to also simulate.
@@ -267,7 +286,7 @@ class Simulator:
         :return: The predicted page load time in milliseconds
         """
         self.log.verbose("simulating page load with client environment", **client_env._asdict())
-        self.reset_simulation(client_env, policy)
+        self.reset_simulation(client_env, policy=policy, cached_urls=cached_urls)
 
         if policy:
             # First simulate it without the policy to comparing timing information
@@ -292,6 +311,11 @@ class Simulator:
                 self.step_request_queue()
             self.schedule_child_requests(curr_node)
 
+        if use_aft:
+            critical_nodes = [node for node in self.node_map.values() if node.resource.critical]
+            if critical_nodes:
+                return max(self.completed_nodes[node] for node in critical_nodes)
+            self.log.warn("requested speed index, but no nodes marked `critical` found")
         return self.completion_time()
 
     def completion_time(self, url: Optional[str] = None) -> float:

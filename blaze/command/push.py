@@ -5,7 +5,7 @@ import random
 import urllib
 import subprocess
 import traceback
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional, Set, Tuple
 
 from blaze.action import Policy
 from blaze.config.client import (
@@ -17,6 +17,7 @@ from blaze.config.config import get_config, Config
 from blaze.config.environment import EnvironmentConfig, ResourceType
 from blaze.evaluator.simulator import Simulator
 from blaze.logger import logger as log
+from blaze.mahimahi.server.filestore import FileStore
 from blaze.preprocess.record import get_page_load_time_in_replay_server, get_speed_index_in_replay_server
 
 from . import command
@@ -69,10 +70,17 @@ def test_push(args):
     Runs a pre-defined test on the given webpage
     """
     if args.policy_type == "all":
-        policy_generator = push_preload_all_policy_generator()
+        policy_generator = _push_preload_all_policy_generator()
     else:
         weight = 0 if args.policy_type == "preload" else 1 if args.policy_type == "push" else None
-        policy_generator = _random_push_preload_policy_generator(weight)
+        cached_urls = set()
+        if args.user_data_dir:
+            filestore = FileStore(EnvironmentConfig.load_file(args.from_manifest).replay_dir)
+            for f in filestore.cacheable_files:
+                cached_urls.add(f"http://{f.host}{f.uri}")
+                cached_urls.add(f"https://{f.host}{f.uri}")
+
+        policy_generator = _random_push_preload_policy_generator(weight, cached_urls)
 
     _test_push(
         manifest=args.from_manifest,
@@ -89,7 +97,7 @@ def test_push(args):
     return 0
 
 
-def push_preload_all_policy_generator() -> Callable[[EnvironmentConfig], Policy]:
+def _push_preload_all_policy_generator() -> Callable[[EnvironmentConfig], Policy]:
     """
     Returns a generator than always choose to push/preload all assets
     Push all in same domain. Preload all in other domains.
@@ -119,7 +127,10 @@ def push_preload_all_policy_generator() -> Callable[[EnvironmentConfig], Policy]
     return _generator
 
 
-def _random_push_preload_policy_generator(push_weight: Optional[float] = None) -> Callable[[EnvironmentConfig], Policy]:
+def _random_push_preload_policy_generator(
+    push_weight: Optional[float] = None, cached_urls: Optional[Set[str]] = None
+) -> Callable[[List[EnvironmentConfig]], Policy]:
+    cached_urls = cached_urls or set()
     dist = {ResourceType.SCRIPT: 32, ResourceType.CSS: 32, ResourceType.IMAGE: 24, ResourceType.FONT: 12}
 
     def _choose_with_dist(groups, distribution):
@@ -135,12 +146,15 @@ def _random_push_preload_policy_generator(push_weight: Optional[float] = None) -
         all_resources = sorted([res for group in push_groups for res in group.resources], key=lambda res: res.order)
         res_by_type = collections.defaultdict(list)
         for res in all_resources:
-            # Only consider objects in the push resource type distribution
-            if res.type in dist:
+            # Only consider non-cached objects in the push resource type distribution
+            if res.type in dist and res.url not in cached_urls:
                 res_by_type[res.type].append(res)
 
         # choose the number of resources to push/preload
         total = sum(map(len, res_by_type.values()))
+        if total <= 1:
+            return Policy()
+
         n = random.randint(1, total)
         # choose the weight factor between push and preload
         weight = push_weight if push_weight is not None else random.random()
