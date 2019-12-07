@@ -40,10 +40,10 @@ class Environment(gym.Env):
         self.client_environment: Optional[ClientEnvironment] = None
         self.action_space: Optional[ActionSpace] = None
         self.policy: Optional[Policy] = None
-        self.initialize_environment(self.config.client_env or client.get_random_fast_lte_client_environment())
+        self.initialize_environment(self.config.client_env or client.get_slow_mobile_client_environment())
 
     def reset(self):
-        self.initialize_environment(client.get_random_fast_lte_client_environment())
+        self.initialize_environment(client.get_slow_mobile_client_environment())
         return self.observation
 
     def initialize_environment(self, client_environment):

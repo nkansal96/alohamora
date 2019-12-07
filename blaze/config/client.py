@@ -45,7 +45,7 @@ def network_to_bandwidth_range(network_type: NetworkType, network_speed: Network
     network_bandwidth_map = {
         NetworkType.WIRED: {NetworkSpeed.FAST: (48000, 96000), NetworkSpeed.SLOW: (24000, 48000)},
         NetworkType.WIFI: {NetworkSpeed.FAST: (12000, 24000), NetworkSpeed.SLOW: (6000, 12000)},
-        NetworkType.LTE: {NetworkSpeed.FAST: (12000, 24000), NetworkSpeed.SLOW: (6000, 12000)},
+        NetworkType.LTE: {NetworkSpeed.FAST: (12000, 25000), NetworkSpeed.SLOW: (6000, 12000)},
         NetworkType.UMTS: {NetworkSpeed.FAST: (6000, 12000), NetworkSpeed.SLOW: (1000, 6000)},
     }
     return network_bandwidth_map[network_type][network_speed]
@@ -56,7 +56,7 @@ def network_to_latency_range(network_type: NetworkType) -> Tuple[int, int]:
     network_latency_map = {
         NetworkType.WIRED: (2, 10),
         NetworkType.WIFI: (10, 25),
-        NetworkType.LTE: (40, 100),
+        NetworkType.LTE: (40, 110),
         NetworkType.UMTS: (60, 120),
     }
     return network_latency_map[network_type]
@@ -66,7 +66,6 @@ def device_speed_to_cpu_slowdown(device_speed: DeviceSpeed) -> int:
     """ Returns the CPU slowdown factor (for Chrome DevTools) for the given device speed """
     device_speed_map = {DeviceSpeed.DESKTOP: 1, DeviceSpeed.FAST_MOBILE: 2, DeviceSpeed.SLOW_MOBILE: 4}
     return device_speed_map[device_speed]
-
 
 def get_random_client_environment():
     """ Returns a random ClientEnvironment """
@@ -91,7 +90,7 @@ def get_random_fast_lte_client_environment():
     """ Returns a random fast mobile LTE ClientEnvironment"""
     network_type = NetworkType.LTE
     network_speed = NetworkSpeed.FAST
-    device_speed = random.choice([DeviceSpeed.FAST_MOBILE, DeviceSpeed.SLOW_MOBILE])
+    device_speed = random.choice([DeviceSpeed.FAST_MOBILE, DeviceSpeed.SLOW_MOBILE, DeviceSpeed.DESKTOP])
     bandwidth_range = network_to_bandwidth_range(network_type, network_speed)
     latency_range = network_to_latency_range(network_type)
     cpu_slowdown = device_speed_to_cpu_slowdown(device_speed)
@@ -114,6 +113,17 @@ def get_fast_mobile_client_environment():
         bandwidth=24000,
         latency=20,
         cpu_slowdown=1,
+    )
+
+def get_slow_mobile_client_environment():
+    """ Returns a ClientEnvironment with 100ms latency, 12 Mbps throughput, and 2x device slowdown """
+    return ClientEnvironment(
+        network_type=NetworkType.LTE,
+        network_speed=NetworkSpeed.SLOW,
+        device_speed=DeviceSpeed.FAST_MOBILE,
+        bandwidth=12000,
+        latency=100,
+        cpu_slowdown=2,
     )
 
 
