@@ -33,6 +33,7 @@ setuptools.setup(
     url='https://github.com/nkansal96/blaze',
     packages=setuptools.find_packages(exclude=['*.tests', '*.tests.*', 'tests.*', 'tests']),
     install_requires=requirements(),
+    include_package_data=True,
     license='MIT',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

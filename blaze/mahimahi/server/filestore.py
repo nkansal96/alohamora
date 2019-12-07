@@ -59,10 +59,21 @@ def check_cacheability(headers: Dict[str, str]) -> bool:
 
 
 def get_cache_times(file_dir: str) -> Dict[str, int]:
+    """
+    :return: a dictionary mapping each file name to its freshness using `findcacheable`
+    """
+    path = os.path.join(os.path.dirname(__file__), "findcacheable")
     proc = subprocess.run(
-        f"./findcacheable '{file_dir}/' | awk -F'/' '{{print $NF'}} | grep freshness", shell=True, check=True
+        f"{path} '{file_dir}/' | awk -F'/' '{{print $NF'}} | grep freshness", shell=True, stdout=subprocess.PIPE
     )
-    return dict((fname, int(time)) for line in proc.stdout.split("\n") for fname, time in line.split(" freshness="))
+    d = {}
+    for line in proc.stdout.decode("utf-8").strip().split("\n"):
+        try:
+            fname, time = line.strip().split(" freshness=")
+            d[fname] = int(time)
+        except ValueError:
+            continue
+    return d
 
 
 class File(RecordClass):
@@ -133,6 +144,7 @@ class File(RecordClass):
         )
 
     def set_cache_time(self, cache_time: int):
+        """ Sets the amount of time this object is cacheable for and adds the Cache-Control header """
         self.cache_time = cache_time
         self.headers[CACHE_CONTROL_HEADER] = str(cache_time)
 
