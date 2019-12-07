@@ -28,6 +28,8 @@ class Resource(NamedTuple):
     group_id: int = 0
     source_id: int = 0
     initiator: int = 0
+
+    cache_time: int = 0
     critical: bool = False
 
     execution_ms: float = 0

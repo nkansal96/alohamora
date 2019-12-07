@@ -2,6 +2,7 @@
 
 import glob
 import os
+import subprocess
 from typing import Dict, List
 
 from recordclass import RecordClass
@@ -57,6 +58,13 @@ def check_cacheability(headers: Dict[str, str]) -> bool:
     return expires != "0" if expires else last_modified
 
 
+def get_cache_times(file_dir: str) -> Dict[str, int]:
+    proc = subprocess.run(
+        f"./findcacheable '{file_dir}/' | awk -F'/' '{{print $NF'}} | grep freshness", shell=True, check=True
+    )
+    return dict((fname, int(time)) for line in proc.stdout.split("\n") for fname, time in line.split(" freshness="))
+
+
 class File(RecordClass):
     """
     A File is a logical entry in the filestore, representing the metadata and body of a particular file in
@@ -77,7 +85,7 @@ class File(RecordClass):
     body: bytes
 
     # Convenience metadata
-    is_cacheable: bool
+    cache_time: int = 0
 
     @property
     def file_name(self):
@@ -104,9 +112,6 @@ class File(RecordClass):
         req_headers = {h.key.decode().lower(): h.value.decode() for h in record.request.header}
         res_headers = {h.key.decode().lower(): h.value.decode() for h in record.response.header}
 
-        # Pushable objects must be cacheable
-        is_cacheable = check_cacheability(res_headers)
-
         # Unchunk the body if it is chunked since HTTP/2 does not support chunked encoding
         body = record.response.body
         if TRANSFER_ENCODING_HEADER in res_headers and "chunked" in res_headers[TRANSFER_ENCODING_HEADER].lower():
@@ -114,8 +119,6 @@ class File(RecordClass):
 
         # Remove the unnecessary headers after checking for cacheability and transer encoding
         res_headers = {k: v for (k, v) in res_headers.items() if k not in REMOVE_HEADERS}
-        if is_cacheable:
-            res_headers[CACHE_CONTROL_HEADER] = "3600000"
         if ACCESS_CONTROL_ALLOW_ORIGIN_HEADER not in res_headers:
             res_headers[ACCESS_CONTROL_ALLOW_ORIGIN_HEADER] = "*"
 
@@ -126,15 +129,12 @@ class File(RecordClass):
         # it doesn't work when specifying the 'typename' parameter, but pylint complains
         # pylint: disable=no-value-for-parameter
         return File(
-            file_path=path,
-            method=method,
-            uri=uri,
-            host=host,
-            headers=res_headers,
-            status=int(status),
-            body=body,
-            is_cacheable=is_cacheable,
+            file_path=path, method=method, uri=uri, host=host, headers=res_headers, status=int(status), body=body
         )
+
+    def set_cache_time(self, cache_time: int):
+        self.cache_time = cache_time
+        self.headers[CACHE_CONTROL_HEADER] = str(cache_time)
 
 
 class FileStore:
@@ -147,6 +147,7 @@ class FileStore:
         :param path: The path to the folder of mahimahi-recorded files
         """
         self.path = os.path.abspath(path)
+        self._cache_times = {}
         self._files = []
 
     @property
@@ -154,8 +155,19 @@ class FileStore:
         """
         :return: A list of File objects corresponding to the files in self.path
         """
-        self._files = self._files or list(map(File.read, glob.iglob(f"{self.path}/*")))
+        if not self._files:
+            self._cache_times = get_cache_times(self.path)
+            self._files = self._files or list(map(File.read, glob.iglob(f"{self.path}/*")))
+            for f in self._files:
+                f.set_cache_time(self._cache_times.get(f.file_name, 0))
         return self._files
+
+    @property
+    def cacheable_files(self) -> List[File]:
+        """
+        :return: A list of File objects that are cacheable
+        """
+        return [f for f in self.files if f.cache_time > 0]
 
     @property
     def files_by_host(self) -> Dict[str, List[File]]:

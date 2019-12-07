@@ -1,9 +1,12 @@
 """ Implements the commands for preprocessing webpages before training """
+from typing import List
+
 from blaze.chrome.devtools import capture_har_in_replay_server
 from blaze.config.client import get_default_client_environment
 from blaze.config.config import get_config
-from blaze.config.environment import EnvironmentConfig
+from blaze.config.environment import EnvironmentConfig, PushGroup
 from blaze.logger import logger as log
+from blaze.mahimahi.server.filestore import FileStore
 from blaze.preprocess.har import har_entries_to_resources
 from blaze.preprocess.record import find_url_stable_set, get_page_links as _get_page_links, record_webpage
 from blaze.preprocess.resource import resource_list_to_push_groups
@@ -68,6 +71,9 @@ def preprocess(args):
     log.info("found total dependencies", total=len(res_list))
     push_groups = resource_list_to_push_groups(res_list, train_domain_globs=train_domain_globs)
 
+    log.info("finding cacheable objects")
+    push_groups = annotate_cacheable_objects(args.record_dir, push_groups)
+
     log.info("generating configuration...")
     env_config = EnvironmentConfig(
         replay_dir=args.record_dir, request_url=args.website, push_groups=push_groups, har_resources=har_resources
@@ -76,14 +82,16 @@ def preprocess(args):
     log.info("successfully prepared website for training", output=args.output)
 
 
-@command.argument("website", help="The URL of the website to find page links for")
-@command.argument("--max_depth", help="The maximum depth to search for links", default=3, type=int)
-@command.argument("--record_dir", help="The directory of the recorded webpage", required=True)
+@command.argument("--from_manifest", help="The manifest file of the recorded webpage", required=True)
 @command.command
-def get_page_links(args):
+def print_cache_times(args):
     """ Finds pages links on the given page up to the given depth """
-    log.info("getting page links", website=args.website, max_depth=args.max_depth)
-    print(_get_page_links(args.website, max_depth=args.max_depth))
+    log.info("reading cache information", website=args.website, max_depth=args.max_depth)
+    env_config = EnvironmentConfig.load_file(args.from_manifest)
+    annotate_cacheable_objects(env_config.replay_dir, env_config.push_groups)
+    for group in env_config.push_groups:
+        for res in group.resources:
+            print(f"{res.url:<48}  {res.cache_time}")
 
 
 def get_har_resources(website, config, client_env, extract_critical_requests):
@@ -102,3 +110,22 @@ def get_har_resources(website, config, client_env, extract_critical_requests):
             res._replace(critical=True)
 
     return har_entries_to_resources(har)
+
+
+def annotate_cacheable_objects(record_dir: str, push_groups: List[PushGroup]) -> List[PushGroup]:
+    """
+    Modifies the passed in push groups by examining files in the record directory
+    and annotating the ones that are cacheable
+    """
+    filestore = FileStore(record_dir)
+    cache_times = {
+        **{f"http://{f.host}{f.uri}": f.cache_time for f in filestore.cacheable_files},
+        **{f"https://{f.host}{f.uri}": f.cache_time for f in filestore.cacheable_files},
+    }
+    for group in push_groups:
+        for res in group.resources:
+            cache_time = cache_times.get(res.url, 0)
+            if cache_time > 0:
+                res._replace(cache_time=cache_time)
+
+    return push_groups
