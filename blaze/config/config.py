@@ -2,7 +2,7 @@
 
 import os
 import platform
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Set
 
 from blaze.util.cmd import run
 from .client import ClientEnvironment
@@ -28,6 +28,7 @@ class Config(NamedTuple):
     client_env: Optional[ClientEnvironment] = None
     reward_func: Optional[int] = None
     use_aft: Optional[bool] = None
+    cached_urls: Optional[Set[str]] = None
 
     def items(self):
         """ Return the dictionary items() method for this object """
@@ -42,6 +43,7 @@ class Config(NamedTuple):
             client_env=kwargs.get("client_env", self.client_env),
             reward_func=kwargs.get("reward_func", self.reward_func),
             use_aft=kwargs.get("use_aft", self.use_aft),
+            cached_urls=kwargs.get("cached_urls", self.cached_urls),
         )
 
 
