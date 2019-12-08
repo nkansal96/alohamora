@@ -1,6 +1,6 @@
 """ Defines the environment that the training of the agent occurs in """
 
-from typing import Optional, Union
+from typing import Optional, Set, Union
 
 import gym
 import numpy as np
@@ -37,22 +37,24 @@ class Environment(gym.Env):
         )
 
         self.observation_space = get_observation_space()
-        self.cached_urls = set()
+        self.cached_urls = config.cached_urls or set()
         self.analyzer = Analyzer(self.config, config.reward_func or 0, config.use_aft or False)
 
         self.client_environment: Optional[ClientEnvironment] = None
         self.action_space: Optional[ActionSpace] = None
         self.policy: Optional[Policy] = None
-        self.initialize_environment(self.config.client_env or client.get_random_fast_lte_client_environment())
+        self.initialize_environment(
+            self.config.client_env or client.get_random_fast_lte_client_environment(), self.config.cached_urls
+        )
 
     def seed(self, seed=None):
         self.np_random.seed(seed)
 
     def reset(self):
-        self.initialize_environment(client.get_random_fast_lte_client_environment())
+        self.initialize_environment(client.get_random_fast_lte_client_environment(), self.config.cached_urls)
         return self.observation
 
-    def initialize_environment(self, client_environment):
+    def initialize_environment(self, client_environment: ClientEnvironment, cached_urls: Optional[Set[str]] = None):
         """ Initialize the environment """
         log.info(
             "initialized environment",
@@ -63,12 +65,15 @@ class Environment(gym.Env):
             latency=client_environment.latency,
             cpu_slowdown=client_environment.cpu_slowdown,
             reward_func=self.analyzer.reward_func_num,
+            cached_urls=cached_urls,
         )
         # Cache scenarios in hours
         scenarios = [0, 0, 0, 0, 0, 1, 2, 4, 12, 24]
         cache_time = self.np_random.choice(scenarios)
         self.cached_urls = (
-            set()
+            cached_urls
+            if cached_urls is not None
+            else set()
             if cache_time == 0
             else set(
                 res.url
@@ -79,7 +84,7 @@ class Environment(gym.Env):
         )
 
         self.client_environment = client_environment
-        self.analyzer.reset(self.client_environment)
+        self.analyzer.reset(self.client_environment, self.cached_urls)
 
         self.action_space = ActionSpace(self.env_config.push_groups)
         self.policy = Policy(self.action_space)
