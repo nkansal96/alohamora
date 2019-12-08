@@ -71,9 +71,13 @@ class TestClientEnvironment:
     def test_get_random_fast_lte_env(self):
         env = client.get_random_fast_lte_client_environment()
         assert isinstance(env, client.ClientEnvironment)
-        assert env.network_type == client.NetworkType.LTE
         assert env.network_speed == client.NetworkSpeed.FAST
-        assert env.device_speed in {client.DeviceSpeed.FAST_MOBILE, client.DeviceSpeed.SLOW_MOBILE}
+        assert env.network_type in {client.NetworkType.LTE, client.NetworkType.WIFI}
+        assert env.device_speed in {
+            client.DeviceSpeed.FAST_MOBILE,
+            client.DeviceSpeed.SLOW_MOBILE,
+            client.DeviceSpeed.DESKTOP,
+        }
 
         bandwidth_range = client.network_to_bandwidth_range(env.network_type, env.network_speed)
         latency_range = client.network_to_latency_range(env.network_type)

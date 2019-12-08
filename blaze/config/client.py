@@ -44,8 +44,8 @@ def network_to_bandwidth_range(network_type: NetworkType, network_speed: Network
     """ Returns the (low, high) bandwidth range in kbps for the given network type """
     network_bandwidth_map = {
         NetworkType.WIRED: {NetworkSpeed.FAST: (48000, 96000), NetworkSpeed.SLOW: (24000, 48000)},
-        NetworkType.WIFI: {NetworkSpeed.FAST: (12000, 24000), NetworkSpeed.SLOW: (6000, 12000)},
-        NetworkType.LTE: {NetworkSpeed.FAST: (12000, 24000), NetworkSpeed.SLOW: (6000, 12000)},
+        NetworkType.WIFI: {NetworkSpeed.FAST: (12000, 26000), NetworkSpeed.SLOW: (6000, 12000)},
+        NetworkType.LTE: {NetworkSpeed.FAST: (12000, 26000), NetworkSpeed.SLOW: (6000, 12000)},
         NetworkType.UMTS: {NetworkSpeed.FAST: (6000, 12000), NetworkSpeed.SLOW: (1000, 6000)},
     }
     return network_bandwidth_map[network_type][network_speed]
@@ -55,7 +55,7 @@ def network_to_latency_range(network_type: NetworkType) -> Tuple[int, int]:
     """ Returns the (low, high) Round-trip latency range in ms for the given network type """
     network_latency_map = {
         NetworkType.WIRED: (2, 10),
-        NetworkType.WIFI: (10, 25),
+        NetworkType.WIFI: (10, 40),
         NetworkType.LTE: (40, 100),
         NetworkType.UMTS: (60, 120),
     }
@@ -89,9 +89,9 @@ def get_random_client_environment():
 
 def get_random_fast_lte_client_environment():
     """ Returns a random fast mobile LTE ClientEnvironment"""
-    network_type = NetworkType.LTE
+    network_type = random.choice([NetworkType.LTE, NetworkType.WIFI])
     network_speed = NetworkSpeed.FAST
-    device_speed = random.choice([DeviceSpeed.FAST_MOBILE, DeviceSpeed.SLOW_MOBILE])
+    device_speed = random.choice([DeviceSpeed.FAST_MOBILE, DeviceSpeed.SLOW_MOBILE, DeviceSpeed.DESKTOP])
     bandwidth_range = network_to_bandwidth_range(network_type, network_speed)
     latency_range = network_to_latency_range(network_type)
     cpu_slowdown = device_speed_to_cpu_slowdown(device_speed)
