@@ -6,6 +6,7 @@ import os
 import re
 import signal
 import subprocess
+import tempfile
 import threading
 import time
 import traceback
@@ -71,6 +72,8 @@ def get_args():
     parser.add_argument("--cpu_slowdown", required=True, type=int, choices=[1, 2, 4], help="cpu_slowdown to test with")
     parser.add_argument("--iterations", required=True, type=int, help="number of policies to try")
     parser.add_argument("--max_retries", required=True, type=int, help="maximum number of times to retry a failure")
+    parser.add_argument("--speed_index", action="store_true", help="use speed index metric instead of PLT")
+    parser.add_argument("--warm_cache", action="store_true", help="use warm cache")
     return parser.parse_args()
 
 
@@ -89,6 +92,9 @@ def website_exists(manifest_file, results_dir):
 
 
 def test_website(args, manifest_file):
+    tempdir = None
+    if args.warm_cache:
+        tempdir = tempfile.mkdtemp(prefix="blaze_warm_" + os.path.basename(manifest_file).split(".manifest")[0])
     with open(get_results_fname(manifest_file, args.results_dir) + ".json", "ab+") as outf:
         with open(get_results_fname(manifest_file, args.results_dir) + ".log", "ab+") as errf:
             monitor_process(
@@ -109,6 +115,8 @@ def test_website(args, manifest_file):
                     str(args.max_retries),
                     "--from_manifest",
                     manifest_file,
+                    *(["--speed_index"] if args.speed_index else []),
+                    *(["--user_data_dir", tempdir] if tempdir else []),
                 ],
                 60 * 10,
                 outf,

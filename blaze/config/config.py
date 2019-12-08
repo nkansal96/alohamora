@@ -27,6 +27,7 @@ class Config(NamedTuple):
     env_config: Optional[EnvironmentConfig] = None
     client_env: Optional[ClientEnvironment] = None
     reward_func: Optional[int] = None
+    use_aft: Optional[bool] = None
 
     def items(self):
         """ Return the dictionary items() method for this object """
@@ -40,6 +41,7 @@ class Config(NamedTuple):
             env_config=kwargs.get("env_config", self.env_config),
             client_env=kwargs.get("client_env", self.client_env),
             reward_func=kwargs.get("reward_func", self.reward_func),
+            use_aft=kwargs.get("use_aft", self.use_aft),
         )
 
 
@@ -47,6 +49,7 @@ def get_config(
     env_config: Optional[EnvironmentConfig] = None,
     client_env: Optional[ClientEnvironment] = None,
     reward_func: Optional[int] = None,
+    use_aft: Optional[bool] = None,
 ) -> Config:
     """
     get_config returns the runtime configuration, taking values from environment variables
@@ -58,4 +61,5 @@ def get_config(
         env_config=env_config,
         client_env=client_env,
         reward_func=reward_func,
+        use_aft=use_aft,
     )

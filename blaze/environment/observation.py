@@ -3,7 +3,7 @@ This module defines classes and methods related to creating the observation spac
 and generating observations based on some training state
 """
 
-from typing import List
+from typing import List, Set
 
 import gym
 import numpy as np
@@ -27,11 +27,15 @@ def get_observation_space():
         [
             # 0 for disabled, 1 for enabled
             2,
+            # 0 for not cached, 1 for cached
+            2,
             # the push group (domain) this object is part of
             MAX_DOMAINS,
             # the source id (the position of this object relative to the domain) of this object
             MAX_RESOURCES,
             # the order (position of this object relative to the top of the page load) of this object, offset by 1
+            MAX_RESOURCES + 1,
+            # the initiator (order, offset by 1, of the object that requested this one)
             MAX_RESOURCES + 1,
             # the resource type
             len(ResourceType),
@@ -59,21 +63,24 @@ def get_observation_space():
     )
 
 
-def get_observation(client_environment: ClientEnvironment, push_groups: List[PushGroup], policy: Policy):
+def get_observation(
+    client_environment: ClientEnvironment, push_groups: List[PushGroup], policy: Policy, cached_urls: Set[str]
+):
     """
     Given the environment, list of pushable resources, and the current push policy,
     return an observation
     """
     # Encode the push groups
-    encoded_resources = {str(i): np.array([0, 0, 0, 0, 0, 0, 0, 0]) for i in range(MAX_RESOURCES)}
+    encoded_resources = {str(i): np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) for i in range(MAX_RESOURCES)}
 
     for group in push_groups:
         for res in group.resources:
             # for some reason, sometimes res.type is in int instead of a ResourceType
             res_type = res.type.value if isinstance(res.type, ResourceType) else res.type
             res_size_kb = min(MAX_KBYTES - 1, res.size // 1000)
+            cached = 1 if res.url in cached_urls else 0
             encoded_resources[str(res.order)] = np.array(
-                [1, group.id, res.source_id, res.order + 1, res_type, res_size_kb, 0, 0]
+                [1, cached, group.id, res.source_id, res.order + 1, res.initiator + 1, res_type, res_size_kb, 0, 0]
             )
 
     for (source, push) in policy.observable_push:

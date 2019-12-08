@@ -4,7 +4,7 @@ under the specified circumstances and returns a metric indicating the policy
 quality
 """
 
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Set
 
 from blaze.action import Policy
 from blaze.config import Config
@@ -13,8 +13,8 @@ from blaze.evaluator.simulator import Simulator
 from blaze.logger import logger
 
 # Define the call signature of a reward function
-# (simulator) => ((policy) => float)
-RewardFunction = Callable[[Simulator, ClientEnvironment], Callable[[Policy], float]]
+# (simulator, client environment, cached urls) => ((policy) => float)
+RewardFunction = Callable[[Simulator, ClientEnvironment, Set[str], Optional[bool]], Callable[[Policy], float]]
 
 MIN_PAGE_LOAD_TIME = 1000000.0
 BEST_REWARD_COEFF = 200000.0
@@ -22,7 +22,9 @@ REGRESSION_REWARD_COEFF = -5.0
 PROGRESSION_REWARD_COEFF = 5.0
 
 
-def reward_0(simulator: Simulator, client_environment: ClientEnvironment) -> Callable[[Policy], float]:
+def reward_0(
+    simulator: Simulator, client_environment: ClientEnvironment, cached_urls: Set[str], use_aft: bool = False
+) -> Callable[[Policy], float]:
     """
     Returns a reward function that returns the difference in 1/plt and 1/last_plt
     """
@@ -31,7 +33,7 @@ def reward_0(simulator: Simulator, client_environment: ClientEnvironment) -> Cal
     def _reward(policy: Policy) -> float:
         nonlocal last_plt
 
-        plt = simulator.simulate_load_time(client_environment, policy)
+        plt = simulator.simulate_load_time(client_environment, policy=policy, cached_urls=cached_urls, use_aft=use_aft)
         if last_plt == 0:
             reward = 1000000.0 * (1.0 / plt)
         else:
@@ -42,31 +44,37 @@ def reward_0(simulator: Simulator, client_environment: ClientEnvironment) -> Cal
     return _reward
 
 
-def reward_1(simulator: Simulator, client_environment: ClientEnvironment) -> Callable[[Policy], float]:
+def reward_1(
+    simulator: Simulator, client_environment: ClientEnvironment, cached_urls: Set[str], use_aft: bool = False
+) -> Callable[[Policy], float]:
     """
     Returns a reward function that returns 1/plt
     """
 
     def _reward(policy: Policy) -> float:
-        plt = simulator.simulate_load_time(client_environment, policy)
+        plt = simulator.simulate_load_time(client_environment, policy=policy, cached_urls=cached_urls, use_aft=use_aft)
         return 1000000.0 / plt
 
     return _reward
 
 
-def reward_2(simulator: Simulator, client_environment: ClientEnvironment) -> Callable[[Policy], float]:
+def reward_2(
+    simulator: Simulator, client_environment: ClientEnvironment, cached_urls: Set[str], use_aft: bool = False
+) -> Callable[[Policy], float]:
     """
     Returns a reward function that returns -plt
     """
 
     def _reward(policy: Policy) -> float:
-        plt = simulator.simulate_load_time(client_environment, policy)
+        plt = simulator.simulate_load_time(client_environment, policy=policy, cached_urls=cached_urls, use_aft=use_aft)
         return -plt
 
     return _reward
 
 
-def reward_3(simulator: Simulator, client_environment: ClientEnvironment) -> Callable[[Policy], float]:
+def reward_3(
+    simulator: Simulator, client_environment: ClientEnvironment, cached_urls: Set[str], use_aft: bool = False
+) -> Callable[[Policy], float]:
     """
     Returns a reward function that returns the original 3-part reward
     """
@@ -76,7 +84,7 @@ def reward_3(simulator: Simulator, client_environment: ClientEnvironment) -> Cal
     def _reward(policy: Policy) -> float:
         nonlocal min_plt, last_plt
 
-        plt = simulator.simulate_load_time(client_environment, policy)
+        plt = simulator.simulate_load_time(client_environment, policy=policy, cached_urls=cached_urls, use_aft=use_aft)
         if plt < min_plt:
             reward = BEST_REWARD_COEFF / plt
         else:
@@ -108,19 +116,31 @@ class Analyzer:
     """
 
     def __init__(
-        self, config: Config, reward_func_num: int = 0, client_environment: Optional[ClientEnvironment] = None
+        self,
+        config: Config,
+        reward_func_num: int = 0,
+        use_aft: bool = False,
+        client_environment: Optional[ClientEnvironment] = None,
+        cached_urls: Optional[Set[str]] = None,
     ):
         self.config = config
+        self.use_aft = use_aft
+        self.cached_urls = cached_urls
         self.client_environment = client_environment
         self.simulator = Simulator(config.env_config)
         self.reward_func_num = reward_func_num
-        self.reward_func = REWARD_FUNCTIONS[self.reward_func_num](self.simulator, self.client_environment)
+        self.reward_func = REWARD_FUNCTIONS[self.reward_func_num](
+            self.simulator, self.client_environment, self.cached_urls, self.use_aft
+        )
         self.log = logger.with_namespace("analyzer")
 
-    def reset(self, client_environment: Optional[ClientEnvironment] = None):
+    def reset(self, client_environment: Optional[ClientEnvironment] = None, cached_urls: Optional[Set[str]] = None):
         """ Resets the analyzer's state and optionally changes the client environment """
         self.client_environment = client_environment or self.client_environment
-        self.reward_func = REWARD_FUNCTIONS[self.reward_func_num](self.simulator, self.client_environment)
+        self.cached_urls = cached_urls
+        self.reward_func = REWARD_FUNCTIONS[self.reward_func_num](
+            self.simulator, self.client_environment, self.cached_urls, self.use_aft
+        )
 
     def get_reward(self, policy: Policy) -> float:
         """
