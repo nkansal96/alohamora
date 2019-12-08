@@ -32,8 +32,13 @@ def view_manifest(args):
             if len(url) > 64:
                 url = url[:61] + "..."
             print(
-                "    {order:<3}  {url:<64}  {type:<6}  {size} B".format(
-                    order=res.order, url=url, type=res.type.name, size=res.size
+                "    {order:<3}  {url:<64}  {type:<6} {size:>8} B  cache: {cache}s  {crit}".format(
+                    order=res.order,
+                    url=url,
+                    type=res.type.name,
+                    size=res.size,
+                    cache=res.cache_time,
+                    crit="critical" if res.critical else "",
                 )
             )
         print()

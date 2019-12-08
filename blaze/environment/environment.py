@@ -3,6 +3,7 @@
 from typing import Optional, Union
 
 import gym
+import numpy as np
 
 from blaze.action import ActionIDType, ActionSpace, Policy
 from blaze.config import client, Config
@@ -29,18 +30,23 @@ class Environment(gym.Env):
 
         self.config = config
         self.env_config = config.env_config
+        self.np_random = np.random.RandomState()
 
         log.info(
             "initialized trainable push groups", groups=[group.name for group in self.env_config.trainable_push_groups]
         )
 
         self.observation_space = get_observation_space()
-        self.analyzer = Analyzer(self.config, config.reward_func or 0)
+        self.cached_urls = set()
+        self.analyzer = Analyzer(self.config, config.reward_func or 0, config.use_aft or False)
 
         self.client_environment: Optional[ClientEnvironment] = None
         self.action_space: Optional[ActionSpace] = None
         self.policy: Optional[Policy] = None
         self.initialize_environment(self.config.client_env or client.get_random_fast_lte_client_environment())
+
+    def seed(self, seed=None):
+        self.np_random.seed(seed)
 
     def reset(self):
         self.initialize_environment(client.get_random_fast_lte_client_environment())
@@ -58,21 +64,25 @@ class Environment(gym.Env):
             cpu_slowdown=client_environment.cpu_slowdown,
             reward_func=self.analyzer.reward_func_num,
         )
+        # Cache scenarios in hours
+        scenarios = [0, 0, 0, 0, 0, 1, 2, 4, 12, 24]
+        cache_time = self.np_random.choice(scenarios)
+        self.cached_urls = (
+            set()
+            if cache_time == 0
+            else set(
+                res.url
+                for group in self.env_config.push_groups
+                for res in group.resources
+                if res.cache_time >= (cache_time * 60 * 60)
+            )
+        )
+
         self.client_environment = client_environment
         self.analyzer.reset(self.client_environment)
 
         self.action_space = ActionSpace(self.env_config.push_groups)
         self.policy = Policy(self.action_space)
-
-        # choose a random non-trainable push group to simulate as if it's already pushed
-        # candidate_push_groups = [
-        #     group for group in self.env_config.push_groups if len(group.resources) > 2 and not group.trainable
-        # ]
-        # if candidate_push_groups:
-        #     default_group = random.choice(candidate_push_groups)
-        #     for push in default_group.resources[1:]:
-        #         self.policy.add_default_push_action(default_group.resources[0], push)
-        #     log.info("chose group to auto push", group=default_group.name, rules_added=len(default_group.resources))
 
     def step(self, action: ActionIDType):
         # decode the action and apply it to the policy
@@ -97,4 +107,4 @@ class Environment(gym.Env):
     @property
     def observation(self):
         """ Returns an observation for the current state of the environment """
-        return get_observation(self.client_environment, self.env_config.push_groups, self.policy)
+        return get_observation(self.client_environment, self.env_config.push_groups, self.policy, self.cached_urls)

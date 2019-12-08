@@ -26,7 +26,7 @@ class TestGetObservation:
         action_space = ActionSpace(self.push_groups)
         policy = Policy(action_space)
 
-        obs = get_observation(self.client_environment, self.push_groups, policy)
+        obs = get_observation(self.client_environment, self.push_groups, policy, set())
         assert isinstance(obs, dict)
         assert self.observation_space.contains(obs)
 
@@ -47,9 +47,11 @@ class TestGetObservation:
                     np.array(
                         (
                             1,  # resource is enabled
+                            0,  # resource is not cached
                             group.id,  # the resource's domain id
                             res.source_id,  # the resource's relative offset from its domain top
                             res.order + 1,  # the resource's absolute offset from the start of the page load
+                            res.initiator + 1,  # the resource's initiator
                             res.type.value,  # resource type
                             res.size // 1000,  # resource size in KB
                             0,  # not pushed
@@ -60,7 +62,7 @@ class TestGetObservation:
 
         max_order = max(r.order for group in self.push_groups for r in group.resources)
         for i in range(max_order + 1, MAX_RESOURCES):
-            assert np.array_equal(obs["resources"][str(i)], np.array([0, 0, 0, 0, 0, 0, 0, 0]))
+            assert np.array_equal(obs["resources"][str(i)], np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
 
     def test_observation_with_nonempty_policy(self):
         action_space = ActionSpace(self.push_groups)
@@ -73,7 +75,7 @@ class TestGetObservation:
             policy.apply_action(action_id)
 
             # get the observation
-            obs = get_observation(self.client_environment, self.push_groups, policy)
+            obs = get_observation(self.client_environment, self.push_groups, policy, set())
             assert self.observation_space.contains(obs)
 
             # make sure the push sources are recorded correctly
@@ -116,7 +118,7 @@ class TestGetObservation:
             policy.apply_action(action_id)
 
             # get the observation
-            obs = get_observation(self.client_environment, self.push_groups, policy)
+            obs = get_observation(self.client_environment, self.push_groups, policy, set())
             assert self.observation_space.contains(obs)
 
             # make sure the push sources are recorded correctly
@@ -136,3 +138,16 @@ class TestGetObservation:
             preloaded_res = set(push_res.order for (source, push) in policy.observable_preload for push_res in push)
             assert all(res[-2] == 0 for order, res in obs["resources"].items() if int(order) not in pushed_res)
             assert all(res[-1] == 0 for order, res in obs["resources"].items() if int(order) not in preloaded_res)
+
+    def test_observation_with_cached_urls(self):
+        action_space = ActionSpace(self.push_groups)
+        policy = Policy(action_space)
+
+        resources = [res for group in self.push_groups for res in group.resources]
+        mask = [random.randint(0, 2) for _ in range(len(resources))]
+        cached = [res for (res, include) in zip(resources, mask) if include]
+        cached_urls = set(res.url for res in cached)
+
+        obs = get_observation(self.client_environment, self.push_groups, policy, cached_urls)
+        for res in cached:
+            assert obs["resources"][str(res.order)][1] == 1

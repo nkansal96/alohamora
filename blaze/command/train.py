@@ -27,6 +27,7 @@ from . import command
 @command.argument(
     "--reward_func", help="Reward function to use", default=1, choices=list(range(get_num_rewards())), type=int
 )
+@command.argument("--use_aft", help="Use AFT at the reward metric", action="store_true")
 @command.argument("--resume", help="Resume training from last checkpoint", default=False, action="store_true")
 @command.argument(
     "--no-resume",
@@ -59,5 +60,5 @@ def train(args):
     resume = False if args.no_resume else True if args.resume else "prompt"
     train_config = TrainConfig(experiment_name=args.name, num_workers=args.workers, resume=resume)
     env_config = EnvironmentConfig.load_file(args.manifest_file)
-    config = get_config(env_config, reward_func=args.reward_func)
+    config = get_config(env_config, reward_func=args.reward_func, use_aft=args.use_aft)
     model.train(train_config, config)

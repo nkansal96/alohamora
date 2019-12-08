@@ -61,6 +61,9 @@ def monitor_process(cmd, timeout, output_file, retries=3):
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--train_dir", required=True, help="Directory containing the recorded websites")
+    parser.add_argument(
+        "--extract_critical_requests", action="store_true", help="Preprocess and additionally get critical requests"
+    )
     parser.add_argument("--num_workers", default=4, type=int, help="Number of workers to use")
     return parser.parse_args()
 
@@ -73,7 +76,7 @@ def get_manifest_file(train_dir_location, website_dir):
     return os.path.join(train_dir_location, f"{website_dir}.manifest")
 
 
-def preprocess_website(train_dir_location, website_dir):
+def preprocess_website(train_dir_location, website_dir, extract_critical_requests):
     url = "https://" + website_dir.replace("__", "/")
     monitor_process(
         [
@@ -81,6 +84,7 @@ def preprocess_website(train_dir_location, website_dir):
             "preprocess",
             "--train_domain_globs",
             "*",
+            *(["--extract_critical_requests"] if extract_critical_requests else []),
             "--record_dir",
             os.path.join(train_dir_location, website_dir),
             "--output",
@@ -96,13 +100,13 @@ def manifest_exists(train_dir_location, website_dir):
     return os.path.isfile(get_manifest_file(train_dir_location, website_dir))
 
 
-def worker(train_dir_location, website_dir):
+def worker(train_dir_location, website_dir, extract_critical_requests):
     try:
         if manifest_exists(train_dir_location, website_dir):
             print(f"preprocessing {website_dir} ... skipping (already exists)")
             return
         print(f"preprocessing {website_dir} ... ")
-        preprocess_website(train_dir_location, website_dir)
+        preprocess_website(train_dir_location, website_dir, extract_critical_requests)
     except KeyboardInterrupt:
         raise
     except:
@@ -113,7 +117,10 @@ def main(args):
     train_dir_location = os.path.abspath(args.train_dir)
     record_dirs = get_record_dirs(train_dir_location)
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.num_workers) as pool:
-        f = [pool.submit(worker, train_dir_location, website_dir) for website_dir in record_dirs]
+        f = [
+            pool.submit(worker, train_dir_location, website_dir, args.extract_critical_requests)
+            for website_dir in record_dirs
+        ]
         print("Finished processing", len([p.result() for p in f]), "websites")
 
 

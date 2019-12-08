@@ -105,20 +105,29 @@ class RequestQueue:
         self.queue = [qi for qi in self.queue if qi.node != node]
         self.delayed = [qi for qi in self.delayed if qi.node != node]
 
-    def add_with_delay(self, node: Node, delay_ms: float):
+    def add_with_delay(self, node: Node, delay_ms: float, cached: bool = False):
         """
         Adds an item to the queue but does not start it until the delay has occurred. Additionally,
         this method checks to see if a connection has been opened for the resource's origin. If not,
         it adds 2-RTT delay for the resource.
+
+        :param node: The node to add to the request queue
+        :param delay_ms: The milliseconds to delay the request before starting it (not including RTT)
+        :param cached: Specifies if the given resource is cached and does not need to be downloaded
         """
 
         domain = Url.parse(node.resource.url).domain
-        num_rtts = self.tcp_state[domain].round_trips_needed_for_bytes(node.resource.size)
-        if domain not in self.connected_origins:
-            num_rtts += 1
+        if cached:
+            delay_ms = max(0.0, delay_ms)
+            queue_item = QueueItem(node, 0, domain, delay_ms)
+        else:
+            num_rtts = self.tcp_state[domain].round_trips_needed_for_bytes(node.resource.size)
+            if domain not in self.connected_origins:
+                num_rtts += 1
 
-        delay_ms = max(0.0, delay_ms + (num_rtts * self.rtt_latency_ms))
-        queue_item = QueueItem(node, node.resource.size, domain, delay_ms)
+            delay_ms = max(0.0, delay_ms + (num_rtts * self.rtt_latency_ms))
+            queue_item = QueueItem(node, node.resource.size, domain, delay_ms)
+
         if delay_ms <= 0:
             self.queue.append(queue_item)
         else:
