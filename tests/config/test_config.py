@@ -19,7 +19,7 @@ class TestConfig:
         conf = config.get_config()
         items = conf.items()
         assert all(len(v) == 2 for v in items)
-        assert len(items) == 6
+        assert len(items) == 7
 
     def test_with_mutations(self):
         conf = config.Config(http2push_image="", chrome_bin="")
