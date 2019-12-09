@@ -217,6 +217,7 @@ def _test_push(
         "url": env_config.request_url,
         "cache": "warm" if user_data_dir else "cold",
         "metric": "speed_index" if speed_index else "plt",
+        "cache_time": cache_time,
     }
 
     if not only_simulator:
