@@ -69,6 +69,7 @@ def start_server(
     cert_path: Optional[str] = None,
     key_path: Optional[str] = None,
     policy: Optional[Policy] = None,
+    cache_time: Optional[int] = None,
     extract_critical_requests: Optional[bool] = False,
 ):
     """
@@ -87,7 +88,7 @@ def start_server(
     # Load the file store into memory
     if not os.path.isdir(replay_dir):
         raise NotADirectoryError(f"{replay_dir} is not a directory")
-    filestore = FileStore(replay_dir)
+    filestore = FileStore(replay_dir, cache_time=cache_time)
 
     # Create host-ip mapping
     hosts = filestore.hosts

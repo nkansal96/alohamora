@@ -34,6 +34,9 @@ from . import command
     help="Returns the speed index of the page calculated using pwmetrics. As a float.",
     action="store_true",
 )
+@command.argument(
+    "--cache_time", help="Simulate cached object expired after this time (in seconds)", type=int, default=None
+)
 @command.command
 def page_load_time(args):
     """
@@ -76,19 +79,37 @@ def page_load_time(args):
     if not args.only_simulator:
         if not args.speed_index:
             orig_plt, *_ = get_page_load_time_in_replay_server(
-                config.env_config.request_url, client_env, config, args.user_data_dir
+                request_url=config.env_config.request_url,
+                client_env=client_env,
+                config=config,
+                cache_time=args.cache_time,
+                user_data_dir=args.user_data_dir,
             )
             if policy:
                 plt, *_ = get_page_load_time_in_replay_server(
-                    config.env_config.request_url, client_env, config, args.user_data_dir, policy
+                    request_url=config.env_config.request_url,
+                    client_env=client_env,
+                    config=config,
+                    policy=policy,
+                    cache_time=args.cache_time,
+                    user_data_dir=args.user_data_dir,
                 )
         else:
             orig_plt = get_speed_index_in_replay_server(
-                config.env_config.request_url, client_env, config, args.user_data_dir
+                request_url=config.env_config.request_url,
+                client_env=client_env,
+                config=config,
+                cache_time=args.cache_time,
+                user_data_dir=args.user_data_dir,
             )
             if policy:
                 plt = get_speed_index_in_replay_server(
-                    config.env_config.request_url, client_env, config, args.user_data_dir, policy
+                    request_url=config.env_config.request_url,
+                    client_env=client_env,
+                    config=config,
+                    policy=policy,
+                    cache_time=args.cache_time,
+                    user_data_dir=args.user_data_dir,
                 )
 
     log.debug("running simulator...")
@@ -102,6 +123,7 @@ def page_load_time(args):
                 "client_env": client_env._asdict(),
                 "metric": "speed_index" if args.speed_index else "plt",
                 "cache": "warm" if args.user_data_dir else "cold",
+                "cache_time": args.cache_time,
                 "replay_server": {"with_policy": plt, "without_policy": orig_plt},
                 "simulator": {"with_policy": sim_plt, "without_policy": orig_sim_plt},
             },

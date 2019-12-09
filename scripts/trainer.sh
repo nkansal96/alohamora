@@ -15,5 +15,4 @@ cat ${TRAIN_MANIFESTS} | xargs -I "{}" blaze train "{}" \
 					--workers ${WORKERS} \
 					--reward_func ${REWARD_FUNC} \
 					--manifest_file "${MANIFEST_DIR}/{}.manifest" \
-					--use_aft \
 					--no-resume >> ${TRAIN_LOG_FILE} 2>&1

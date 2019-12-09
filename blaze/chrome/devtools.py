@@ -19,8 +19,9 @@ def capture_har_in_replay_server(
     url: str,
     config: Config,
     client_env: ClientEnvironment,
-    user_data_dir: Optional[str] = None,
     policy: Optional[Policy] = None,
+    cache_time: Optional[int] = None,
+    user_data_dir: Optional[str] = None,
     extract_critical_requests: Optional[bool] = False,
 ) -> Har:
     """
@@ -56,6 +57,7 @@ def capture_har_in_replay_server(
             policy_file_name="policy.json",
             link_trace_file_name="trace_file",
             capture_url=url,
+            cache_time=cache_time,
             user_data_dir=user_data_dir,
             extract_critical_requests=extract_critical_requests,
         )
@@ -73,8 +75,9 @@ def capture_si_in_replay_server(
     url: str,
     config: Config,
     client_env: ClientEnvironment,
-    user_data_dir: str,
     policy: Optional[Policy] = None,
+    cache_time: Optional[int] = None,
+    user_data_dir: Optional[str] = None,
     extract_critical_requests: Optional[bool] = False,
 ) -> float:
     """
@@ -110,6 +113,7 @@ def capture_si_in_replay_server(
             policy_file_name="policy.json",
             link_trace_file_name="trace_file",
             capture_url=url,
+            cache_time=cache_time,
             user_data_dir=user_data_dir,
             extract_critical_requests=extract_critical_requests,
         )

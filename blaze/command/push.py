@@ -64,6 +64,9 @@ def random_push_policy(args):
     help="Returns the speed index of the page calculated using pwmetrics. As a float.",
     action="store_true",
 )
+@command.argument(
+    "--cache_time", help="Simulate cached object expired after this time (in seconds)", type=int, default=None
+)
 @command.command
 def test_push(args):
     """
@@ -92,6 +95,7 @@ def test_push(args):
         cpu_slowdown=args.cpu_slowdown,
         only_simulator=args.only_simulator,
         speed_index=args.speed_index,
+        cache_time=args.cache_time,
         user_data_dir=args.user_data_dir,
     )
     return 0
@@ -197,6 +201,7 @@ def _test_push(
     cpu_slowdown: Optional[int],
     only_simulator: Optional[bool],
     speed_index: Optional[bool],
+    cache_time: Optional[int],
     user_data_dir: Optional[str],
 ):
     env_config = EnvironmentConfig.load_file(manifest)
@@ -212,12 +217,13 @@ def _test_push(
         "url": env_config.request_url,
         "cache": "warm" if user_data_dir else "cold",
         "metric": "speed_index" if speed_index else "plt",
+        "cache_time": cache_time,
     }
 
     if not only_simulator:
         config = get_config(env_config)
         plt, push_plts, policies = _get_results_in_replay_server(
-            config, client_env, iterations, max_retries, policy_generator, user_data_dir, speed_index
+            config, client_env, iterations, max_retries, policy_generator, cache_time, user_data_dir, speed_index
         )
         data["replay_server"] = {
             "without_policy": plt,
@@ -244,16 +250,27 @@ def _get_results_in_replay_server(
     iterations: int,
     max_retries: int,
     policy_generator: Callable[[EnvironmentConfig], Policy],
+    cache_time: Optional[int] = None,
     user_data_dir: Optional[str] = None,
     speed_index: Optional[bool] = False,
 ) -> Tuple[float, List[float], List[Policy]]:
     log.debug("capturing median PLT in mahimahi with given environment")
     if not speed_index:
         orig_plt, *_ = get_page_load_time_in_replay_server(
-            config.env_config.request_url, client_env, config, user_data_dir
+            request_url=config.env_config.request_url,
+            client_env=client_env,
+            config=config,
+            cache_time=cache_time,
+            user_data_dir=user_data_dir,
         )
     else:
-        orig_plt = get_speed_index_in_replay_server(config.env_config.request_url, client_env, config, user_data_dir)
+        orig_plt = get_speed_index_in_replay_server(
+            request_url=config.env_config.request_url,
+            client_env=client_env,
+            config=config,
+            cache_time=cache_time,
+            user_data_dir=user_data_dir,
+        )
 
     plts = []
     policies = []
@@ -268,11 +285,21 @@ def _get_results_in_replay_server(
         try:
             if not speed_index:
                 plt, *_ = get_page_load_time_in_replay_server(
-                    config.env_config.request_url, client_env, config, user_data_dir, policy
+                    request_url=config.env_config.request_url,
+                    client_env=client_env,
+                    config=config,
+                    policy=policy,
+                    cache_time=cache_time,
+                    user_data_dir=user_data_dir,
                 )
             else:
                 plt = get_speed_index_in_replay_server(
-                    config.env_config.request_url, client_env, config, user_data_dir, policy
+                    request_url=config.env_config.request_url,
+                    client_env=client_env,
+                    config=config,
+                    policy=policy,
+                    cache_time=cache_time,
+                    user_data_dir=user_data_dir,
                 )
             plts.append(plt)
             policies.append(policy)

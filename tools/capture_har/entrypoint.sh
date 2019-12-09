@@ -11,7 +11,9 @@ rm /tmp/resolv.conf
 sudo chmod -R 755 /mnt/share
 
 # nginx is installed in a non-standard location
-export PATH=/usr/local/openresty/nginx/sbin:"$PATH"
+export PATH="/usr/local/openresty/nginx/sbin:$PATH"
+export FINDCACHEABLE_BIN="/usr/local/lib/python3.6/dist-packages/blaze/mahimahi/server/findcacheable"
+sudo chmod +x $FINDCACHEABLE_BIN
 
 # If no arguments are provided, start a shell
 if [[ $# -eq 0 ]]; then

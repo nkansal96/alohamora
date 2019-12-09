@@ -3,10 +3,11 @@
 import glob
 import os
 import subprocess
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from recordclass import RecordClass
 
+from blaze.logger import logger as log
 from blaze.proto import http_record_pb2
 from blaze.util import encoding
 
@@ -62,10 +63,21 @@ def get_cache_times(file_dir: str) -> Dict[str, int]:
     """
     :return: a dictionary mapping each file name to its freshness using `findcacheable`
     """
-    path = os.path.join(os.path.dirname(__file__), "findcacheable")
+
+    def demote():
+        if os.path.isfile("/opt/entrypoint.sh"):
+            os.setgid(27)
+            os.setuid(103)
+
+    path = os.environ.get("FINDCACHEABLE_BIN", os.path.join(os.path.dirname(__file__), "findcacheable"))
     proc = subprocess.run(
-        f"{path} '{file_dir}/' | awk -F'/' '{{print $NF'}} | grep freshness", shell=True, stdout=subprocess.PIPE
+        f"{path} '{file_dir}/' | awk -F'/' '{{print $NF'}} | grep freshness",
+        shell=True,
+        preexec_fn=demote,
+        stdout=subprocess.PIPE,
     )
+    if proc.returncode != 0:
+        log.with_namespace("get_cache_times").warn("failed to run findcacheable", code=proc.returncode)
     d = {}
     for line in proc.stdout.decode("utf-8").strip().split("\n"):
         try:
@@ -105,6 +117,13 @@ class File(RecordClass):
         """
         return os.path.basename(self.file_path)
 
+    @property
+    def url(self):
+        """
+        :return: The full URL of this resources
+        """
+        return f"https://{self.host}{self.uri}"
+
     @staticmethod
     def read(path: str) -> "File":
         """
@@ -128,7 +147,7 @@ class File(RecordClass):
         if TRANSFER_ENCODING_HEADER in res_headers and "chunked" in res_headers[TRANSFER_ENCODING_HEADER].lower():
             body = encoding.unchunk(body)
 
-        # Remove the unnecessary headers after checking for cacheability and transer encoding
+        # Remove the unnecessary headers after checking transer encoding
         res_headers = {k: v for (k, v) in res_headers.items() if k not in REMOVE_HEADERS}
         if ACCESS_CONTROL_ALLOW_ORIGIN_HEADER not in res_headers:
             res_headers[ACCESS_CONTROL_ALLOW_ORIGIN_HEADER] = "*"
@@ -154,11 +173,12 @@ class FileStore:
     A collection of Files representing recorded files by mahimahi
     """
 
-    def __init__(self, path: str):
+    def __init__(self, path: str, cache_time: Optional[int] = None):
         """
         :param path: The path to the folder of mahimahi-recorded files
         """
         self.path = os.path.abspath(path)
+        self.cache_time = cache_time
         self._cache_times = {}
         self._files = []
 
@@ -171,7 +191,16 @@ class FileStore:
             self._cache_times = get_cache_times(self.path)
             self._files = self._files or list(map(File.read, glob.iglob(f"{self.path}/*")))
             for f in self._files:
-                f.set_cache_time(self._cache_times.get(f.file_name, 0))
+                cache_time = self._cache_times.get(f.file_name, 0)
+                if self.cache_time is None and cache_time > 0:
+                    f.set_cache_time(cache_time)
+                elif self.cache_time is not None and cache_time > self.cache_time:
+                    f.set_cache_time(cache_time)
+                else:
+                    log.with_namespace("filestore").debug(
+                        "skipping setting cache", url=f.url, actual_cache_time=cache_time, cache_time=self.cache_time
+                    )
+
         return self._files
 
     @property

@@ -139,8 +139,9 @@ def get_page_load_time_in_replay_server(
     request_url: str,
     client_env: ClientEnvironment,
     config: Config,
-    user_data_dir: Optional[str] = None,
     policy: Optional[Policy] = None,
+    cache_time: Optional[int] = None,
+    user_data_dir: Optional[str] = None,
     extract_critical_requests: Optional[bool] = False,
 ):
     """
@@ -156,8 +157,9 @@ def get_page_load_time_in_replay_server(
             url=request_url,
             config=config,
             client_env=client_env,
-            user_data_dir=user_data_dir,
             policy=policy,
+            cache_time=cache_time,
+            user_data_dir=user_data_dir,
             extract_critical_requests=extract_critical_requests,
         )
         hars.append(har)
@@ -175,8 +177,9 @@ def get_speed_index_in_replay_server(
     request_url: str,
     client_env: ClientEnvironment,
     config: Config,
-    user_data_dir: str,
     policy: Optional[Policy] = None,
+    cache_time: Optional[int] = None,
+    user_data_dir: Optional[str] = None,
     extract_critical_requests: Optional[bool] = False,
 ):
     """
@@ -191,8 +194,9 @@ def get_speed_index_in_replay_server(
             url=request_url,
             config=config,
             client_env=client_env,
-            user_data_dir=user_data_dir,
             policy=policy,
+            cache_time=cache_time,
+            user_data_dir=user_data_dir,
             extract_critical_requests=extract_critical_requests,
         )
         speed_indices.append(speed_index)

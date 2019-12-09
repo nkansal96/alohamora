@@ -196,8 +196,8 @@ def get_serve_config() -> ServeConfig:
     return ServeConfig(host="0.0.0.0", port=41568 + random.randint(0, 1000), max_workers=1)
 
 
-def get_config() -> Config:
-    return _get_config(env_config=get_env_config())
+def get_config(**kwargs) -> Config:
+    return _get_config(env_config=get_env_config(), **kwargs)
 
 
 def get_mahimahi_config() -> MahiMahiConfig:

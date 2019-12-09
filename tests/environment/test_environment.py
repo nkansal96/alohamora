@@ -1,3 +1,5 @@
+import random
+
 import pytest
 from unittest import mock
 
@@ -128,3 +130,17 @@ class TestEnvironment:
     def test_render(self):
         with pytest.raises(NotImplementedError):
             self.environment.render()
+
+    def test_environment_with_cached_urls(self):
+        config = get_config()
+        resources = [res for group in config.env_config.push_groups for res in group.resources]
+        mask = [random.randint(0, 2) for _ in range(len(resources))]
+        cached = [res for (res, include) in zip(resources, mask) if include]
+        cached_urls = set(res.url for res in cached)
+
+        config = config.with_mutations(cached_urls=cached_urls)
+        env = Environment(config)
+
+        obs = env.observation
+        for res in cached:
+            assert obs["resources"][str(res.order)][1] == 1

@@ -28,6 +28,7 @@ class MahiMahiConfig:
         har_output_file_name: str,
         policy_file_name: Optional[str] = None,
         link_trace_file_name: str = "",
+        cache_time: Optional[int] = None,
         user_data_dir: Optional[str] = None,
         extract_critical_requests: Optional[bool] = False,
     ) -> List[str]:
@@ -64,6 +65,7 @@ class MahiMahiConfig:
             *(["--link-trace-path", f"/mnt/share/{link_trace_file_name}"] if link_trace_file_name else []),
             *(["--link-latency-ms", str(self.client_environment.latency // 2)] if self.client_environment else []),
             *(["--cpu-slowdown", str(self.client_environment.cpu_slowdown)] if self.client_environment else []),
+            *(["--cache-time", str(cache_time)] if cache_time else []),
             *(["--user-data-dir /mnt/chrome-user-dir"] if user_data_dir else []),
             *(["--extract-critical-requests"] if extract_critical_requests else []),
             "--url",
@@ -79,6 +81,7 @@ class MahiMahiConfig:
         link_trace_file_name: str = "",
         capture_url: str,
         user_data_dir: str,
+        cache_time: Optional[int] = None,
         extract_critical_requests: Optional[bool] = False,
     ) -> List[str]:
         """
@@ -91,6 +94,7 @@ class MahiMahiConfig:
             policy_file_name=policy_file_name,
             link_trace_file_name=link_trace_file_name,
             capture_url=capture_url,
+            cache_time=cache_time,
             user_data_dir=user_data_dir,
             extract_critical_requests=extract_critical_requests,
         )

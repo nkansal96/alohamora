@@ -67,6 +67,9 @@ def query(args):
     "--reward_func", help="Reward function to use", default=1, choices=list(range(get_num_rewards())), type=int
 )
 @command.argument("--use_aft", help="Use Speed Index metric", action="store_true")
+@command.argument(
+    "--cache_time", help="Simulate cached object expired after this time (in seconds)", type=int, default=None
+)
 @command.argument("--verbose", "-v", help="Output more information in the JSON output", action="store_true")
 @command.argument(
     "--run_simulator", help="Run the outputted policy through the simulator (implies -v)", action="store_true"
@@ -84,8 +87,18 @@ def evaluate(args):
     log.info("evaluating model...", model=args.model, location=args.location, manifest=args.manifest)
     client_env = get_client_environment_from_parameters(args.bandwidth, args.latency, args.cpu_slowdown)
     manifest = EnvironmentConfig.load_file(args.manifest)
-    # somehow populate cached_urls here
-    config = get_config(manifest, client_env, args.reward_func).with_mutations(cached_urls=set(), use_aft=args.use_aft)
+
+    cached_urls = set(
+        res.url
+        for group in manifest.push_groups
+        for res in group.resources
+        if args.cache_time is not None and res.cache_time > args.cache_time
+    )
+
+    log.debug("using cached resources", cached_urls=cached_urls)
+    config = get_config(manifest, client_env, args.reward_func).with_mutations(
+        cached_urls=cached_urls, use_aft=args.use_aft
+    )
 
     if args.model == "A3C":
         from blaze.model import a3c as model
