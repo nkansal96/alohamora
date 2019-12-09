@@ -282,9 +282,13 @@ class ActionSpace(gym.spaces.Tuple):
             return Action()
 
         is_push = action_type_id == 1 and not self.disable_push
-        if is_push:
-            return self.push_space.decode_action_id(push_id)
-        return self.preload_space.decode_action_id(preload_id)
+        try:
+            if is_push:
+                return self.push_space.decode_action_id(push_id)
+            return self.preload_space.decode_action_id(preload_id)
+        except KeyError:
+            logger.with_namespace("action_space").warn("picked out of bounds action", action=action)
+            return Action()
 
     def use_action(self, action: Action):
         """ Marks the action as used in both the push and preload spaces """
