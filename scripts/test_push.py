@@ -116,7 +116,7 @@ def test_website(args, manifest_file):
                     str(args.max_retries),
                     "--from_manifest",
                     manifest_file,
-                    *(["--cache_time", args.cache_time] if args.cache_time else []),
+                    *(["--cache_time", str(args.cache_time)] if args.cache_time else []),
                     *(["--speed_index"] if args.speed_index else []),
                     *(["--user_data_dir", tempdir] if tempdir else []),
                 ],
