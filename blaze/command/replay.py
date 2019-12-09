@@ -15,6 +15,9 @@ from . import command
 @command.argument("--cert_path", help="Location of the server certificate")
 @command.argument("--key_path", help="Location of the server key")
 @command.argument(
+    "--cache_time", help="Do not cache objects which expire in less than this time (in seconds)", type=int, default=None
+)
+@command.argument(
     "--extract_critical_requests",
     help="true or false to specify if server should inject critical request extractor",
     action="store_true",
@@ -35,6 +38,13 @@ def replay(args):
             policy_dict = json.load(policy_file)
         policy = Policy.from_dict(policy_dict)
 
-    with start_server(args.replay_dir, cert_path, key_path, policy, args.extract_critical_requests):
+    with start_server(
+        args.replay_dir,
+        cert_path,
+        key_path,
+        policy,
+        cache_time=args.cache_time,
+        extract_critical_requests=args.extract_critical_requests,
+    ):
         while True:
             time.sleep(86400)

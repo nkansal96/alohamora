@@ -1,5 +1,6 @@
 """ Defines the environment that the training of the agent occurs in """
 
+import math
 from typing import Optional, Set, Union
 
 import gym
@@ -13,6 +14,7 @@ from blaze.logger import logger as log
 
 from .observation import get_observation, get_observation_space
 
+PROPORTION_DEPLOYED = 1.0
 NOOP_ACTION_REWARD = 0
 
 
@@ -86,7 +88,12 @@ class Environment(gym.Env):
         self.client_environment = client_environment
         self.analyzer.reset(self.client_environment, self.cached_urls)
 
-        self.action_space = ActionSpace(self.env_config.push_groups)
+        num_domains_deployed = math.ceil(PROPORTION_DEPLOYED * len(self.env_config.push_groups))
+        push_groups = sorted(self.env_config.push_groups, key=lambda g: len(g.resources), reverse=True)[
+            :num_domains_deployed
+        ]
+
+        self.action_space = ActionSpace(push_groups)
         self.policy = Policy(self.action_space)
 
     def step(self, action: ActionIDType):

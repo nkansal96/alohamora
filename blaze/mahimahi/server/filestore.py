@@ -3,7 +3,7 @@
 import glob
 import os
 import subprocess
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from recordclass import RecordClass
 
@@ -128,7 +128,7 @@ class File(RecordClass):
         if TRANSFER_ENCODING_HEADER in res_headers and "chunked" in res_headers[TRANSFER_ENCODING_HEADER].lower():
             body = encoding.unchunk(body)
 
-        # Remove the unnecessary headers after checking for cacheability and transer encoding
+        # Remove the unnecessary headers after checking transer encoding
         res_headers = {k: v for (k, v) in res_headers.items() if k not in REMOVE_HEADERS}
         if ACCESS_CONTROL_ALLOW_ORIGIN_HEADER not in res_headers:
             res_headers[ACCESS_CONTROL_ALLOW_ORIGIN_HEADER] = "*"
@@ -154,11 +154,12 @@ class FileStore:
     A collection of Files representing recorded files by mahimahi
     """
 
-    def __init__(self, path: str):
+    def __init__(self, path: str, cache_time: Optional[int] = None):
         """
         :param path: The path to the folder of mahimahi-recorded files
         """
         self.path = os.path.abspath(path)
+        self.cache_time = cache_time
         self._cache_times = {}
         self._files = []
 
@@ -171,7 +172,10 @@ class FileStore:
             self._cache_times = get_cache_times(self.path)
             self._files = self._files or list(map(File.read, glob.iglob(f"{self.path}/*")))
             for f in self._files:
-                f.set_cache_time(self._cache_times.get(f.file_name, 0))
+                cache_time = self._cache_times.get(f.file_name, 0)
+                if self.cache_time is None or cache_time > self.cache_time:
+                    f.set_cache_time(cache_time)
+
         return self._files
 
     @property

@@ -11,6 +11,7 @@ const captureHarArguments = require("./capturer/args");
 const argumentsDefinition = [
   ...serverArguments,
   ...captureHarArguments,
+  { name: 'cache-time', defaultValue: 0, type: Number },
   { name: 'link-trace-path', alias: 't', defaultValue: '', type: String },
   { name: 'link-latency-ms', alias: 'l', defaultValue: 0, type: Number },
   { name: 'user-id', alias: 'u', defaultValue: 0, type: Number },
@@ -26,6 +27,7 @@ const run = async args => {
     "--cert_path", args.certFile,
     "--key_path", args.keyFile,
     "--policy", args.policyPath,
+    ...(args.cacheTime ? ["--cache_time", args.cacheTime.toString()] : []),
     args.fileStorePath,
   ];
 
