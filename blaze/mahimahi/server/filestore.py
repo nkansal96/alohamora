@@ -191,7 +191,9 @@ class FileStore:
             self._files = self._files or list(map(File.read, glob.iglob(f"{self.path}/*")))
             for f in self._files:
                 cache_time = self._cache_times.get(f.file_name, 0)
-                if (self.cache_time is None and cache_time > 0) or cache_time > self.cache_time:
+                if self.cache_time is None and cache_time > 0:
+                    f.set_cache_time(cache_time)
+                elif self.cache_time is not None and cache_time > self.cache_time:
                     f.set_cache_time(cache_time)
                 else:
                     log.with_namespace("filestore").debug(
