@@ -63,6 +63,7 @@ def get_cache_times(file_dir: str) -> Dict[str, int]:
     """
     :return: a dictionary mapping each file name to its freshness using `findcacheable`
     """
+
     def demote():
         if os.path.isfile("/opt/entrypoint.sh"):
             os.setgid(27)
@@ -70,7 +71,11 @@ def get_cache_times(file_dir: str) -> Dict[str, int]:
 
     path = os.environ.get("FINDCACHEABLE_BIN", os.path.join(os.path.dirname(__file__), "findcacheable"))
     proc = subprocess.run(
-        f"{path} '{file_dir}/' | awk -F'/' '{{print $NF'}} | grep freshness", shell=True, check=True, preexec_fn=demote, stdout=subprocess.PIPE
+        f"{path} '{file_dir}/' | awk -F'/' '{{print $NF'}} | grep freshness",
+        shell=True,
+        check=True,
+        preexec_fn=demote,
+        stdout=subprocess.PIPE,
     )
     d = {}
     for line in proc.stdout.decode("utf-8").strip().split("\n"):

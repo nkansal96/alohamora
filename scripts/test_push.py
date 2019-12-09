@@ -74,6 +74,7 @@ def get_args():
     parser.add_argument("--max_retries", required=True, type=int, help="maximum number of times to retry a failure")
     parser.add_argument("--speed_index", action="store_true", help="use speed index metric instead of PLT")
     parser.add_argument("--warm_cache", action="store_true", help="use warm cache")
+    parser.add_argument("--cache_time", type=int, help="seconds to expire cache")
     return parser.parse_args()
 
 
@@ -115,6 +116,7 @@ def test_website(args, manifest_file):
                     str(args.max_retries),
                     "--from_manifest",
                     manifest_file,
+                    *(["--cache_time", args.cache_time] if args.cache_time else []),
                     *(["--speed_index"] if args.speed_index else []),
                     *(["--user_data_dir", tempdir] if tempdir else []),
                 ],
