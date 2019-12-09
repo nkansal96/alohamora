@@ -73,10 +73,11 @@ def get_cache_times(file_dir: str) -> Dict[str, int]:
     proc = subprocess.run(
         f"{path} '{file_dir}/' | awk -F'/' '{{print $NF'}} | grep freshness",
         shell=True,
-        check=True,
         preexec_fn=demote,
         stdout=subprocess.PIPE,
     )
+    if proc.returncode != 0:
+        log.with_namespace("get_cache_times").warn("failed to run findcacheable", code=proc.returncode)
     d = {}
     for line in proc.stdout.decode("utf-8").strip().split("\n"):
         try:
