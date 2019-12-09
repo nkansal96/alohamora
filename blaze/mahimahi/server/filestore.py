@@ -63,9 +63,14 @@ def get_cache_times(file_dir: str) -> Dict[str, int]:
     """
     :return: a dictionary mapping each file name to its freshness using `findcacheable`
     """
-    path = os.path.join(os.path.dirname(__file__), "findcacheable")
+    def demote():
+        if os.path.isfile("/opt/entrypoint.sh"):
+            os.setgid(27)
+            os.setuid(103)
+
+    path = os.environ.get("FINDCACHEABLE_BIN", os.path.join(os.path.dirname(__file__), "findcacheable"))
     proc = subprocess.run(
-        f"{path} '{file_dir}/' | awk -F'/' '{{print $NF'}} | grep freshness", shell=True, stdout=subprocess.PIPE
+        f"{path} '{file_dir}/' | awk -F'/' '{{print $NF'}} | grep freshness", shell=True, check=True, preexec_fn=demote, stdout=subprocess.PIPE
     )
     d = {}
     for line in proc.stdout.decode("utf-8").strip().split("\n"):
@@ -181,7 +186,7 @@ class FileStore:
             self._files = self._files or list(map(File.read, glob.iglob(f"{self.path}/*")))
             for f in self._files:
                 cache_time = self._cache_times.get(f.file_name, 0)
-                if self.cache_time is None or cache_time > self.cache_time:
+                if (self.cache_time is None and cache_time > 0) or cache_time > self.cache_time:
                     f.set_cache_time(cache_time)
                 else:
                     log.with_namespace("filestore").debug(
