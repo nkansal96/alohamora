@@ -94,6 +94,8 @@ def evaluate(args):
         for res in group.resources
         if args.cache_time is not None and res.cache_time > args.cache_time
     )
+
+    log.debug("using cached resources", cached_urls=cached_urls)
     config = get_config(manifest, client_env, args.reward_func).with_mutations(
         cached_urls=cached_urls, use_aft=args.use_aft
     )

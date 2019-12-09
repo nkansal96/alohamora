@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 
 from recordclass import RecordClass
 
+from blaze.logger import logger as log
 from blaze.proto import http_record_pb2
 from blaze.util import encoding
 
@@ -105,6 +106,13 @@ class File(RecordClass):
         """
         return os.path.basename(self.file_path)
 
+    @property
+    def url(self):
+        """
+        :return: The full URL of this resources
+        """
+        return f"https://{self.host}{self.uri}"
+
     @staticmethod
     def read(path: str) -> "File":
         """
@@ -175,6 +183,10 @@ class FileStore:
                 cache_time = self._cache_times.get(f.file_name, 0)
                 if self.cache_time is None or cache_time > self.cache_time:
                     f.set_cache_time(cache_time)
+                else:
+                    log.with_namespace("filestore").debug(
+                        "skipping setting cache", url=f.url, actual_cache_time=cache_time, cache_time=self.cache_time
+                    )
 
         return self._files
 
