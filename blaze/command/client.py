@@ -96,7 +96,7 @@ def evaluate(args):
     )
 
     log.debug("using cached resources", cached_urls=cached_urls)
-    config = get_config(manifest, client_env, args.reward_func).with_mutations(
+    config = get_config(env_config=manifest, client_env=client_env, reward_func=args.reward_func).with_mutations(
         cached_urls=cached_urls, use_aft=args.use_aft
     )
 
