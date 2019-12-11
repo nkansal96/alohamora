@@ -7,8 +7,8 @@ quality
 from typing import Callable, List, Optional, Set
 
 from blaze.action import Policy
-from blaze.config import Config
 from blaze.config.client import ClientEnvironment
+from blaze.config.environment import EnvironmentConfig
 from blaze.evaluator.simulator import Simulator
 from blaze.logger import logger
 
@@ -117,27 +117,34 @@ class Analyzer:
 
     def __init__(
         self,
-        config: Config,
+        env_config: EnvironmentConfig,
         reward_func_num: int = 0,
         use_aft: bool = False,
         client_environment: Optional[ClientEnvironment] = None,
         cached_urls: Optional[Set[str]] = None,
     ):
-        self.config = config
+        self.env_config = env_config
         self.use_aft = use_aft
         self.cached_urls = cached_urls
         self.client_environment = client_environment
-        self.simulator = Simulator(config.env_config)
+        self.simulator = Simulator(env_config)
         self.reward_func_num = reward_func_num
         self.reward_func = REWARD_FUNCTIONS[self.reward_func_num](
             self.simulator, self.client_environment, self.cached_urls, self.use_aft
         )
         self.log = logger.with_namespace("analyzer")
 
-    def reset(self, client_environment: Optional[ClientEnvironment] = None, cached_urls: Optional[Set[str]] = None):
+    def reset(
+        self,
+        env_config: Optional[EnvironmentConfig] = None,
+        client_environment: Optional[ClientEnvironment] = None,
+        cached_urls: Optional[Set[str]] = None,
+    ):
         """ Resets the analyzer's state and optionally changes the client environment """
+        self.env_config = env_config or self.env_config
         self.client_environment = client_environment or self.client_environment
         self.cached_urls = cached_urls
+        self.simulator = Simulator(self.env_config)
         self.reward_func = REWARD_FUNCTIONS[self.reward_func_num](
             self.simulator, self.client_environment, self.cached_urls, self.use_aft
         )

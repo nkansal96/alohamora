@@ -1,6 +1,7 @@
 """ Defines the environment that the training of the agent occurs in """
 
 import math
+import random
 from typing import Optional, Set, Union
 
 import gym
@@ -9,6 +10,7 @@ import numpy as np
 from blaze.action import ActionIDType, ActionSpace, Policy
 from blaze.config import client, Config
 from blaze.config.client import ClientEnvironment
+from blaze.config.environment import EnvironmentConfig
 from blaze.evaluator import Analyzer
 from blaze.logger import logger as log
 
@@ -31,20 +33,17 @@ class Environment(gym.Env):
         config = config if isinstance(config, Config) else Config(**config)
 
         self.config = config
-        self.env_config = config.env_config
+        self.env_configs = config.env_configs
         self.np_random = np.random.RandomState()
-
-        log.info(
-            "initialized trainable push groups", groups=[group.name for group in self.env_config.trainable_push_groups]
-        )
 
         self.observation_space = get_observation_space()
         self.cached_urls = config.cached_urls or set()
-        self.analyzer = Analyzer(self.config, config.reward_func or 0, config.use_aft or False)
+        self.analyzer = Analyzer(self.config.env_config, config.reward_func or 0, config.use_aft or False)
 
         self.client_environment: Optional[ClientEnvironment] = None
         self.action_space: Optional[ActionSpace] = None
         self.policy: Optional[Policy] = None
+        self.env_config: Optional[EnvironmentConfig] = None
         self.initialize_environment(
             self.config.client_env or client.get_random_fast_lte_client_environment(), self.config.cached_urls
         )
@@ -69,9 +68,13 @@ class Environment(gym.Env):
             reward_func=self.analyzer.reward_func_num,
             cached_urls=cached_urls,
         )
+
+        # Choose a random page to train on
+        self.env_config = random.choice(self.env_configs)
+
         # Cache scenarios in hours
         scenarios = [0, 0, 0, 0, 0, 1, 2, 4, 12, 24]
-        cache_time = self.np_random.choice(scenarios)
+        cache_time = random.choice(scenarios)
         self.cached_urls = (
             cached_urls
             if cached_urls is not None
@@ -86,7 +89,7 @@ class Environment(gym.Env):
         )
 
         self.client_environment = client_environment
-        self.analyzer.reset(self.client_environment, self.cached_urls)
+        self.analyzer.reset(self.env_config, self.client_environment, self.cached_urls)
 
         num_domains_deployed = math.ceil(PROPORTION_DEPLOYED * len(self.env_config.push_groups))
         push_groups = sorted(self.env_config.push_groups, key=lambda g: len(g.resources), reverse=True)[
