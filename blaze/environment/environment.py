@@ -73,20 +73,21 @@ class Environment(gym.Env):
         self.env_config = random.choice(self.env_configs)
 
         # Cache scenarios in hours
-        scenarios = [0, 0, 0, 0, 0, 1, 2, 4, 12, 24]
-        cache_time = random.choice(scenarios)
-        self.cached_urls = (
-            cached_urls
-            if cached_urls is not None
-            else set()
-            if cache_time == 0
-            else set(
-                res.url
-                for group in self.env_config.push_groups
-                for res in group.resources
-                if res.cache_time >= (cache_time * 60 * 60)
-            )
-        )
+        # scenarios = [0, 0, 0, 0, 0, 1, 2, 4, 12, 24]
+        # cache_time = random.choice(scenarios)
+        # self.cached_urls = (
+        #     cached_urls
+        #     if cached_urls is not None
+        #     else set()
+        #     if cache_time == 0
+        #     else set(
+        #         res.url
+        #         for group in self.env_config.push_groups
+        #         for res in group.resources
+        #         if res.cache_time >= (cache_time * 60 * 60)
+        #     )
+        # )
+        self.cached_urls = set()
 
         self.client_environment = client_environment
         self.analyzer.reset(self.env_config, self.client_environment, self.cached_urls)
