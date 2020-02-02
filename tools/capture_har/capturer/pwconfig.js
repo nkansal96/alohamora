@@ -20,7 +20,6 @@ let numOfRuns = 1;
 let flags = '--allow-insecure-localhost' +
     ' --disable-background-networking' +
     ' --disable-default-apps' +
-    ' --headless' +
     ' --ignore-certificate-errors' +
     ' --incognito' +
     ' --no-check-certificate' +
@@ -28,18 +27,21 @@ let flags = '--allow-insecure-localhost' +
     ' --no-first-run' +
     ' --no-sandbox' +
     ' --disable-gpu' +
-    ' --disable-logging' 
+    ' --disable-logging' +
+    ' --window-size=800,600'
      typeof(userDataDir) == 'undefined' || (typeof(userDataDir) == 'string' && userDataDir.length < 1) ? '' : ' --user-data-dir=' + userDataDir;
-    
+// headless more removed and window size contraint added in above config.
+// these two are only for my dev purpose. they are unneceesary in prod and should be reverted.
 
+     
+// send emulated-form-factor=none to lighthouse to avoid the throttling behavior
+// config changes inside lh-runner (in side node_modules)
 module.exports = {
     url: url,
     flags: {
         runs: numOfRuns,
-        chromePath: chromeCachingBinary,
         chromeFlags: flags,
         json: true,
-        outputPath: jsonOutputPath
     },
 };
 
