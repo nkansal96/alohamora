@@ -19,6 +19,36 @@ function isElementInViewport (el) {
 	return vertInView && horzInView;
 }
 
+function getPercentInViewport (el) {
+    //special bonus for those using jQuery
+    if (typeof jQuery === "function" && el instanceof jQuery) {
+        el = el[0];
+    }
+    var rect = el.getBoundingClientRect();
+    var topIsVisible = rect.top >= 0 && (rect.top <= (window.innerHeight || document.documentElement.clientHeight));
+    var botIsVisible = rect.top < 0 && rect.bottom >= 0;
+    var vertInView = topIsVisible || botIsVisible;
+	var leftIsVisible = rect.left >= 0 && (rect.left <= (window.innerWidth || document.documentElement.clientWidth));
+	var rightIsVisible = rect.left < 0 && rect.right >= 0;
+	var horzInView = leftIsVisible || rightIsVisible;
+    if (vertInView && horzInView) {
+        var leftTopX = 0, leftTopY = 0, rightBottomX = 0, rightBottomY = 0;
+        var vertInView = topIsVisible || botIsVisible;
+        rightBottomX = rect.y + rect.width;
+        rightBottomY = rect.x + rect.height;
+        leftTopY = rect.y > 0 ? rect.y : 0; 
+        leftTopX = rect.x > 0 ? rect.x : 0;
+        var widthOfWindow = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+        var heightOfWindow = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+        rightBottomX = rightBottomX > widthOfWindow ? widthOfWindow : rightBottomX;
+        rightBottomY = rightBottomY > heightOfWindow ? heightOfWindow : rightBottomY;
+        var areaOfImageInViewport = (rightBottomY - leftTopY) * (rightBottomX - leftTopX);
+        return areaOfImageInViewport * 1.0/(heightOfWindow*widthOfWindow)
+    } else {
+        return 0;
+    }
+}
+
 
 function getCriticalRequests() {
     var importantRequests = []
