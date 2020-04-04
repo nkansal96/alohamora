@@ -5,6 +5,7 @@ from . import cluster
 from . import command
 from . import manifest
 from . import preprocess
+from . import proxy
 from . import replay
 from . import serve
 from . import push
