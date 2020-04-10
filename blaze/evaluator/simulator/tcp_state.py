@@ -17,9 +17,7 @@ class TCPState:
     payload) and the time since last transmission (affects the shrinkage rate of the window)
     """
 
-    def __init__(
-        self, loss_prop: float = 0.0, cwnd: int = INITIAL_WINDOW_SIZE, time_since_last_byte: int = 0,
-    ):
+    def __init__(self, loss_prop: float = 0.0, cwnd: int = INITIAL_WINDOW_SIZE, time_since_last_byte: int = 0):
         self.loss_prop = loss_prop
         self.total_packets = 0
         self.cwnd = cwnd

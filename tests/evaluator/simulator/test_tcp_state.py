@@ -1,11 +1,6 @@
 import random
 
-from blaze.evaluator.simulator.tcp_state import (
-    INITIAL_WINDOW_SIZE,
-    MTU_BYTES,
-    RTO_MS,
-    TCPState,
-)
+from blaze.evaluator.simulator.tcp_state import INITIAL_WINDOW_SIZE, MTU_BYTES, RTO_MS, TCPState
 
 
 class TestTCPState:

@@ -45,7 +45,7 @@ class Simulator:
         self.policy: Optional[Policy] = None
 
     def reset_simulation(
-        self, client_env: ClientEnvironment, policy: Optional[Policy] = None, cached_urls: Optional[Set[str]] = None,
+        self, client_env: ClientEnvironment, policy: Optional[Policy] = None, cached_urls: Optional[Set[str]] = None
     ):
         """
         Resets the state of the simulator with the given client environment
@@ -149,9 +149,7 @@ class Simulator:
 
         for node in completed_this_step:
             self.completed_nodes[node] = self.total_time_ms + node.resource.execution_ms
-            self.log.verbose(
-                "resource completed", resource=node.resource.url, time=self.completed_nodes[node],
-            )
+            self.log.verbose("resource completed", resource=node.resource.url, time=self.completed_nodes[node])
 
     def schedule_child_requests(self, parent: Node, dry_run=False) -> Optional[List[Tuple[Node, float]]]:
         """
@@ -192,10 +190,10 @@ class Simulator:
                     for (node, delay) in nodes_to_schedule:
                         if node not in rq and node not in self.completed_nodes:
                             rq.add_with_delay(node, delay)
-                    (time_til_complete, time_remaining_to_download,) = rq.estimated_completion_time(child)
+                    (time_til_complete, time_remaining_to_download) = rq.estimated_completion_time(child)
                     remaining_delay_before_download = time_til_complete - time_remaining_to_download
                 else:
-                    (time_til_complete, time_remaining_to_download,) = self.request_queue.estimated_completion_time(
+                    (time_til_complete, time_remaining_to_download) = self.request_queue.estimated_completion_time(
                         child
                     )
                     remaining_delay_before_download = self.request_queue.remaining_delay(child)
@@ -250,7 +248,7 @@ class Simulator:
                         dry_run_list.append((child, child_delay))
                     dry_run_list.extend(
                         self.schedule_pushed_and_preloaded_resources(
-                            child, child_delay - child.resource.time_to_first_byte_ms, dry_run=True,
+                            child, child_delay - child.resource.time_to_first_byte_ms, dry_run=True
                         )
                     )
                 else:
@@ -355,7 +353,7 @@ class Simulator:
         for res in res_list:
             if res != self.root.resource:
                 self.node_map[res.order] = Node(
-                    resource=res, priority=res.order, children=[], parent=self.node_map.get(res.initiator, None),
+                    resource=res, priority=res.order, children=[], parent=self.node_map.get(res.initiator, None)
                 )
                 self.node_map[res.initiator].children.append(self.node_map[res.order])
 
