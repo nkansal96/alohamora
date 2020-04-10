@@ -17,7 +17,9 @@ class TCPState:
     payload) and the time since last transmission (affects the shrinkage rate of the window)
     """
 
-    def __init__(self, cwnd: int = INITIAL_WINDOW_SIZE, time_since_last_byte: int = 0):
+    def __init__(self, loss_prop: float = 0.0, cwnd: int = INITIAL_WINDOW_SIZE, time_since_last_byte: int = 0):
+        self.loss_prop = loss_prop
+        self.total_packets = 0
         self.cwnd = cwnd
         self.time_since_last_byte = time_since_last_byte
 
@@ -38,6 +40,19 @@ class TCPState:
         window size * packet size (defined to be MTU_BYTES)
         """
         return MTU_BYTES * self.window_size
+
+    def num_packets_to_drop(self, packets_transmitted: int) -> int:
+        """
+        Keeps a running total to see how many packets have been transmitted and whether
+        the transmission of any set packets should result in packets being dropped
+        """
+        self.total_packets += packets_transmitted
+        if self.loss_prop < 0.00001:
+            return False
+        num_to_drop = self.total_packets // int(1.0 / self.loss_prop)
+        if num_to_drop > 0:
+            self.total_packets %= int(1.0 / self.loss_prop)
+        return num_to_drop
 
     def round_trips_needed_for_bytes(self, bytes_to_send: int) -> int:
         """

@@ -109,3 +109,19 @@ class TestTCPState:
         tcp_state = TCPState()
         tcp_state.add_bytes_sent(MTU_BYTES * 3.5)
         assert tcp_state.window_size == INITIAL_WINDOW_SIZE + 4
+
+    def test_packets_not_dropped_if_prop_is_zero(self):
+        tcp_state = TCPState()
+        assert tcp_state.num_packets_to_drop(10000) == 0
+
+    def test_packets_dropped_if_prop_gt_zero(self):
+        tcp_state = TCPState(loss_prop=0.01)
+        assert tcp_state.num_packets_to_drop(10) == 0
+        assert tcp_state.num_packets_to_drop(20) == 0
+        assert tcp_state.num_packets_to_drop(50) == 0
+        assert tcp_state.num_packets_to_drop(20) == 1
+
+        assert tcp_state.num_packets_to_drop(10) == 0
+        assert tcp_state.num_packets_to_drop(99) == 1
+        assert tcp_state.num_packets_to_drop(91) == 1
+        assert tcp_state.num_packets_to_drop(1000) == 10

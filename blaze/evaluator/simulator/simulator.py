@@ -56,7 +56,7 @@ class Simulator:
         """
 
         self.pq = PriorityQueue()
-        self.request_queue = RequestQueue(client_env.bandwidth, client_env.latency)
+        self.request_queue = RequestQueue(client_env.bandwidth, client_env.latency, client_env.loss)
         self.completed_nodes = {}
         self.pushed_nodes = {}
         self.total_time_ms = 0
@@ -190,10 +190,12 @@ class Simulator:
                     for (node, delay) in nodes_to_schedule:
                         if node not in rq and node not in self.completed_nodes:
                             rq.add_with_delay(node, delay)
-                    time_til_complete, time_remaining_to_download = rq.estimated_completion_time(child)
+                    (time_til_complete, time_remaining_to_download) = rq.estimated_completion_time(child)
                     remaining_delay_before_download = time_til_complete - time_remaining_to_download
                 else:
-                    time_til_complete, time_remaining_to_download = self.request_queue.estimated_completion_time(child)
+                    (time_til_complete, time_remaining_to_download) = self.request_queue.estimated_completion_time(
+                        child
+                    )
                     remaining_delay_before_download = self.request_queue.remaining_delay(child)
 
                 normal_time_spent_downloading = self.no_push.request_queue.time_spent_downloading(child)

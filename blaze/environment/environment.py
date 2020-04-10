@@ -66,6 +66,7 @@ class Environment(gym.Env):
             bandwidth=client_environment.bandwidth,
             latency=client_environment.latency,
             cpu_slowdown=client_environment.cpu_slowdown,
+            loss=client_environment.loss,
             reward_func=self.analyzer.reward_func_num,
             cached_urls=cached_urls,
         )
