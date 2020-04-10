@@ -38,6 +38,7 @@ class ClientEnvironment(NamedTuple):
     bandwidth: int = 0
     latency: int = 0
     cpu_slowdown: int = 0
+    loss: float = 0  # Should be between 0 and 1
 
 
 def network_to_bandwidth_range(network_type: NetworkType, network_speed: NetworkSpeed) -> Tuple[int, int]:

@@ -56,6 +56,7 @@ def get_observation_space():
                     "device_speed": gym.spaces.Discrete(len(DeviceSpeed)),
                     "bandwidth_mbps": gym.spaces.Discrete(100),
                     "latency_ms": gym.spaces.Discrete(1000),
+                    "loss": gym.spaces.Box(low=0, high=1, shape=(1,)),
                 }
             ),
             "resources": gym.spaces.Dict({str(i): resource_space for i in range(MAX_RESOURCES)}),
@@ -100,6 +101,7 @@ def get_observation(
             "device_speed": client_environment.device_speed.value,
             "bandwidth_mbps": client_environment.bandwidth // 1000,
             "latency_ms": 10 * (client_environment.latency // 10),
+            "loss": np.array([client_environment.loss]),
         },
         "resources": encoded_resources,
     }

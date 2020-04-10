@@ -45,7 +45,7 @@ class RequestQueue:
     take to complete them.
     """
 
-    def __init__(self, bandwidth_kbps: int, rtt_latency_ms: int):
+    def __init__(self, bandwidth_kbps: int, rtt_latency_ms: int, loss_prop: float):
         self.queue: List[QueueItem] = []
         self.delayed: List[QueueItem] = []
         self.connected_origins: Set[str] = set()
@@ -54,8 +54,9 @@ class RequestQueue:
         self.link_bandwidth_bps = bandwidth_kbps * (1000 / 8)
         self.bandwidth_kbps = bandwidth_kbps
         self.rtt_latency_ms = rtt_latency_ms
+        self.loss_prop = loss_prop
         # model TCP dynamics per domain
-        self.tcp_state: DefaultDict[TCPState] = defaultdict(TCPState)
+        self.tcp_state: DefaultDict[TCPState] = defaultdict(lambda: TCPState(loss_prop=self.loss_prop))
 
     def __contains__(self, node: Node):
         """
@@ -70,7 +71,7 @@ class RequestQueue:
         """
         :return: a copy of the request queue
         """
-        rq = RequestQueue(self.bandwidth_kbps, self.rtt_latency_ms)
+        rq = RequestQueue(self.bandwidth_kbps, self.rtt_latency_ms, self.loss_prop)
         rq.queue = [copy.copy(qi) for qi in self.queue]
         rq.delayed = [copy.copy(qi) for qi in self.delayed]
         rq.node_to_queue_item_map = {
