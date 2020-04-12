@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 import sys
 from typing import List
+from urllib.parse import urlparse, urlunparse
 
 from blaze.action import Policy
 from blaze.config.environment import EnvironmentConfig, PushGroup
@@ -95,7 +96,7 @@ def convert_folder(args):
 							if source not in url_to_push_mapping:
 								url_to_push_mapping[source] = []
 								number_of_unique_source_push_urls += 1
-							url_to_push_mapping[source].append(obj["url"])
+							url_to_push_mapping[source].append({"url":obj["url"]})
 							this_source_did_push = True
 						elif ptype == "preload":
 							if source in already_seen_preload_source:
@@ -104,18 +105,46 @@ def convert_folder(args):
 							if source not in url_to_preload_mapping:
 								url_to_preload_mapping[source] = []
 								number_of_unique_source_preload_urls += 1
-							url_to_preload_mapping[source].append(obj["url"])
+							url_to_preload_mapping[source].append({"url":obj["url"],"as_type":obj["type"]})
 							this_source_did_preload = True
 				if this_source_did_push:
 					already_seen_push_source[source] = True
 				if this_source_did_preload:
 					already_seen_preload_source[source] = True
 
-	log.debug("", number_of_overlapping_source_push_urls=number_of_overlapping_source_push_urls)
-	log.debug("", number_of_unique_source_push_urls=number_of_unique_source_push_urls)
-	log.debug("", number_of_overlapping_source_preload_urls=number_of_overlapping_source_preload_urls)
-	log.debug("", number_of_unique_source_preload_urls=number_of_unique_source_preload_urls)
-	log.debug("", already_seen_push_source=already_seen_push_source)
-	log.debug("", already_seen_preload_source=already_seen_preload_source)
-	log.debug("", url_to_push_mapping=url_to_push_mapping)
-	log.debug("", url_to_preload_mapping=url_to_preload_mapping)
+	list_of_domains = []
+	domain_to_source_url_mapping = {}
+	domain_to_protocol_mapping = {}
+
+	for k in dict.keys(url_to_push_mapping):
+		domain_name = urlparse(k).netloc
+		if domain_name not in domain_to_protocol_mapping:
+			domain_to_protocol_mapping[domain_name] = urlparse(k).scheme
+		list_of_domains.append(domain_name)
+		if domain_name not in domain_to_source_url_mapping:
+			domain_to_source_url_mapping[domain_name] = []
+		domain_to_source_url_mapping[domain_name].append(k)
+
+	for k in dict.keys(url_to_preload_mapping):
+		domain_name = urlparse(k).netloc
+		if domain_name not in domain_to_protocol_mapping:
+			domain_to_protocol_mapping[domain_name] = urlparse(k).scheme
+		if domain_name not in list_of_domains:
+			list_of_domains.append(domain_name)
+		if domain_name not in domain_to_source_url_mapping:
+			domain_to_source_url_mapping[domain_name] = []
+		domain_to_source_url_mapping[domain_name].append(k)
+
+	for domain, source_url_list in domain_to_source_url_mapping.items():
+		log.debug("from domain ", domain=domain, source_url_list=source_url_list)
+		config = Config()
+		server_block = config.http_block.add_server(server_name=domain,server_addr=urlunparse([domain_to_protocol_mapping[domain],domain,'/','','','']))
+		for source in source_url_list:
+			location_block = server_block.add_location_block(uri=source)
+			if source in url_to_push_mapping:
+				for item in url_to_push_mapping[source]:
+					location_block.add_push(uri=item["url"])
+			if source in url_to_preload_mapping:
+				for item in url_to_preload_mapping[source]:
+					location_block.add_preload(uri=item["url"], as_type=item["as_type"])
+		log.debug("config is ", nginx_config=config)
