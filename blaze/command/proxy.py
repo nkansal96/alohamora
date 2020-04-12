@@ -2,6 +2,7 @@
 from pathlib import Path
 import json
 import sys
+import os
 from typing import List
 from urllib.parse import urlparse, urlunparse
 
@@ -89,24 +90,27 @@ def convert_folder(args):
 				this_source_did_preload = False
 				for (source, deps) in policy_obj.items():
 					for obj in deps:
-						if ptype == "push":
-							if source in already_seen_push_source:
-								number_of_overlapping_source_push_urls += 1
-								continue
-							if source not in url_to_push_mapping:
-								url_to_push_mapping[source] = []
-								number_of_unique_source_push_urls += 1
-							url_to_push_mapping[source].append({"url":obj["url"]})
-							this_source_did_push = True
-						elif ptype == "preload":
-							if source in already_seen_preload_source:
-								number_of_overlapping_source_preload_urls += 1
-								continue
-							if source not in url_to_preload_mapping:
-								url_to_preload_mapping[source] = []
-								number_of_unique_source_preload_urls += 1
-							url_to_preload_mapping[source].append({"url":obj["url"],"as_type":obj["type"]})
-							this_source_did_preload = True
+						try:
+							if ptype == "push":
+								if source in already_seen_push_source:
+									number_of_overlapping_source_push_urls += 1
+									continue
+								if source not in url_to_push_mapping:
+									url_to_push_mapping[source] = []
+									number_of_unique_source_push_urls += 1
+								url_to_push_mapping[source].append({"url":obj["url"]})
+								this_source_did_push = True
+							elif ptype == "preload":
+								if source in already_seen_preload_source:
+									number_of_overlapping_source_preload_urls += 1
+									continue
+								if source not in url_to_preload_mapping:
+									url_to_preload_mapping[source] = []
+									number_of_unique_source_preload_urls += 1
+								url_to_preload_mapping[source].append({"url":obj["url"],"as_type":obj["type"]})
+								this_source_did_preload = True
+						except KeyError as e:
+							log.debug("have key error when trying to read policy ", error=e)
 				if this_source_did_push:
 					already_seen_push_source[source] = True
 				if this_source_did_preload:
@@ -148,3 +152,6 @@ def convert_folder(args):
 				for item in url_to_preload_mapping[source]:
 					location_block.add_preload(uri=item["url"], as_type=item["as_type"])
 		log.debug("config is ", nginx_config=config)
+		Path(args.output_folder).mkdir(parents=True, exist_ok=True)
+		with open(os.path.join(args.output_folder, f'{domain}.config'), "w") as f:
+			f.write(str(config))
