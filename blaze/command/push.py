@@ -46,7 +46,6 @@ def generate_push_preload_all_policy(args):
     """
     Outputs a random push policy for the given recorded website
     """
-    log.info("generating a push/preload all policy")
     env_config = EnvironmentConfig.load_file(args.from_manifest)
 
     policy = _push_preload_all_policy_generator()(env_config)
