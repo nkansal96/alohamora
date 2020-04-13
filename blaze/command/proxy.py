@@ -79,6 +79,7 @@ def convert_folder(args):
     for posix_file_path in file_paths:
         f = str(posix_file_path)
         try:
+            print("working on file ", f)
             with open(f, "r") as policy_file:
                 policy_dict = json.load(policy_file)
         except json.JSONDecodeError as e:
