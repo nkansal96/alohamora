@@ -40,6 +40,19 @@ def random_push_policy(args):
 
     print(json.dumps(policy.as_dict, indent=4))
 
+@command.argument("--from_manifest", required=True, help="The training manifest file to use as input to the simulator")
+@command.command
+def generate_push_preload_all_policy(args):
+    """
+    Outputs a random push policy for the given recorded website
+    """
+    log.info("generating a push/preload all policy")
+    env_config = EnvironmentConfig.load_file(args.from_manifest)
+
+    policy = _push_preload_all_policy_generator()(env_config)
+
+    print(json.dumps(policy.as_dict, indent=4))
+
 
 @command.argument("--from_manifest", help="The training manifest file to use as input to the simulator", required=True)
 @command.argument("--only_simulator", action="store_true", help="Only evaluate the page load time on the simulator")
