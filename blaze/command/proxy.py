@@ -27,7 +27,7 @@ def convert(args):
     policy = Policy.from_dict(policy_dict)
     
     config = Config()
-    server_block = config.http_block.add_server(server_name=args.hostname,server_addr="127.0.0.1")
+    server_block = config.add_server(server_name=args.hostname,server_addr="127.0.0.1")
 
     for ptype, policy_obj in policy_dict.items():
         if ptype == "push" or ptype == "preload":
@@ -141,15 +141,18 @@ def convert_folder(args):
 
     for domain, source_url_list in domain_to_source_url_mapping.items():
         config = Config()
-        server_block = config.http_block.add_server(server_name=domain,server_addr=urlunparse([domain_to_protocol_mapping[domain],domain,'/','','','']))
+        server_block = config.add_server(cert_path="/etc/ssl/certs/nginx-selfsigned.crt",key_path="/etc/ssl/private/nginx-selfsigned.key",server_addr="127.0.0.1",server_name=domain)
         for source in source_url_list:
-            location_block = server_block.add_location_block(uri=source)
+            location_block = server_block.add_location_block(uri=urlparse(source).path)
+            location_block.enable_proxy_server()
             if source in url_to_push_mapping:
                 for item in url_to_push_mapping[source]:
-                    location_block.add_push(uri=item["url"])
+                    location_block.add_push(uri=urlparse(item["url"]).path)
             if source in url_to_preload_mapping:
                 for item in url_to_preload_mapping[source]:
                     location_block.add_preload(uri=item["url"], as_type=item["as_type"])
+        location_block = server_block.add_location_block(uri="/",exact_match=False)
+        location_block.enable_proxy_server()
         Path(args.output_folder).mkdir(parents=True, exist_ok=True)
         with open(os.path.join(args.output_folder, f'{domain}.config'), "w") as f:
             f.write(str(config))

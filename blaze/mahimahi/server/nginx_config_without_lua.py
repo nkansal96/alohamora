@@ -94,11 +94,7 @@ class LocationBlock(Block):
         super().__init__(
             indent_level=indent_level,
             block_name=f"location{matcher}{uri}",
-            block_args=[
-                ("default_type", content_type),
-                ("try_files", f"{file_name} =404" if not redirect_uri else None),
-                ("return", f"301 {redirect_uri}" if redirect_uri else None),
-            ],
+            block_args=[],
             sub_blocks=sub_blocks,
         )
 
@@ -118,6 +114,15 @@ class LocationBlock(Block):
         :param uri: The URI to push
         """
         self.block_args.append(("http2_push", quote(uri)))
+
+    def enable_proxy_server(self):
+        """
+        Makes this block proxy all requests
+        """
+        self.block_args.append(("resolver", "8.8.8.8 ipv6=off"))
+        self.block_args.append(("proxy_ssl_server_name","on"))
+        self.block_args.append(("add_header","X-alohamora proxied"))
+        self.block_args.append(("proxy_pass", "https://$http_host$uri$is_args$args"))
 
     def add_preload(self, uri: str, as_type: str):
         """
@@ -152,7 +157,7 @@ class ServerBlock(Block):
         *,
         indent_level: int,
         server_name: str,
-        server_addr: str,
+        server_addr: Optional[str] = "127.0.0.1",
         cert_path: Optional[str] = None,
         key_path: Optional[str] = None,
         root: Optional[str] = None,
@@ -161,16 +166,19 @@ class ServerBlock(Block):
             indent_level=indent_level,
             block_name="server",
             block_args=[
-                ("listen", f"{server_addr}:443 ssl http2"),
+                ("listen", "443 ssl http2"),
+                ("listen", "80"),
                 ("server_name", server_name),
                 ("ssl_certificate", cert_path),
                 ("ssl_certificate_key", key_path),
+                ("proxy_cache", "common_cache"),
+                ("include", "/home/ubuntu/generating_certificate/self-signed-params.conf"),
                 ("root", root),
             ],
         )
 
         # Create an empty types block so that we can manually set the content type using the proto headers
-        self.sub_blocks.append(TypesBlock(indent_level=self.indent_level + 1))
+        # self.sub_blocks.append(TypesBlock(indent_level=self.indent_level + 1))
 
     def add_location_block(self, **kwargs) -> LocationBlock:
         """
@@ -210,7 +218,7 @@ class HttpBlock(Block):
         :return: The created ServerBlock
         """
         block = ServerBlock(
-            indent_level=self.indent_level + 1, server_name=server_name, server_addr=server_addr, **kwargs
+            indent_level=self.indent_level, server_name=server_name, server_addr=server_addr, **kwargs
         )
         self.sub_blocks.append(block)
         return block
@@ -236,11 +244,26 @@ class Config(Block):
         super().__init__(
             indent_level=0,
             block_name="",
-            block_args=[("daemon", "off"), ("worker_processes", "auto"), ("user", "root")],
+            block_args=[],
         )
-        self.http_block = HttpBlock(indent_level=0)
-        self.sub_blocks.append(EventsBlock(indent_level=0))
-        self.sub_blocks.append(self.http_block)
+        # self.http_block = HttpBlock(indent_level=0)
+        # self.sub_blocks.append(EventsBlock(indent_level=0))
+        # self.sub_blocks.append(self.http_block)
 
     def __str__(self):
         return "\n".join(self._body_lines()) + "\n" + "\n\n".join(map(str, self.sub_blocks))
+
+    def add_server(self, *, server_name: str, server_addr: str, **kwargs) -> ServerBlock:
+        """
+        Add a virtual server
+
+        :param server_name: The domain name for this server to handle requests for
+        :param server_addr: The IP address to bind on
+        :param kwargs: Additional arguments to pass to `Server()`
+        :return: The created ServerBlock
+        """
+        block = ServerBlock(
+            indent_level=self.indent_level + 1, server_name=server_name, server_addr=server_addr, **kwargs
+        )
+        self.sub_blocks.append(block)
+        return block
