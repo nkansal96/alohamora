@@ -148,10 +148,11 @@ def convert_folder(args):
             if source in url_to_push_mapping:
                 for item in url_to_push_mapping[source]:
                     location_block.add_push(uri=urlparse(item["url"]).path)
+                    cache_override_block = server_block.add_location_block(uri=urlparse(item["url"]).path)
+                    cache_override_block.enable_override_cache_settings()
             if source in url_to_preload_mapping:
                 for item in url_to_preload_mapping[source]:
                     location_block.add_preload(uri=item["url"], as_type=item["as_type"])
-        # TODO: add location block for each pushed or preloaded object, override the cache setting and cache locally
         location_block = server_block.add_location_block(uri="/",exact_match=False)
         location_block.enable_proxy_server()
         Path(args.output_folder).mkdir(parents=True, exist_ok=True)

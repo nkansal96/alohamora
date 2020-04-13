@@ -135,6 +135,18 @@ class LocationBlock(Block):
         as_type = type_map.get(as_type, "other")
         self.block_args.append(("add_header", quote("Link"), quote(f"<{uri}>; rel=preload; as={as_type}; nopush")))
 
+    def enable_override_cache_settings(self):
+        """
+        The current block is meant to just override all cache-control headers. 
+        This is used because we want to force cache all pushed/preloaded assets in our proxy.
+        """
+        self.block_args.append(("resolver", "8.8.8.8 ipv6=off"))
+        self.block_args.append(("proxy_ssl_server_name","on"))
+        self.block_args.append(("proxy_ignore_headers", "Cache-Control"))
+        self.block_args.append(("proxy_cache_valid", "any 30m"))
+        self.block_args.append(("add_header", "X-alohamora from-cache"))
+        self.block_args.append(("proxy_pass", "https://$http_host$uri$is_args$args"))
+
 
 class TypesBlock(Block):
     """
