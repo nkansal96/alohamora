@@ -115,14 +115,16 @@ class LocationBlock(Block):
         """
         self.block_args.append(("http2_push", quote(uri)))
 
-    def enable_proxy_server(self):
+    def enable_proxy_server(self, preexisting_location_block = False):
         """
         Makes this block proxy all requests
         """
-        self.block_args.append(("resolver", "8.8.8.8 ipv6=off"))
-        self.block_args.append(("proxy_ssl_server_name","on"))
+        if not preexisting_location_block: # if this location block was preexisting, it has proxy settings already
+            self.block_args.append(("resolver", "8.8.8.8 ipv6=off"))
+            self.block_args.append(("proxy_ssl_server_name","on"))
+            self.block_args.append(("proxy_pass", "$scheme://$http_host$uri$is_args$args"))
         self.block_args.append(("add_header","X-alohamora proxied"))
-        self.block_args.append(("proxy_pass", "https://$http_host$uri$is_args$args"))
+        
 
     def add_preload(self, uri: str, as_type: str):
         """
@@ -135,17 +137,18 @@ class LocationBlock(Block):
         as_type = type_map.get(as_type, "other")
         self.block_args.append(("add_header", quote("Link"), quote(f"<{uri}>; rel=preload; as={as_type}; nopush")))
 
-    def enable_override_cache_settings(self):
+    def enable_override_cache_settings(self, preexisting_location_block = False):
         """
         The current block is meant to just override all cache-control headers. 
         This is used because we want to force cache all pushed/preloaded assets in our proxy.
         """
-        self.block_args.append(("resolver", "8.8.8.8 ipv6=off"))
-        self.block_args.append(("proxy_ssl_server_name","on"))
+        if not preexisting_location_block:
+            self.block_args.append(("resolver", "8.8.8.8 ipv6=off"))
+            self.block_args.append(("proxy_ssl_server_name","on"))
+            self.block_args.append(("proxy_pass", "$scheme://$http_host$uri$is_args$args"))
         self.block_args.append(("proxy_ignore_headers", "Cache-Control"))
         self.block_args.append(("proxy_cache_valid", "any 30m"))
         self.block_args.append(("add_header", "X-alohamora from-cache"))
-        self.block_args.append(("proxy_pass", "https://$http_host$uri$is_args$args"))
 
 
 class TypesBlock(Block):
@@ -202,6 +205,16 @@ class ServerBlock(Block):
         block = LocationBlock(indent_level=self.indent_level + 1, **kwargs)
         self.sub_blocks.append(block)
         return block
+    
+    def get_location_block(self, uri) -> LocationBlock:
+        """
+        takes in a uri and returns a matching location block. 
+        returns None if it does not exist
+        """
+        for block in self.sub_blocks:
+            if block.block_name == f"location = {quote(uri)}":
+                return block
+        return None
 
 
 class HttpBlock(Block):
