@@ -178,6 +178,7 @@ def convert_folder(args):
     print(f'number_of_overlapping_source_preload_urls={number_of_overlapping_source_preload_urls}')
     print(f'number_of_unique_source_preload_urls={number_of_unique_source_preload_urls}')
     print(f'number_of_overlapping_websites={len(list_of_overlapping_websites.keys())}')
+    print(f'list of overlapping websites={list_of_overlapping_websites.keys()}')
     print(f'set nginx config worker_connections 2048 and server_names_hash_bucket_size 2048;')
     with open("/home/murali/Documents/new_si_new_plt_manifests/overlap_info.txt", "w") as f:
         f.write(json.dumps(overlapping_website_to_source_mapping, indent=4))
