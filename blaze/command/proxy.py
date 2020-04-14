@@ -69,6 +69,8 @@ def convert_folder(args):
     number_of_overlapping_source_preload_urls = 0
     number_of_unique_source_preload_urls = 0
 
+    overlapping_website_to_source_mapping = {}
+    list_of_overlapping_websites = {}
 
     already_seen_push_source = {}
     already_seen_preload_source = {}
@@ -85,16 +87,19 @@ def convert_folder(args):
         except json.JSONDecodeError as e:
             print("failed to decode json for " + f + ", err: " + str(e), file=sys.stderr)
         policy = Policy.from_dict(policy_dict)
+        overlapping_website_to_source_mapping[f] = []
         for ptype, policy_obj in policy_dict.items():
             if ptype == "push" or ptype == "preload":
                 this_source_did_push = False
                 this_source_did_preload = False
                 for (source, deps) in policy_obj.items():
+                    overlapping_website_to_source_mapping[f].append(source)
                     for obj in deps:
                         try:
                             if ptype == "push":
                                 if source in already_seen_push_source:
                                     number_of_overlapping_source_push_urls += 1
+                                    list_of_overlapping_websites[f] = True
                                     continue
                                 if source not in url_to_push_mapping:
                                     url_to_push_mapping[source] = []
@@ -104,6 +109,7 @@ def convert_folder(args):
                             elif ptype == "preload":
                                 if source in already_seen_preload_source:
                                     number_of_overlapping_source_preload_urls += 1
+                                    list_of_overlapping_websites[f] = True
                                     continue
                                 if source not in url_to_preload_mapping:
                                     url_to_preload_mapping[source] = []
@@ -143,14 +149,20 @@ def convert_folder(args):
     for domain, source_url_list in domain_to_source_url_mapping.items():
         config = Config()
         server_block = config.add_server(cert_path="/etc/ssl/certs/nginx-selfsigned.crt",key_path="/etc/ssl/private/nginx-selfsigned.key",server_addr="127.0.0.1",server_name=domain)
-        for source in source_url_list:
-            location_block = server_block.add_location_block(uri=urlparse(source).path)
-            location_block.enable_proxy_server()
-            if source in url_to_push_mapping:
+        for source in source_url_list: # for each source in this domain
+            existing_location_block_for_source = server_block.get_location_block(uri=urlparse(source).path)
+            location_block = server_block.add_location_block(uri=urlparse(source).path) if existing_location_block_for_source is None else existing_location_block_for_source # create a location block with exact match
+            location_block.enable_proxy_server(preexisting_location_block=existing_location_block_for_source is not None) # and enable proxy for the source
+            if source in url_to_push_mapping: # for each item this source push or preload
                 for item in url_to_push_mapping[source]:
-                    location_block.add_push(uri=urlparse(item["url"]).path)
-                    cache_override_block = server_block.add_location_block(uri=urlparse(item["url"]).path)
-                    cache_override_block.enable_override_cache_settings()
+                    location_block.add_push(uri=urlparse(item["url"]).path) # make the source location block contain a push directive
+                    existing_block_for_pushed_asset = server_block.get_location_block(uri=urlparse(item["url"]).path) # check if the pushed asset already has a location block
+                    if existing_block_for_pushed_asset is None:
+                        cache_override_block = server_block.add_location_block(uri=urlparse(item["url"]).path)
+                        cache_override_block.enable_override_cache_settings(preexisting_location_block=True) 
+                    else:
+                        cache_override_block = existing_block_for_pushed_asset
+                        cache_override_block.enable_override_cache_settings() # add a cache directive for the pushed asset
             if source in url_to_preload_mapping:
                 for item in url_to_preload_mapping[source]:
                     location_block.add_preload(uri=item["url"], as_type=item["as_type"])
@@ -159,3 +171,12 @@ def convert_folder(args):
         Path(args.output_folder).mkdir(parents=True, exist_ok=True)
         with open(os.path.join(args.output_folder, f'{domain}.config'), "w") as f:
             f.write(str(config))
+
+
+    print(f'number_of_overlapping_source_push_urls={number_of_overlapping_source_push_urls}')
+    print(f'number_of_unique_source_push_urls={number_of_unique_source_push_urls}')
+    print(f'number_of_overlapping_source_preload_urls={number_of_overlapping_source_preload_urls}')
+    print(f'number_of_unique_source_preload_urls={number_of_unique_source_preload_urls}')
+    print(f'number_of_overlapping_websites={len(list_of_overlapping_websites.keys())}')
+    with open("/home/murali/Documents/new_si_new_plt_manifests/overlap_info.txt", "w") as f:
+        f.write(json.dumps(overlapping_website_to_source_mapping, indent=4))
