@@ -159,10 +159,10 @@ def convert_folder(args):
                     existing_block_for_pushed_asset = server_block.get_location_block(uri=urlparse(item["url"]).path) # check if the pushed asset already has a location block
                     if existing_block_for_pushed_asset is None:
                         cache_override_block = server_block.add_location_block(uri=urlparse(item["url"]).path)
-                        cache_override_block.enable_override_cache_settings(preexisting_location_block=True) 
+                        cache_override_block.enable_override_cache_settings(preexisting_location_block=False) 
                     else:
                         cache_override_block = existing_block_for_pushed_asset
-                        cache_override_block.enable_override_cache_settings() # add a cache directive for the pushed asset
+                        cache_override_block.enable_override_cache_settings(preexisting_location_block=True) # add a cache directive for the pushed asset
             if source in url_to_preload_mapping:
                 for item in url_to_preload_mapping[source]:
                     location_block.add_preload(uri=item["url"], as_type=item["as_type"])
