@@ -69,6 +69,7 @@ def get_args():
     parser.add_argument("--num_workers", default=4, type=int, help="Number of workers to use")
 
     parser.add_argument("--bandwidth", type=int, help="bandwidth to test with")
+    parser.add_argument("--loss", type=int, help="use a lossy network. this is in percentage.")
     parser.add_argument("--latency", type=int, help="latency to test with")
     parser.add_argument("--cpu_slowdown", type=int, choices=[1, 2, 4], help="cpu_slowdown to test with")
     parser.add_argument("--randomize", help="set this flag to randomly choose bw, latency and cpu", action="store_true")
@@ -103,8 +104,8 @@ def get_test_websites(ray_results_dir):
         yield latest_checkpoint_file, experiment_name
 
 
-def get_results_fname(experiment_name, results_dir, bandwidth="", cpu_slowdown="", latency=""):
-    return os.path.join(results_dir, experiment_name + str(bandwidth) + "_" + str(latency) + "_" + str(cpu_slowdown))
+def get_results_fname(experiment_name, results_dir, bandwidth="", cpu_slowdown="", loss="", latency=""):
+    return os.path.join(results_dir, experiment_name + str(bandwidth) + "_" + str(latency) + "_" + str(cpu_slowdown) + "_" + str(loss))
 
 
 def website_exists(experiment_name, results_dir):
@@ -112,13 +113,13 @@ def website_exists(experiment_name, results_dir):
 
 
 def test_website(
-    results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, latency, checkpoint_file, experiment_name
+    results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, loss, latency, checkpoint_file, experiment_name
 ):
     with open(
-        get_results_fname(experiment_name, results_dir, bandwidth, cpu_slowdown, latency) + ".json", "ab+"
+        get_results_fname(experiment_name, results_dir, bandwidth, cpu_slowdown, loss, latency) + ".json", "ab+"
     ) as outf:
         with open(
-            get_results_fname(experiment_name, results_dir, bandwidth, cpu_slowdown, latency) + ".log", "ab+"
+            get_results_fname(experiment_name, results_dir, bandwidth, cpu_slowdown, loss, latency) + ".log", "ab+"
         ) as errf:
             monitor_process(
                 [
@@ -136,6 +137,8 @@ def test_website(
                     str(bandwidth),
                     "--cpu_slowdown",
                     str(cpu_slowdown),
+                    "--loss",
+                    str(loss),
                     "--reward_func",
                     str(reward_func),
                     "--run_simulator",
@@ -147,14 +150,14 @@ def test_website(
             )
 
 
-def worker(results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, latency, checkpoint_file, experiment_name):
+def worker(results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, loss, latency, checkpoint_file, experiment_name):
     try:
         if website_exists(experiment_name, results_dir):
             print(f"evaluating {checkpoint_file} ... skipping (already exists)")
             return
         print(f"evaluating {checkpoint_file} ...")
         test_website(
-            results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, latency, checkpoint_file, experiment_name
+            results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, loss, latency, checkpoint_file, experiment_name
         )
     except KeyboardInterrupt:
         raise
@@ -166,15 +169,16 @@ def generate_random_params():
     bandwidth = list(range(12000, 24001, 2000))
     latency = list(range(20, 101, 20))
     cpu = [2, 4]
-    return list(itertools.product(bandwidth, cpu, latency))
+    loss = [0, 1]
+    return list(itertools.product(bandwidth, cpu, latency, loss))
 
 
 def main(args):
-    if (not args.randomize) and (args.bandwidth is None or args.cpu_slowdown is None or args.latency is None):
-        print("Either choose randomize option or provide all three of (bw, latency, cpu).")
+    if (not args.randomize) and (args.bandwidth is None or args.cpu_slowdown is None or args.latency is None or args.loss is None):
+        print("Either choose randomize option or provide all four of (bw, latency, loss, cpu).")
         sys.exit(1)
     websites = list(get_test_websites(args.ray_results_dir))
-    params = generate_random_params() if args.randomize else [(args.bandwidth, args.cpu_slowdown, args.latency)]
+    params = generate_random_params() if args.randomize else [(args.bandwidth, args.cpu_slowdown, args.loss, args.latency)]
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.num_workers) as pool:
         f = [
             pool.submit(
@@ -184,12 +188,13 @@ def main(args):
                 args.reward_func,
                 bandwidth,
                 cpu_slowdown,
+                loss,
                 latency,
                 checkpoint_file,
                 experiment_name,
             )
             for (checkpoint_file, experiment_name) in websites
-            for (bandwidth, cpu_slowdown, latency) in params
+            for (bandwidth, cpu_slowdown, loss, latency) in params
         ]
         print("Finished processing", len([p.result() for p in f]), "websites")
 
