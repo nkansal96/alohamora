@@ -67,6 +67,7 @@ def query(args):
     "--reward_func", help="Reward function to use", default=1, choices=list(range(get_num_rewards())), type=int
 )
 @command.argument("--use_aft", help="Use Speed Index metric", action="store_true")
+@command.argument("--user_data_dir", help="Use user data dir for chrome", default=None)
 @command.argument(
     "--cache_time", help="Simulate cached object expired after this time (in seconds)", type=int, default=None
 )
@@ -131,9 +132,9 @@ def evaluate(args):
         data["simulator"] = {"without_policy": sim_plt, "with_policy": push_plt}
 
     if args.run_replay_server:
-        *_, plts = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config)
+        *_, plts = get_page_load_time_in_replay_server(config.env_config.request_url, client_env, config, user_data_dir=args.user_data_dir, cache_time=args.cache_time)
         *_, push_plts = get_page_load_time_in_replay_server(
-            config.env_config.request_url, client_env, config, policy=policy
+            config.env_config.request_url, client_env, config, policy=policy, user_data_dir=args.user_data_dir, cache_time=args.cache_time
         )
         data["replay_server"] = {"without_policy": plts, "with_policy": push_plts}
 

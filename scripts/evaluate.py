@@ -79,6 +79,8 @@ def get_args():
         choices=[0, 1, 2, 3],
         help="reward function that the model was trained with",
     )
+    parser.add_argument("--warm_cache", action="store_true", help="use warm cache")
+    parser.add_argument("--cache_time", type=int, help="seconds to expire cache")
     return parser.parse_args()
 
 
@@ -112,8 +114,11 @@ def website_exists(experiment_name, results_dir):
 
 
 def test_website(
-    results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, latency, checkpoint_file, experiment_name
+    args, results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, latency, checkpoint_file, experiment_name
 ):
+    tempdir = None
+    if args.warm_cache:
+        tempdir = tempfile.mkdtemp(prefix="blaze_warm_" + os.path.basename(manifest_file).split(".manifest")[0])
     with open(
         get_results_fname(experiment_name, results_dir, bandwidth, cpu_slowdown, latency) + ".json", "ab+"
     ) as outf:
@@ -138,6 +143,8 @@ def test_website(
                     str(cpu_slowdown),
                     "--reward_func",
                     str(reward_func),
+                    *(["--cache_time", str(args.cache_time)] if args.cache_time else []),
+                    *(["--user_data_dir", tempdir] if tempdir else []),
                     "--run_simulator",
                     "--run_replay_server",
                 ],
@@ -147,14 +154,14 @@ def test_website(
             )
 
 
-def worker(results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, latency, checkpoint_file, experiment_name):
+def worker(args, results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, latency, checkpoint_file, experiment_name):
     try:
         if website_exists(experiment_name, results_dir):
             print(f"evaluating {checkpoint_file} ... skipping (already exists)")
             return
         print(f"evaluating {checkpoint_file} ...")
         test_website(
-            results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, latency, checkpoint_file, experiment_name
+            args, results_dir, manifests_dir, reward_func, bandwidth, cpu_slowdown, latency, checkpoint_file, experiment_name
         )
     except KeyboardInterrupt:
         raise
@@ -179,6 +186,7 @@ def main(args):
         f = [
             pool.submit(
                 worker,
+                args,
                 args.results_dir,
                 args.manifests_dir,
                 args.reward_func,
