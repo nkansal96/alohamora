@@ -55,6 +55,7 @@ def query(args):
 @command.argument("--manifest", "-m", help="The location of the page manifest to query the model for", required=True)
 @command.argument("--bandwidth", "-b", help="The bandwidth to query the model for (kbps)", type=int, required=True)
 @command.argument("--latency", "-l", help="The latency to query the model for (ms)", type=int, required=True)
+@command.argument("--loss", "-n", help="The loss of the network in which evaluation is performed (%)", type=int, required=True)
 @command.argument(
     "--cpu_slowdown",
     "-s",
@@ -85,7 +86,7 @@ def evaluate(args):
     replay server to get the PLTs and compare them under different conditions.
     """
     log.info("evaluating model...", model=args.model, location=args.location, manifest=args.manifest)
-    client_env = get_client_environment_from_parameters(args.bandwidth, args.latency, args.cpu_slowdown)
+    client_env = get_client_environment_from_parameters(args.bandwidth, args.latency, args.cpu_slowdown, args.loss)
     manifest = EnvironmentConfig.load_file(args.manifest)
 
     cached_urls = set(

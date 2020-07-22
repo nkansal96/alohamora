@@ -130,7 +130,7 @@ def get_default_client_environment():
     )
 
 
-def get_client_environment_from_parameters(bandwidth: int, latency: int, cpu_slowdown: int):
+def get_client_environment_from_parameters(bandwidth: int, latency: int, cpu_slowdown: int, loss: int):
     """
     Returns a fully configured client environment for valid values of bandwidth, latency, and CPU slowdown
     """
@@ -148,4 +148,5 @@ def get_client_environment_from_parameters(bandwidth: int, latency: int, cpu_slo
         bandwidth=bandwidth,
         latency=latency,
         cpu_slowdown=cpu_slowdown,
+        loss=loss/100.0,
     )
