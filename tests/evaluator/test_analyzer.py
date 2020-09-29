@@ -4,17 +4,17 @@ from blaze.action import ActionSpace, Policy
 from blaze.config.client import get_random_client_environment
 from blaze.evaluator import Analyzer
 
-from tests.mocks.config import get_config
+from tests.mocks.config import get_env_config
 
 
 class TestAnalyzer:
     def setup(self):
-        self.config = get_config()
-        self.policy = Policy(ActionSpace(self.config.env_config.push_groups))
+        self.env_config = get_env_config()
+        self.policy = Policy(ActionSpace(self.env_config.push_groups))
         self.client_environment = get_random_client_environment()
 
     def get_analyzer(self, reward_func: int = 0):
-        return Analyzer(get_config(), reward_func, self.client_environment)
+        return Analyzer(get_env_config(), reward_func, self.client_environment)
 
     def test_init(self):
         a = self.get_analyzer()

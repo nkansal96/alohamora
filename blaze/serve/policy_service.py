@@ -42,5 +42,5 @@ class PolicyService(policy_service_pb2_grpc.PolicyServiceServicer):
         # create environment config
         env_config = environment.EnvironmentConfig.deserialize(page.manifest)
         # instantiate a model for this config - TODO is to populate cached_urls
-        config = self.config.with_mutations(env_config=env_config, client_env=client_env, cached_urls=set())
+        config = self.config.with_mutations(env_configs=[env_config], client_env=client_env, cached_urls=set())
         return self.saved_model.instantiate(config)

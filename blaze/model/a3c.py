@@ -12,9 +12,9 @@ from .model import SavedModel
 
 
 WINDOW_SIZE = 50
-MAX_ITERATIONS = 150
+MAX_ITERATIONS = 250
 MIN_ITERATIONS = 50
-MAX_TIME_SECONDS = 2 * 60 * 60  # 2 hours
+MAX_TIME_SECONDS = 3 * 60 * 60  # 2 hours
 
 
 def stop_condition():

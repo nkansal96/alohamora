@@ -46,9 +46,12 @@ class PushActionSpace(gym.spaces.Tuple):
 
         super().__init__(
             (
-                gym.spaces.Discrete(self.max_group_id + 1),
-                gym.spaces.Discrete(self.max_source_id + 1),
-                gym.spaces.Discrete(self.max_source_id + 1),
+                # gym.spaces.Discrete(self.max_group_id + 1),
+                # gym.spaces.Discrete(self.max_source_id + 1),
+                # gym.spaces.Discrete(self.max_source_id + 1),
+                gym.spaces.Discrete(100),
+                gym.spaces.Discrete(200),
+                gym.spaces.Discrete(200),
             )
         )
 
@@ -157,7 +160,8 @@ class PreloadActionSpace(gym.spaces.Tuple):
         self.source_list = sorted([r.order for group in push_groups for r in group.resources])
         self.max_order = self.source_list[-1]
 
-        super().__init__((gym.spaces.Discrete(self.max_order + 1), gym.spaces.Discrete(self.max_order + 1)))
+        # super().__init__((gym.spaces.Discrete(self.max_order + 1), gym.spaces.Discrete(self.max_order + 1)))
+        super().__init__((gym.spaces.Discrete(200), gym.spaces.Discrete(200)))
 
     def seed(self, seed):
         self.np_random.seed(seed)
