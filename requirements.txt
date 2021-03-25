@@ -58,7 +58,7 @@ pytest-cov==2.6.1
 pytest-forked==1.0.2
 pytest-xdist==1.28.0
 python-dateutil==2.8.0
-PyYAML==5.1
+PyYAML==5.4
 ray==0.7.6
 recordclass==0.12.0.1
 redis==3.3.11
